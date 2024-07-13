@@ -1,0 +1,28 @@
+name: Build and Deploy Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: [self-hosted, scrapi]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        id: build
+        run: docker build -t my-app:latest .
+
+      - name: Stop old container, remove it, and run new container
+        if: success()
+        run: |
+          docker stop my-app || true
+          docker rm my-app || true
+          docker run -d --name my-app -p 80:80 my-app:latest
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "Build failed. Old container was not stopped or replaced."
