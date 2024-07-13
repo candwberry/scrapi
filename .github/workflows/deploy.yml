@@ -19,7 +19,7 @@ jobs:
       - name: Run new container
         if: success()
         run: |
-          docker run -d --name scrapi -p 80:80 my-app:latest /bin/sh -c "bun run dev"
+          docker run -d --name scrapi -p 80:80 scrapi:latest /bin/sh -c "bun run dev"
 
       - name: Notify on failure
         if: failure()
