@@ -11,4 +11,3 @@ WORKDIR /home/scrapi
 
 # Install node_modules, build project
 RUN bun install
-RUN bun run dev
