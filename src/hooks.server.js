@@ -1,5 +1,7 @@
 import ebay from "$lib/ebay";
+import { exec } from "child_process";
 
+let currentProcess = null;
 /** @type {import("svelte-adapter-bun").WebSocketHandler} */
 export const handleWebsocket = {
 	open(ws) {
@@ -16,10 +18,32 @@ export const handleWebsocket = {
 						const resp =  await ebay(data.data);
 						ws.send(JSON.stringify({ type: 'ebay', data: JSON.stringify(resp) }));
 						break;
-				}
-            else {
-                console.error("WebSocket message is not as expected.");
+          case 'shell':
+            if (currentProcess) {
+                currentProcess.kill();
             }
+    
+            currentProcess = exec(data.data, { shell: true });
+    
+            currentProcess.stdout.on('data', (data) => {
+                var processedOutput = data;
+                ws.send(processedOutput);
+                console.log(processedOutput);
+            });
+    
+            currentProcess.stderr.on('data', (data) => {
+                var processedOutput = (data);
+                ws.send(processedOutput);
+                console.log(processedOutput);
+            });
+    
+            currentProcess.on('close', (code) => {
+                console.log(`Child process exited with code ${code}`);
+                currentProcess = null;
+            });
+				} else {
+            console.error("WebSocket message is not as expected.");
+        }
 		} else {
 			console.error("WebSocket message is not JSON.");
 		}
