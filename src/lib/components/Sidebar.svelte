@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
   import ArrowLeft from 'lucide-svelte/icons/arrow-left';
   import Folder from 'lucide-svelte/icons/folder';
-  import FolderOpen from 'lucide-svelte/icons/folder-Open';
+  import FolderOpen from 'lucide-svelte/icons/folder-open';
   import Home from 'lucide-svelte/icons/house';
   import CalendarClock from 'lucide-svelte/icons/calendar-clock';
   import Database from 'lucide-svelte/icons/database';
