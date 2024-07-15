@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Check from 'lucide-svelte/icons/Check';
-  import ChevronDown from 'lucide-svelte/icons/Chevron-Down';
+  import Check from 'lucide-svelte/icons/check';
+  import ChevronDown from 'lucide-svelte/icons/chevron-down';
   import { createSelect, melt } from '@melt-ui/svelte';
   import { fade } from 'svelte/transition';
 

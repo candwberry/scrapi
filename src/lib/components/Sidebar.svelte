@@ -1,12 +1,12 @@
 <script context="module" lang="ts">
-  import ArrowLeft from 'lucide-svelte/icons/Arrow-Left';
-  import Folder from 'lucide-svelte/icons/Folder';
-  import FolderOpen from 'lucide-svelte/icons/Folder-Open';
-  import Home from 'lucide-svelte/icons/House';
-  import CalendarClock from 'lucide-svelte/icons/Calendar-Clock';
-  import Database from 'lucide-svelte/icons/Database';
-  import Settings from 'lucide-svelte/icons/Settings';
-  import SquareTerminal from 'lucide-svelte/icons/Square-Terminal';
+  import ArrowLeft from 'lucide-svelte/icons/arrow-left';
+  import Folder from 'lucide-svelte/icons/folder';
+  import FolderOpen from 'lucide-svelte/icons/folder-Open';
+  import Home from 'lucide-svelte/icons/house';
+  import CalendarClock from 'lucide-svelte/icons/calendar-clock';
+  import Database from 'lucide-svelte/icons/database';
+  import Settings from 'lucide-svelte/icons/settings';
+  import SquareTerminal from 'lucide-svelte/icons/square-terminal';
   type Icon = 'folder' |'home' | 'schedule' | 'database' | 'settings' | 'terminal';
 
   export type TreeItem = {
