@@ -1,5 +1,10 @@
 import ebay from "$lib/ebay";
 import { exec } from "child_process";
+import type { Handle } from '@sveltejs/kit';
+
+export const handle: Handle = async ({ event, resolve }) => {
+  return resolve(event);
+};
 
 let currentProcess = null;
 /** @type {import("svelte-adapter-bun").WebSocketHandler} */
@@ -18,7 +23,7 @@ export const handleWebsocket = {
 						const resp =  await ebay(data.data);
 						ws.send(JSON.stringify({ type: 'ebay', data: JSON.stringify(resp) }));
 						break;
-          case 'shell':
+
             if (currentProcess) {
                 currentProcess.kill();
             }
@@ -41,7 +46,7 @@ export const handleWebsocket = {
                 console.log(`Child process exited with code ${code}`);
                 currentProcess = null;
             });
-				} else {
+			} else {
             console.error("WebSocket message is not as expected.");
         }
 		} else {
