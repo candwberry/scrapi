@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" media="all"
+        href="https://www.cwberry.com/static/version1719306471/frontend/Webstraxt/cwberry/en_GB/css/styles.css" />
+    <style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked+.slider {
+            background-color: #009845;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+
+        hr {
+            border: 1.5px solid var(--material-text-color);
+            background-color: transparent;
+        }
+
+        .material-input-with-select {
+            display: grid;
+
+            grid-template-columns: 2fr 1fr;
+            background-color: white;
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+            border: 2px solid #e9e9e9 !important;
+
+            input {
+                border: none;
+                border-top-left-radius: 6px;
+                border-bottom-left-radius: 6px;
+                background-color: transparent;
+                width: 100%;
+            }
+
+            select {
+                border-top-right-radius: 6px;
+                border-bottom-right-radius: 6px;
+                border: none;
+                background-color: #e9e9e9;
+            }
+        }
+
+        .material-question {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .material-label {
+            color: var(--material-text-color);
+            margin-bottom: 4px;
+        }
+
+        .material-select {
+            border-radius: 8px;
+            background-color: #e9e9e9;
+            border: none;
+            width: 100%;
+        }
+
+        .material-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+
+            div {
+                width: 100%;
+            }
+        }
+
+        .material-results {
+            display: flex;
+            flex-direction: column;
+
+            :first-child {
+                font-size: 1.5rem;
+                font-weight: 600;
+            }
+        }
+
+        .material-text {
+            color: var(--material-text-color) !important;
+        }
+
+        .material-span {
+            padding: 8px;
+            width: 100%;
+            background-color: #e9e9e9;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            display: flex;
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+        }
+
+        input[type="checkbox"] {
+            outline: 2px solid white !important;
+            margin-right: 8px !important;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .material-section {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+
+            }
+        }
+    </style>
+</head>
+
+<body style="background-color: #009845">
+    <div class="flex flex-col w-full" style="--material-text-color: white;">
+        <div class="material-section">
+            <p class="material-question material-text">What type of aggregate are you using:</p>
+            <div class="material-label-and-select">
+                <div class="material-label">
+                    <label for="aggregate-type" id="aggregate-type-label">Aggregate Type</label>
+                </div>
+                <select class="material-select" id="aggregate-type" style="background-color: white">
+                    <option value="Sand">Sand</option>
+                    <option value="Decorative Stone">Decorative Stone</option>
+                    <option value="Sand & Stone Ballast">Sand & Stone Ballast</option>
+                    <option value="Stone & Gravel">Stone & Gravel</option>
+                </select>
+            </div>
+        </div>
+        <hr class="my-8 material-text">
+        <div class="material-section">
+            <p class="material-question material-text">What are the dimensions of the area you want to cover:</p>
+            <div>
+                <div>
+                    <div class="material-label">
+                        <label for="aggregate-length" id="aggregate-length-label">Length</label>
+                    </div>
+                    <div class="material-input-with-select">
+                        <input class="material-input" type="number" id="aggregate-length" placeholder="0" min="0">
+                        <select id="aggregate-length-unit">
+                            <option value="m">metres</option>
+                            <option value="ft">feet</option>
+                            <option value="cm">centimetres</option>
+                            <option value="in">inches</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <div class="material-label">
+                        <label class="material-label" for="aggregate-width" id="aggregate-width-label">Width</label>
+                    </div>
+                    <div class="material-input-with-select">
+                        <input class="material-input" type="number" id="aggregate-width" placeholder="0" min="0">
+                        <select id="aggregate-width-unit">
+                            <option value="m">metres</option>
+                            <option value="ft">feet</option>
+                            <option value="cm">centimetres</option>
+                            <option value="in">inches</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <div class="material-label">
+                        <label class="material-label" for="aggregate-depth" id="aggregate-depth-label">Depth</label>
+                    </div>
+                    <div class="material-input-with-select">
+                        <input class="material-input" type="number" id="aggregate-depth" placeholder="0" min="0">
+                        <select id="aggregate-depth-unit">
+                            <option value="mm">millimetres</option>
+                            <option value="ft">feet</option>
+                            <option value="cm">centimetres</option>
+                            <option value="in">inches</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr class="my-8 material-text">
+        <div id="aggregate-output" class="material-text w-full text-nowrap">
+        </div>
+    </div>
+    <script>
+        // Config to change later if need be.
+        const grabs = {
+            "Sand": 850,
+            "Decorative Stone": 850,
+            "Sand & Stone Ballast": 850,
+            "Stone & Gravel": 850
+        };
+
+        const aggregateLength = document.getElementById('aggregate-length');
+        const aggregateWidth = document.getElementById('aggregate-width');
+        const aggregateDepth = document.getElementById('aggregate-depth');
+        const aggregateLengthUnit = document.getElementById('aggregate-length-unit');
+        const aggregateWidthUnit = document.getElementById('aggregate-width-unit');
+        const aggregateDepthUnit = document.getElementById('aggregate-depth-unit');
+        const aggregateOutput = document.getElementById('aggregate-output');
+        const aggregateType = document.getElementById('aggregate-type');
+
+        function convertUnits(value, from, to) {
+            if (from === to) return value;
+            if (from === 'm' && to === 'ft') return value * 3.28084;
+            if (from === 'm' && to === 'cm') return value * 100;
+            if (from === 'm' && to === 'in') return value * 39.3701;
+            if (from === 'ft' && to === 'm') return value / 3.28084;
+            if (from === 'ft' && to === 'cm') return value * 30.48;
+            if (from === 'ft' && to === 'in') return value * 12;
+            if (from === 'cm' && to === 'm') return value / 100;
+            if (from === 'cm' && to === 'ft') return value / 30.48;
+            if (from === 'cm' && to === 'in') return value / 2.54;
+            if (from === 'in' && to === 'm') return value / 39.3701;
+            if (from === 'in' && to === 'ft') return value / 12;
+            if (from === 'in' && to === 'cm') return value * 2.54;
+            if (from === 'mm' && to === 'ft') return value / 304.8;
+            if (from === 'mm' && to === 'cm') return value / 10;
+            if (from === 'mm' && to === 'in') return value / 25.4;
+            if (from === 'mm' && to === 'm') return value / 1000;
+            return value;
+        }
+
+        function volumeToGrabBags(volume) {
+            if (isNaN(volume)) volume = 0;
+            return Object.fromEntries(Object.entries(grabs).map(([key, value]) => [key, Math.ceil(volume / value)]));
+        }
+
+        function calculateVolume() {
+            const length = convertUnits(parseFloat(aggregateLength.value), aggregateLengthUnit.value, "m");
+            const width = convertUnits(parseFloat(aggregateWidth.value), aggregateWidthUnit.value, "m");
+            const depth = convertUnits(parseFloat(aggregateDepth.value), aggregateDepthUnit.value, "m");
+            const volume = length * width * depth;
+            const grabBags = volumeToGrabBags(volume * 2000);
+            aggregateOutput.innerHTML = isNaN(volume) ? "" : `
+                <div class="material-results">
+                    <p>Results</p>
+                    <p>Please note these figures are a guide and offer no guarantee that the quantity specified will be enough for your project.</p>
+                    <br>
+                </div>
+                <p class="font-bold text-xl
+                    ">Volume: ${isNaN(volume) ? 0 : volume.toFixed(3)} ${aggregateLengthUnit.value}<sup>3</sup></p>
+                <p class="font-bold text-xl">Weight: ${isNaN(volume) ? 0 : (volume * 2000).toFixed(3)} kg</p>
+                <div>
+                    <div style="margin-top: 4px">
+                        <p>Grab Bags: ${grabBags[aggregateType.value]}</p>
+                        <p>Handy Bags: ${isNaN(volume) ? 1 : Math.ceil(volume * 100)}</p>
+                    </div>
+                </div>`;
+        }
+
+        aggregateLength.addEventListener('input', calculateVolume);
+        aggregateWidth.addEventListener('input', calculateVolume);
+        aggregateDepth.addEventListener('input', calculateVolume);
+        aggregateLengthUnit.addEventListener('change', calculateVolume);
+        aggregateWidthUnit.addEventListener('change', calculateVolume);
+        aggregateDepthUnit.addEventListener('change', calculateVolume);
+        aggregateType.addEventListener('change', calculateVolume);
+        calculateVolume();
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+
+                const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+                const focusable = Array.from(document.querySelectorAll(focusableElements));
+
+                const index = focusable.indexOf(document.activeElement);
+
+                let nextIndex = index + 1;
+                if (nextIndex >= focusable.length) nextIndex = 0;
+
+                if (focusable[nextIndex].tagName !== 'INPUT') {
+                    nextIndex += 1;
+                    if (nextIndex >= focusable.length) nextIndex = 0;
+                }
+                focusable[nextIndex].focus();
+                if (focusable[nextIndex].tagName === 'INPUT') focusable[nextIndex].select();
+
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+
+                const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+                const focusable = Array.from(document.querySelectorAll(focusableElements));
+
+                const index = focusable.indexOf(document.activeElement);
+
+                let nextIndex = index - 1;
+                if (nextIndex < 0) nextIndex = focusable.length - 1;
+
+                if (focusable[nextIndex].tagName !== 'INPUT') {
+                    nextIndex -= 1;
+                    if (nextIndex < 0) nextIndex = focusable.length - 1;
+                }
+                focusable[nextIndex].focus();
+                if (focusable[nextIndex].tagName === 'INPUT') focusable[nextIndex].select();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -41,24 +41,18 @@ export const GET: RequestHandler = async ({ request, url }) => {
     console.log(items);
     const itemSummaries = items.itemSummaries ?? [];
     
-    const cheapestItem = itemSummaries.length > 0 ? itemSummaries[0] : null;
-    const href = cheapestItem ? cheapestItem.itemWebUrl : "about:blank"; // Not found.
-    const title = cheapestItem ? cheapestItem.title : "Not found";
-    const price = cheapestItem ? cheapestItem.price.value : "-1";
-    let shipping = "-1";
-    let thumbnail = "berry.png";
-    if (cheapestItem.thumbnailImages && cheapestItem.thumbnailImages.length > 0) {
-        thumbnail = cheapestItem.thumbnailImages[0].imageUrl;
-    }
+    const formatItem = (item: any) => ({
+        title: item.title,
+        href: item.itemWebUrl,
+        price: item.price.value,
+        shipping: item.shippingOptions?.find((option: any) => option.shippingCostType === "FIXED")?.shippingCost.value ?? "-1",
+        thumbnail: item.thumbnailImages && item.thumbnailImages.length > 0 ? item.thumbnailImages[0].imageUrl : "berry.png"
+    });
 
-    if (cheapestItem.shippingOptions)
-    for (const shippingOption of cheapestItem.shippingOptions) {
-        if (shippingOption.shippingCostType === "FIXED") {
-            shipping = shippingOption.shippingCost.value;
-            break;
-        }
-    }
-    return new Response(JSON.stringify({ title: title, href: href, price: price, shipping: shipping, thumbnail: thumbnail }), {
+    const firstItem = itemSummaries.length > 0 ? formatItem(itemSummaries[0]) : null;
+    const otherItems = itemSummaries.slice(1).map(formatItem);
+
+    return new Response(JSON.stringify({ first: firstItem, others: otherItems }), {
         headers: {
             "content-type": "application/json"
         }

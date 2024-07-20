@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" media="all"
+        href="https://www.cwberry.com/static/version1719306471/frontend/Webstraxt/cwberry/en_GB/css/styles.css" />
+    <style>
+        .material-input-with-select {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            width: fit-content;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+
+            input {
+                border: none;
+                border-top-left-radius: 8px;
+                border-bottom-left-radius: 8px;
+                background-color: transparent;
+            }
+
+            select {
+                border-top-right-radius: 8px;
+                border-bottom-right-radius: 8px;
+                border: none;
+                background-color: #e9e9e9;
+            }
+        }
+
+        .material-question {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .material-label {
+            color: var(--material-text-color);
+            margin-bottom: 4px;
+        }
+
+        .material-select {
+            border-radius: 8px;
+            background-color: #e9e9e9;
+            border: none;
+        }
+
+        .material-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .material-results {
+            display: flex;
+            flex-direction: column;
+
+            :first-child {
+                font-size: 1.5rem;
+                font-weight: 600;
+            }
+        }
+
+        .material-text {
+            color: var(--material-text-color) !important;
+        }
+
+        .material-span {
+            padding: 8px;
+            width: 100%;
+            background-color: #e9e9e9;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            display: flex;
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        input[type="checkbox"] {
+            outline: 2px solid white !important;
+        }
+
+        hr {
+            border: 2px solid var(--material-text-color);
+            background-color: transparent;
+        }
+
+        @media (max-width: 768px) {
+            .material-section {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+
+<body style="background-color: #009845">
+    <div class="flex flex-col w-full" style="--material-text-color: black;">
+        <div class="material-section">
+            <p class="material-question material-text">What size is the proposed flooring installation:</p>
+            <div>
+                <div>
+                    <div class="material-label">
+                        <label for="flooring-room-length" id="flooring-room-length-label">Length:</label>
+                    </div>
+                    <div class="material-input-with-select">
+                        <input class="material-input" type="number" id="flooring-room-length" placeholder="0" min="0">
+                        <select id="flooring-room-length-unit">
+                            <option value="m">metres</option>
+                            <option value="ft">feet</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <div class="material-label">
+                        <label for="flooring-room-width" id="flooring-room-width-label">Width:</label>
+                    </div>
+                    <div class="material-input-with-select">
+                        <input class="material-input" type="number" id="flooring-room-width" placeholder="0" min="0">
+                        <select id="flooring-room-width-unit">
+                            <option value="m">metres</option>
+                            <option value="ft">feet</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <div class="material-label">
+                        <label for="flooring-area" id="flooring-area-label">Area:</label>
+                    </div>
+                    <div class="material-input-with-select">
+                        <input class="material-input" type="number" id="flooring-area" placeholder="0" disabled>
+                        <div class="material-span">m²</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr class="my-8 material-text" style="border-color: #009845">
+        <div class="material-section">
+            <p class="material-question material-text">Do you want to include a 5% wastage buffer:</p>
+            <div class="flex flex-row gap-4 material-extra-margin-mobile">
+                <div class="material-label">
+                    <label for="board-wastage" id="board-wastage-label">Wastage</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="board-wastage" checked>
+                </div>
+            </div>
+        </div>
+        <hr class="my-8 material-text" style="border-color: #009845">
+        <div class="material-section">
+            <div class="flex flex-col justify-between">
+                <p class="material-question material-text">Floorboard dimensions:</p>
+                <!--                <div class="material-extra-margin-mobile">
+                    <div class="material-label">
+                        <label>Set a default size:</label>
+                    </div>
+                    <select class="material-select cursor-pointer" style="width: 200px;" onchange="setBoardSize(this.value)">
+                        <option value="3600x125">3600 x 125mm</option>
+                        <option value="3600x150">3600 x 150mm</option>
+                        <option value="4200x125">4200 x 125mm</option>
+                        <option value="4200x150">4200 x 150mm</option>
+                        <option value="4800x125">4800 x 125mm</option>
+                        <option value="4800x150">4800 x 150mm</option>
+                    </select>
+                </div>
+                -->
+
+            </div>
+            <div>
+                <!--<div>
+                    <div class="material-label">
+                        <label for="flooring-board-length" id="flooring-board-length-label">Length:</label>
+                    </div>
+                    <div class="material-input-with-select">
+                        <input class="material-input" type="number" id="flooring-board-length" value="3600" step="300" min="0">
+                        <div class="material-span">mm</div>
+                    </div>
+                </div>-->
+                <div>
+                    <div class="material-label">
+                        <label for="flooring-board-width" id="flooring-board-width-label">Width:</label>
+                    </div>
+                    <div class="material-input-with-select">
+                        <input class="material-input" type="number" id="flooring-board-width" value="125" step="25" min="125" max="150">
+                        <div class="material-span">mm</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr class="my-8 material-text" style="border-color: #009845">
+        <div id="flooring-output" class="material-text w-full text-nowrap">
+        </div>
+    </div>
+
+
+    <script>
+        const flooringRoomLength = document.getElementById('flooring-room-length');
+        const flooringRoomWidth = document.getElementById('flooring-room-width');
+        const flooringRoomLengthUnit = document.getElementById('flooring-room-length-unit');
+        const flooringRoomWidthUnit = document.getElementById('flooring-room-width-unit');
+        const flooringOutput = document.getElementById('flooring-output');
+        const flooringBoardWastage = document.getElementById('board-wastage');
+        const flooringBoardLength = document.getElementById('flooring-board-length');
+        const flooringBoardWidth = document.getElementById('flooring-board-width');
+        const flooringArea = document.getElementById('flooring-area');
+
+        function setBoardSize(value) {
+            const [length, width] = value.split('x');
+            flooringBoardLength.value = length;
+            flooringBoardWidth.value = width;
+            calculateFlooring();
+        }
+
+        function calculateFlooring() {
+            const length = convertUnits(parseFloat(flooringRoomLength.value), flooringRoomLengthUnit.value, 'm');
+            const width = convertUnits(parseFloat(flooringRoomWidth.value), flooringRoomWidthUnit.value, 'm');
+            const area = length * width;
+            flooringArea.value = isNaN(area) ? "" : area.toFixed(2);
+
+            const flooringBoardLengthM = 1; //parseFloat(flooringBoardLength.value) / 1000;
+            let flooringBoardWidthM = parseFloat(flooringBoardWidth.value);
+            if (flooringBoardWidthM < 125) {
+                flooringBoardWidth.value = 125;
+                flooringBoardWidthM = 125;
+            } else if (flooringBoardWidthM > 150) {
+                flooringBoardWidthM = 150;
+                flooringBoardWidth.value = 150;
+            }
+            console.log(flooringBoardWidthM);
+            flooringBoardWidthM -= 11;
+            console.log(flooringBoardWidthM);
+            flooringBoardWidthM /= 1000;
+
+            const boardsPerSquareMeter = 1 / (flooringBoardLengthM * flooringBoardWidthM);
+            let totalBoards = area * boardsPerSquareMeter;
+
+            if (flooringBoardWastage.checked) {
+                totalBoards *= 1.05;
+            }
+
+            // Calculate total length of floorboards
+            const totalLengthMeters = totalBoards * flooringBoardLengthM;
+
+            flooringOutput.innerHTML = (isNaN(area) || flooringBoardWidthM * 1000 < 1)? "" : `
+            <div class="material-results">
+                <p>Results</p>
+                <p>Please note these figures are a guide and offer no guarantee that the quantity specified will be enough for your project.</p>
+                <br>
+            </div>
+            <p>Flooring Area: ${isNaN(area) ? 0 : area.toFixed(2)} m²</p>
+            <p class="font-bold text-xl">Linear Meterage: ${totalLengthMeters.toFixed(2)} meters</p>
+            <div style="margin-top: 12px">
+                <p>Wastage: ${flooringBoardWastage.checked ? '5% included' : 'Not included'}</p>
+                <p>Floorboard Width: ${flooringBoardWidth.value}mm</p>
+                <p>Please note, our 125 and 150mm wide floorboards have a respective coverage of 114 and 139mm.</p>
+            </div>
+        `;
+        }
+
+        flooringRoomLength.addEventListener('input', calculateFlooring);
+        flooringRoomWidth.addEventListener('input', calculateFlooring);
+        flooringRoomLengthUnit.addEventListener('change', calculateFlooring);
+        flooringRoomWidthUnit.addEventListener('change', calculateFlooring);
+        flooringBoardWastage.addEventListener('change', calculateFlooring);
+        flooringBoardWidth.addEventListener('input', calculateFlooring);
+        calculateFlooring();
+    </script>
+</body>
+
+</html>

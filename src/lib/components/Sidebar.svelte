@@ -53,7 +53,7 @@
           goto(`/${title === 'Dashboard' ? '' : title.toLowerCase()}`);
         }
       }}
-      class="flex items-center gap-1 rounded-md p-1 focus:bg-berry-200"
+      class={`flex items-center gap-1 rounded-md p-1 focus:bg-berry-200 ${$isSelected(itemId) ? 'bg-berry-200' : ''}`}
       use:melt={$item({
         id: itemId,
         hasChildren,

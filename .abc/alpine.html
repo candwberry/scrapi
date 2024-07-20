@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" media="all" href="https://www.cwberry.com/static/version1719306471/frontend/Webstraxt/cwberry/en_GB/css/styles.css" />
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <style>
+        /* ... (keep the existing CSS) ... */
+    </style>
+</head>
+<body style="background-color: #009845" x-data="aggregateCalculator()">
+    <div class="flex flex-col w-full" style="--material-text-color: white;">
+        <div class="material-section">
+            <p class="material-question material-text">What type of aggregate are you using:</p>
+            <div>
+                <div class="material-label">
+                    <label for="aggregate-type" id="aggregate-type-label">Aggregate Type</label>
+                </div>
+                <div>
+                    <select class="material-select" id="aggregate-type" x-model="aggregateType" @change="calculateVolume()">
+                        <option value="Sand">Sand</option>
+                        <option value="Decorative Stone">Decorative Stone</option>
+                        <option value="Sand & Stone Ballast">Sand & Stone Ballast</option>
+                        <option value="Stone & Gravel">Stone & Gravel</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <hr class="my-8 material-text">
+        <div class="material-section">
+            <p class="material-question material-text">What are the dimensions of the area you want to cover:</p>
+            <div>
+                <div>
+                    <div class="material-label">
+                        <label for="aggregate-length" id="aggregate-length-label">Length</label>
+                    </div>
+                    <div class="material-input-with-select">
+                        <input class="material-input" type="number" id="aggregate-length" placeholder="0" min="0" x-model="length" @input="calculateVolume()">
+                        <select id="aggregate-length-unit" x-model="lengthUnit" @change="calculateVolume()">
+                            <option value="m">metres</option>
+                            <option value="ft">feet</option>
+                            <option value="cm">centimetres</option>
+                            <option value="in">inches</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <div class="material-label">
+                        <label class="material-label" for="aggregate-width" id="aggregate-width-label">Width</label>
+                    </div>
+                    <div class="material-input-with-select">
+                        <input class="material-input" type="number" id="aggregate-width" placeholder="0" min="0" x-model="width" @input="calculateVolume()">
+                        <select id="aggregate-width-unit" x-model="widthUnit" @change="calculateVolume()">
+                            <option value="m">metres</option>
+                            <option value="ft">feet</option>
+                            <option value="cm">centimetres</option>
+                            <option value="in">inches</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <div class="material-label">
+                        <label class="material-label" for="aggregate-depth" id="aggregate-depth-label">Depth</label>
+                    </div>
+                    <div class="material-input-with-select">
+                        <input class="material-input" type="number" id="aggregate-depth" placeholder="0" min="0" x-model="depth" @input="calculateVolume()">
+                        <select id="aggregate-depth-unit" x-model="depthUnit" @change="calculateVolume()">
+                            <option value="mm">millimetres</option>
+                            <option value="ft">feet</option>
+                            <option value="cm">centimetres</option>
+                            <option value="in">inches</option>
+                        </select>
+                    </div>
+                </div>    
+            </div>
+        </div>
+        <hr class="my-8 material-text">
+        <div id="aggregate-output" class="material-text w-full text-nowrap" x-html="outputHtml">
+        </div>
+    </div>
+
+    <script>
+        function convertUnits(value, from, to) {
+            if (from === to) return value;
+            const conversions = {
+                'm': { ft: 3.28084, cm: 100, in: 39.3701 },
+                'ft': { m: 1/3.28084, cm: 30.48, in: 12 },
+                'cm': { m: 1/100, ft: 1/30.48, in: 1/2.54 },
+                'in': { m: 1/39.3701, ft: 1/12, cm: 2.54 },
+                'mm': { m: 1/1000, ft: 1/304.8, cm: 1/10, in: 1/25.4 }
+            };
+            return value * (conversions[from][to] || 1/conversions[to][from]);
+        }
+
+        function aggregateCalculator() {
+            return {
+                grabs: {
+                    "Sand": 800,
+                    "Decorative Stone": 850,
+                    "Sand & Stone Ballast": 850,
+                    "Stone & Gravel": 850
+                },
+                aggregateType: 'Sand',
+                length: 0,
+                width: 0,
+                depth: 0,
+                lengthUnit: 'm',
+                widthUnit: 'm',
+                depthUnit: 'mm',
+                outputHtml: '',
+
+                volumeToGrabBags(volume) {
+                    if (isNaN(volume)) volume = 0;
+                    return Object.fromEntries(Object.entries(this.grabs).map(([key, value]) => [key, Math.ceil(volume / value)]));
+                },
+
+                calculateVolume() {
+                    length = convertUnits(parseFloat(this.length), this.lengthUnit, "m");
+                    width = convertUnits(parseFloat(this.width), this.widthUnit, "m");
+                    depth = convertUnits(parseFloat(this.depth), this.depthUnit, "m");
+                    volume = length * width * depth;
+                    grabBags = this.volumeToGrabBags(volume * 2000);
+                    if (volume === 0) volume = NaN;
+                    console.log(volume);
+                    this.outputHtml = isNaN(volume) ? "" : `
+                        <div class="material-results">
+                            <p>Results</p>
+                            <p>Please note these figures are a guide and offer no guarantee that the quantity specified will be enough for your project.</p>
+                            <br>
+                        </div>
+                        <p class="font-bold text-xl">Volume: ${isNaN(volume) ? 0 : volume.toFixed(3)} ${this.lengthUnit}<sup>3</sup></p>
+                        <p class="font-bold text-xl">Weight: ${isNaN(volume) ? 0 : (volume * 2000).toFixed(3)} kg</p>
+                        <div>
+                            <div style="margin-top: 4px">
+                                <p>Grab Bags: ${grabBags[this.aggregateType]}</p>
+                                <p>Handy Bags: ${isNaN(volume) ? 1 : Math.ceil(volume * 100)}</p>
+                            </div>
+                        </div>`;
+                },
+
+                init() {
+                    this.calculateVolume();
+                },
+            }
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+
+                const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+                const focusable = Array.from(document.querySelectorAll(focusableElements));
+
+                const index = focusable.indexOf(document.activeElement);
+
+                let nextIndex = index + 1;
+                if (nextIndex >= focusable.length) nextIndex = 0;
+
+                if (focusable[nextIndex].tagName !== 'INPUT') {
+                    nextIndex += 1;
+                    if (nextIndex >= focusable.length) nextIndex = 0;
+                }
+                focusable[nextIndex].focus();
+                if (focusable[nextIndex].tagName === 'INPUT') focusable[nextIndex].select();
+
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+
+                const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+                const focusable = Array.from(document.querySelectorAll(focusableElements));
+
+                const index = focusable.indexOf(document.activeElement);
+
+                let nextIndex = index - 1;
+                if (nextIndex < 0) nextIndex = focusable.length - 1;
+
+                if (focusable[nextIndex].tagName !== 'INPUT') {
+                    nextIndex -= 1;
+                    if (nextIndex < 0) nextIndex = focusable.length - 1;
+                }
+                focusable[nextIndex].focus();
+                if (focusable[nextIndex].tagName === 'INPUT') focusable[nextIndex].select();
+            }
+        });
+
+    </script>
+</body>
+</html>
