@@ -12,7 +12,7 @@ puppeteer.use(AdBlockerPlugin({
 }));
 
 let browser = await puppeteer.launch({
-    headless: false
+    headless: true
 });
 
 export const GET: RequestHandler = async ({ request, url }) => {
@@ -26,7 +26,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
 
     if (browser.connected === false) {
         browser = await puppeteer.launch({
-            headless: false
+            headless: true
         });
     }
     const page = await browser.newPage();

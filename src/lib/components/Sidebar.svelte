@@ -7,7 +7,9 @@
   import Database from 'lucide-svelte/icons/database';
   import Settings from 'lucide-svelte/icons/settings';
   import SquareTerminal from 'lucide-svelte/icons/square-terminal';
-  type Icon = 'folder' |'home' | 'schedule' | 'database' | 'settings' | 'terminal';
+  import FileSpreadsheet from 'lucide-svelte/icons/file-spreadsheet';
+  import Hammer from 'lucide-svelte/icons/hammer';
+  type Icon = 'folder' |'home' | 'schedule' | 'database' | 'settings' | 'terminal' | 'excel' | 'hammer';
 
   export type TreeItem = {
     title: string;
@@ -25,13 +27,16 @@
     database: Database,
     settings: Settings,
     terminal: SquareTerminal,
+    excel: FileSpreadsheet,
+    hammer: Hammer,
   };
 </script>
 
 <script lang="ts">
   import { melt, type TreeView } from '@melt-ui/svelte';
-  import { getContext } from 'svelte';
+  import { getContext, onMount } from 'svelte';
   import { goto } from '$app/navigation';
+    import { page } from '$app/stores';
 
   export let treeItems: TreeItem[];
   export let level = 1;
@@ -40,6 +45,10 @@
     elements: { item, group },
     helpers: { isExpanded, isSelected },
   } = getContext<TreeView>('tree');
+
+  onMount(() => {
+    console.log($page.url.pathname);
+  });
 </script>
 
 {#each treeItems as { title, icon, children }, i}
@@ -50,10 +59,10 @@
     <button
       on:click={() => {
         if (!hasChildren) {
-          goto(`/${title === 'Dashboard' ? '' : title.toLowerCase()}`);
+          goto(`/${title === 'Home' ? '' : title.toLowerCase()}`);
         }
       }}
-      class={`flex items-center gap-1 rounded-md p-1 focus:bg-berry-200 ${$isSelected(itemId) ? 'bg-berry-200' : ''}`}
+      class={`flex items-center gap-1 rounded-md p-1 ${($page.url.pathname === "/" + title.toLowerCase() || ($page.url.pathname === "/" && title === 'Home')) ? 'bg-berry-200' : ''}`}
       use:melt={$item({
         id: itemId,
         hasChildren,
@@ -69,7 +78,7 @@
       <span class="select-none">{title}</span>
 
       <!-- Selected icon. -->
-      {#if $isSelected(itemId)}
+      {#if ($page.url.pathname === "/" + title.toLowerCase() || ($page.url.pathname === "/" && title === 'Home'))}
         <svelte:component this={icons['highlight']} class="h-4 w-4" />
       {/if}
     </button>

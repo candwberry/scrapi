@@ -8,6 +8,9 @@
   import Switch from "$lib/components/Switch.svelte";
   import NumEnter from "$lib/svg/NumEnter.svelte";
   import NumZero from "$lib/svg/NumZero.svelte";
+  import Combobox from "$lib/components/Combobox.svelte";
+  import { mode } from '$lib/stores';
+
   const {
     elements: {
       root,
@@ -26,7 +29,6 @@
 
   const progress = writable(10);
   const limit = writable(20);
-  const mode = writable("ebay");
   let query = "";
 
   let lastResponse = writable({
@@ -48,20 +50,27 @@
         lastResponse.set(data);
         console.log(data);
         break;
+      case "amazon":
+        const resp2 = await fetch("/api/amazon?query=" + query);
+        const data2 = await resp2.json();
+        lastResponse.set(data2);
+        console.log(data2);
+        break;
       default:
         alert("Invalid mode? " + $mode);
     }
   }
+
+  $: console.log($mode);
 </script>
 
 <Progress value={progress} />
 <div class="flex flex-row gap-4 items-center bg-black/10 p-[1rem] rounded-[1rem]">
-  <Input name="search" callback={api} bind:value={query}/>
 </div>
 
 <!-- First Item -->
-<div class="grid grid-cols-3 gap-4">
-  <div class="search-result col-span-2 flex items-start p-4 max-w-2xl bg-blue-100 rounded-lg">
+<div class="grid grid-cols-5 gap-4">
+  <div class="search-result col-span-2 flex items-start p-4 w-full bg-blue-100 rounded-lg">
     <div class="thumbnail mr-4">
       <img src={$lastResponse.first.thumbnail} alt="Thumbnail" class="w-20 h-20 object-cover" />
     </div>
@@ -72,14 +81,21 @@
       <div class="text-sm text-green-700 mb-1">£{$lastResponse.first.price} + <span class="text-xs text-gray-600 mb-2">£{$lastResponse.first.shipping} shipping</span></div>
     </div>
   </div>
-  <div class="bg-black/10 rounded-lg p-4">
-    <div class="flex flex-row justify-between items-center">
+  <div class="bg-black/10 rounded-lg p-4 flex flex-col col-span-2 justify-between">
+    <div class="flex flex-row justify-between items-center font-bold">
       Manual Mode
       <Switch  />
     </div>
-    <button on:click={api} class="bg-berry-600 text-white p-2 rounded-lg flex flex-row gap-4">Accept</button>
-    <button on:click={api} class="bg-red-600 text-white p-2 rounded-lg">Reject </button>
+    <div class="flex flex-row justify-between">
+      <Input name="search" callback={api} bind:value={query}/>
+      <!--<button on:click={api} class="bg-red-600 text-white p-2 rounded-lg">Reject </button>
+      <button on:click={api} class="bg-berry-600 text-white p-2 rounded-lg flex flex-row gap-4">Accept</button>-->
+    </div>
 
+  </div>
+  <div class="bg-black/10 rounded-lg p-4 gap-4 flex flex-row col-span-1 justify-between items-center">
+    <Combobox />
+    <!--<img src={["ebay", "amazon", "google"].includes($mode) ? $mode+".png" : "no-image.png"} class="w-10 h-10" alt="Amazon Logo" />-->
   </div>
 </div>
 

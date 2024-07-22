@@ -27,6 +27,7 @@
   "type": "module",
   "dependencies": {
     "@tailwindcss/typography": "^0.5.13",
+    "@types/bun": "^1.1.6",
     "@xterm/xterm": "^5.5.0",
     "bun": "^1.1.20",
     "ebay-api": "^9.1.0",

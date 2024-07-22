@@ -1,32 +1,45 @@
 import type { RequestHandler } from "@sveltejs/kit";
 
-// @ts-expect-error - Only exists at runtime, if we force bun --bun
-const proc = Bun.spawn(["bash"], {
-    stdin: "pipe",
-    stdout: "pipe",
-    stderr: "pipe"
-});
+let currentWorkingDirectory = process.cwd();
+Bun.$.cwd(currentWorkingDirectory);
+console.log(currentWorkingDirectory);
 
-const reader = proc.stdout.getReader();
-const stderrReader = proc.stderr.getReader();
-
-async function readOutput(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<string> {
-    let output = '';
-    const { done, value } = await Promise.race([reader.read(), new Promise((resolve) => setTimeout(() => resolve({ done: true, value: new Uint8Array() }), 500))]);
-    output += new TextDecoder().decode(value);
-    console.log(output);
-    console.log(done);
-    return output.trim();
-}
-
-async function callCommand(command: string): Promise<string> {
-    const enc = new TextEncoder();
-    await proc.stdin.write(enc.encode(command + "\n"));
-    await proc.stdin.flush();
-    
-    const output = await readOutput(reader);
-    
-    return output;
+async function executeCommand(command: string): Promise<{ stdout: string; stderr: string }> {
+    if (command.trim().startsWith('cd')) {
+        // Handle cd command separately
+        const newDir = command.trim().substring(3);
+        // if == ".." then go to parent dir
+        currentWorkingDirectory = currentWorkingDirectory.replaceAll("/", "\\").substring(0, currentWorkingDirectory.lastIndexOf("\\"));
+        console.log(currentWorkingDirectory);
+        console.log("HELLO");
+        Bun.$.cwd(currentWorkingDirectory);
+        const result = await Bun.$`pwd`;
+        
+        return {
+            stdout: result.stdout.toString(),
+            stderr: ''
+        };
+        
+        try {
+            Bun.$`pwd`.cwd(newDir);
+            return { stdout: '', stderr: '' };
+        } catch (error) {
+            return { stdout: '', stderr: `cd: ${error.message}` };
+        }
+    } else {
+        try {
+            const result = await Bun.$`${command.split(" ")}`;
+            return { 
+                stdout: result.stdout.toString(),
+                stderr: result.stderr.toString()
+            };
+        } catch (error) {
+            return { 
+                stdout: error.stdout?.toString() || '',
+                stderr: error.stderr?.toString() || error.message 
+            };
+        }
+    }
 }
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -36,9 +49,30 @@ export const POST: RequestHandler = async ({ request }) => {
     const message = body.command;
     console.log("Message:", message);
 
-    const response = await callCommand(message);
-    console.log("ResponseSERVER:", response);
+    let out = undefined
+    let err = undefined;
+    try {
+        const { stdout, stderr } = await executeCommand(message);
+        out = stdout;
+        err = stderr;
+    } catch (error) {
+        console.log("Error:", error);
+        err = error.message;
+    } finally {
+        console.log("Finally:", out, err);
+    };
+    
+    console.log("ResponseSERVER stdout:", out);
+    console.log("ResponseSERVER stderr:", err);
+    let response = out + err;
 
+    if (out === undefined || err === undefined) {
+        // possible out of bounds wd so we will reset session
+        currentWorkingDirectory = process.cwd();
+        Bun.$.cwd(currentWorkingDirectory);
+        console.log("Resetting session");
+        response = "Operation not permitted, session reset.";
+    }
     return new Response(JSON.stringify({ response }), {
         headers: {
             "content-type": "application/json"
