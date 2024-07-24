@@ -6,6 +6,17 @@ SELECT name FROM sqlite_master WHERE type='table';
 
 export const GET: RequestHandler = async ({ request, url }) => {
     const expo = url.searchParams.get("export") || "";
+    const q = url.searchParams.get("query") || "";
+    console.log(expo, q);
+
+    if (q !== "") {
+        try {
+            const result = db.query(q).all();
+            return ok(result);
+        } catch (e: any) {
+            return err("Invalid SQL", e.message);
+        };
+    }
 
     if (expo === "") {
         try {

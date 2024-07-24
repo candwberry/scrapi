@@ -1,6 +1,5 @@
 <script lang="ts">
   import Input from "$lib/components/SQLInput.svelte";
-  import Combobox from "$lib/components/Combobox.svelte";
   import { onMount } from "svelte";
   import { writable } from "svelte/store";
 
@@ -103,7 +102,7 @@
     reader.readAsText(file);
   }
 
-  async function handleAddProducts() {
+  const handleAllProducts = async () => {
     fileContents.shift(); // remove the header row
     const products = fileContents.map((line) => {
       const values = line.split(",");
@@ -120,9 +119,9 @@
     let completed = 0;
     const total = products.length;
 
-    Promise.all(products.map(async (product) => {
+    await Promise.all(products.map(async (product) => {
       console.log(product);
-
+      await new Promise((resolve) => {setTimeout(resolve, 100)}); 
       try {
       const resp = await fetch("/api/db/products", {
         method: "PUT",
@@ -457,7 +456,7 @@
               Cancel
             </button>
             <button
-              on:click={handleAddProducts}
+              on:click={handleAllProducts}
               class="inline-flex h-8 items-center justify-center rounded-sm
                       bg-berry-100 px-4 font-medium leading-none text-berry-900"
             >

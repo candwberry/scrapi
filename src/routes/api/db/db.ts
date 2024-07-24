@@ -1,7 +1,6 @@
 import { Database } from "bun:sqlite";
 import { createProductsTable, createPricesTable, createSupplierTable, createShopTable } from "./sql";
 const db = new Database("mydb.sqlite");
-db.exec("PRAGMA journal_mode = WAL;");
 
 db.run(createProductsTable);
 db.run(createPricesTable);
