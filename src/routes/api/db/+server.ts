@@ -1,74 +1,64 @@
 import type { RequestHandler } from "@sveltejs/kit";
-import { Database } from "bun:sqlite";
-const db = new Database("./mydb.sqlite");
-
-const createProductsTable = `CREATE TABLE IF NOT EXISTS products (
-    berry TEXT PRIMARY KEY,
-    barcode TEXT,
-    supplierCode TEXT,
-    supplier TEXT,
-    title TEXT
-);`;
-const createPricesTable = `CREATE TABLE IF NOT EXISTS prices (
-    id INTEGER PRIMARY KEY,
-    price REAL,
-    shipping REAL,
-    date TEXT,
-    shop TEXT,
-    href TEXT
-);`;
-const createSupplierTable = `CREATE TABLE IF NOT EXISTS suppliers (
-    name TEXT PRIMARY KEY
-);`;
-const createShopTable = `CREATE TABLE IF NOT EXISTS shops (
-    name TEXT PRIMARY KEY,
-    url TEXT
-);`;
-
-// Create tables.
-db.run("DROP TABLE IF EXISTS test");
-db.run(createProductsTable); db.run(createPricesTable); db.run(createSupplierTable); db.run(createShopTable);
+import { db, ok, err } from "./db";
+const query = db.query(`
+SELECT name FROM sqlite_master WHERE type='table';
+`);
 
 export const GET: RequestHandler = async ({ request, url }) => {
-    console.log(url);
-    const query = url.searchParams.get("query") ?? "";
-    const tables = url.searchParams.get("tables") ?? "";
+    const expo = url.searchParams.get("export") || "";
 
-    console.log(query);
-    console.log(tables);
-    let result;
+    if (expo === "") {
+        try {
+            const result = query.all();
+            console.log(result);
+
+            for (let i = 0; i < result.length; i++) {
+                const name = result[i].name;
+                const count = db.query(`SELECT COUNT(*) FROM ${name}`).get();
+                result[i].count = count["COUNT(*)"];
+            }
+            console.log(result);
+
+            return ok(result);
+        } catch (e: any) {
+            return err("Invalid SQL", e.message);
+        };
+    };
+
+    const EXPOS = [
+        "products", "prices"
+    ];
+
+    if (!EXPOS.includes(expo))
+        return err("Invalid export", `Valid exports are: ${EXPOS.join(", ")}`);
+
     try {
-        if (tables === "get") {
-            result = await db.query(`SELECT name FROM sqlite_master WHERE type='table'`).all();
-            return new Response(JSON.stringify(result), {
-                headers: {
-                    "content-type": "application/json"
-                }
-            });
-        } else if (tables !== "") {
-            result = await db.query(`SELECT * FROM ${tables}`).all();
-            return new Response(JSON.stringify(result), {
-                headers: {
-                    "content-type": "application/json"
-                }
-            });
-        }
+        const result: unknown[] = db.query(`SELECT * FROM ${expo};`).all();
 
-        result = await db.query(query).all();
-        console.log(result);
-        
-        return new Response(JSON.stringify(result), {
-            headers: {
-                "content-type": "application/json"
-            }
+        // Convert to CSV
+        const head = Object.keys(result[0] as object);
+
+        const csvContent = [
+            head.join(','),
+            ...result.map(row => head.map(header => JSON.stringify(row[header])).join(','))
+        ].join('\n');
+
+        // Create a Blob with the CSV content
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+        // Create headers for the response
+        const headers = new Headers({
+            'Content-Type': 'text/csv',
+            'Content-Disposition': `attachment; filename="${expo}-${new Date().toISOString()}.csv"`
         });
-    } catch (error) {
-        console.error(error.message);
-        return new Response(JSON.stringify({error: error.message}), {
-            headers: {
-                "content-type": "application/json"
-            }
+
+        // Return the CSV file as a downloadable response
+        return new Response(blob, {
+            status: 200,
+            headers: headers
         });
+
+    } catch (e: any) {
+        return err("Invalid SQL", e.message);
     }
 };
-

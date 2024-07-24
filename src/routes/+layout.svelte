@@ -5,6 +5,7 @@
   import { setContext } from 'svelte';
   import type { TreeItem } from '$lib/components/Sidebar.svelte';
   import Tree from '$lib/components/Sidebar.svelte';
+  import Toaster from "$lib/components/Toaster.svelte";
 
   const ctx = createTreeView({
     defaultExpanded: ['lib-0', 'tree-0'],
@@ -17,12 +18,12 @@
 
   const treeItems: TreeItem[] = [
     { title: 'Home', icon: 'home' },
-    { title: 'Schedule', icon: 'schedule' },
+    { title: 'Database', icon: 'database' },
     {
       title: 'Tools',
       icon: 'folder',
       children: [
-        { title: 'Database', icon: 'database' },
+        { title: 'Schedule', icon: 'schedule' },
         { title: 'Excel', icon: 'excel' },
         { title: 'Shell', icon: 'terminal' },
       ],
@@ -34,6 +35,7 @@
   ];
 </script>
 
+<Toaster />
 <div class="flex h-full w-full flex-row">
   <div
     class="flex h-full w-[15rem] max-w-[15rem] min-w-[15rem] flex-col rounded-r-xl bg-white text-neutral-900 justify-between"
