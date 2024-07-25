@@ -17,7 +17,7 @@ const isWindows = process.platform === 'win32';
 let browser = await puppeteer.launch({
         headless: true,
         executablePath: isWindows ? '' : '/usr/bin/chromium',
-
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
 export const GET: RequestHandler = async ({ request, url }) => {
