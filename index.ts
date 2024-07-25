@@ -9,7 +9,7 @@ import "./build/mime.conf.js";
 const { serve } = globalThis.Bun;
 /*! MIT © Volodymyr Palamar https://github.com/gornostay25/svelte-adapter-bun */
 const hostname = env("HOST", "0.0.0.0");
-const port = parseInt(env("PORT", 8080));
+const port = parseInt(env("PORT", 80));
 const { httpserver, websocket } = handler_default(build_options.assets ?? true);
 
 const serverOptions = {
