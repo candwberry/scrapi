@@ -9,6 +9,23 @@
   import { fade } from "svelte/transition";
   import { goto } from "$app/navigation";
   import Progress from "$lib/components/Progress.svelte";
+  import { createScrollArea } from '@melt-ui/svelte';
+
+  const {
+    elements: {
+      root,
+      content: scrollContent,
+      viewport,
+      corner,
+      scrollbarY,
+      thumbY,
+      thumbX,
+      scrollbarX,
+    },
+  } = createScrollArea({
+    type: 'hover',
+    dir: 'ltr',
+  });
 
   const progress = writable(0);
 
@@ -103,50 +120,54 @@
   }
 
   const handleAllProducts = async () => {
-    fileContents.shift(); // remove the header row
-    const products = fileContents.map((line) => {
-      const values = line.split(",");
-      return {
-        berry: values[columnNames.indexOf(berrySKUColumn)],
-        barcode: values[columnNames.indexOf(barcodeColumn)],
-        supplierCode: values[columnNames.indexOf(supplierCodeColumn)],
-        title: values[columnNames.indexOf(titleColumn)],
-        supplier: "NA",
-      };
-    });
+  fileContents.shift(); // remove the header row
+  const products = fileContents.map((line) => {
+    const values = line.split(",");
+    return {
+      berry: values[columnNames.indexOf(berrySKUColumn)],
+      barcode: values[columnNames.indexOf(barcodeColumn)],
+      supplierCode: values[columnNames.indexOf(supplierCodeColumn)],
+      title: values[columnNames.indexOf(titleColumn)],
+      supplier: "NA",
+    };
+  });
 
-    // loop through each product and call PUT /api/db/products (in a try inside loop)
-    let completed = 0;
-    const total = products.length;
-
-    await Promise.all(products.map(async (product) => {
-      console.log(product);
-      await new Promise((resolve) => {setTimeout(resolve, 100)}); 
-      try {
+  let completed = 0;
+  const total = products.length;
+  const batchSize = 500;
+  
+  progress.set(0.0001);
+  for (let i = 0; i < products.length; i += batchSize) {
+    const batch = products.slice(i, i + batchSize);
+    console.log(`Processing batch ${i / batchSize + 1}`);
+    
+    try {
       const resp = await fetch("/api/db/products", {
         method: "PUT",
         headers: {
-        "Content-Type": "application/json",
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(product),
+        body: JSON.stringify(batch),
       });
       const data = await resp.json();
       console.log(data);
       if (data.error) {
         console.error(data.error);
       }
-      } catch (err) {
+    } catch (err) {
       console.error(err);
-      } finally {
-      completed++;
-
-      console.log(completed);
+    } finally {
+      completed += batch.length;
+      console.log(`Completed: ${completed}`);
       progress.set((completed / total) * 100);
-      }
-    })).then(() => {
-      //open.set(false);
-    });
+    }
   }
+
+  open.set(false);
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  progress.set(0);
+};
+
 
   let error = "";
   let tableSelect: HTMLSelectElement;
@@ -275,11 +296,12 @@
           transition:fade={{ duration: 150 }}
         />
         <div
-          class="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw]
-            max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white
-            p-6 shadow-lg"
-          use:melt={$exportContent}
-        >
+        class="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw]
+        max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white
+        p-6 shadow-lg"
+    use:melt={$exportContent}
+    transition:fade={{ duration: 150 }}
+      >
           <h2
             use:melt={$exportTitle}
             class="m-0 text-lg font-medium text-black"
@@ -336,11 +358,12 @@
           transition:fade={{ duration: 150 }}
         />
         <div
-          class="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw]
-              max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white
-              p-6 shadow-lg"
-          use:melt={$content}
-        >
+        class="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw]
+        max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white
+        p-6 shadow-lg"
+    use:melt={$content}
+    transition:fade={{ duration: 150 }}
+      >
           <h2 use:melt={$title} class="m-0 text-lg font-medium text-black">
             Upload Products
           </h2>
@@ -393,6 +416,7 @@
             </p>
           {/if}
 
+          
           {#if columnNames.length > 0}
             <div class="mb-4">
               <label for="berrySKU" class="block mb-2">Berry SKU</label>
@@ -483,6 +507,15 @@
   {error}
 </p>
 
+<div
+  use:melt={$root}
+  class="relative h-full w-full overflow-hidden rounded-md border bg-white text-magnum-900 shadow-lg"
+>
+  <div use:melt={$viewport} class="h-full w-full rounded-[inherit]">
+    <div use:melt={$scrollContent}>
+      <div class="p-4">
+        <h4 class="mb-4 font-semibold leading-none">Results</h4>
+
 <table class="w-full">
   <thead>
     <tr>
@@ -505,3 +538,24 @@
     {/each}
   </tbody>
 </table>
+</div>
+</div>
+</div>
+<div
+use:melt={$scrollbarY}
+class="flex h-full w-2.5 touch-none select-none border-l border-l-transparent bg-magnum-800/10 p-px transition-colors"
+>
+<div
+  use:melt={$thumbY}
+  class="relative flex-1 rounded-full bg-magnum-600"
+/>
+</div>
+<div
+use:melt={$scrollbarX}
+class="flex h-2.5 w-full touch-none select-none border-t border-t-transparent bg-magnum-800/10 p-px"
+>
+<div use:melt={$thumbX} class="relative rounded-full bg-magnum-600" />
+</div>
+<div use:melt={$corner} />
+</div>
+

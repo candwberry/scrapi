@@ -22,3 +22,6 @@ vite.config.ts.timestamp-*
 
 # Bun
 bun.lockb
+
+# Bash scripts
+server-fresh-start.sh

@@ -107,6 +107,7 @@
                 const priceInc = form.querySelector(".price-including-tax");
                 const priceEx = form.querySelector(".price-excluding-tax");
                 const href = form.querySelector("a").href;
+                const label = (((form.querySelector(".price-label") ?? {}).textContent) ?? "").trim();
                 const action = form.action;
 
                 const product = {
@@ -115,7 +116,8 @@
                     priceInc: priceInc,
                     priceEx: priceEx,
                     href: href,
-                    action: action
+                    action: action,
+                    label: label ?? ""
                 };
                 products.push(product);
             }
@@ -130,7 +132,7 @@
                 products.forEach((product, index) => {
                     const priceElement = document.getElementById(`${material}${index}price`);
                     if (priceElement) {
-                        priceElement.innerHTML = getPriceElement(product, isExVat).innerHTML;
+                        priceElement.innerHTML = product.label + " " + getPriceElement(product, isExVat).innerHTML;
                     }
                 });
             }
@@ -177,7 +179,7 @@
   `;
                 carousel.appendChild(item);
                 const priceElement = item.querySelector(`#${material}${index}price`);
-                priceElement.innerHTML = getPriceElement(product, vat.checked).innerHTML;
+                priceElement.innerHTML = product.label + " " + getPriceElement(product, vat.checked).innerHTML;
 
             });
         };

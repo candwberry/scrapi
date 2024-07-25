@@ -6,5 +6,12 @@ export default defineConfig({
 	server: {
 		port: 80,
 		strictPort: false // means you can use another port if not 80
+	},
+	build: {
+		rollupOptions: {
+			external: [
+				"sqlite"
+			]
+		}
 	}
 });
