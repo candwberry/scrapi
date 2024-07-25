@@ -1,4 +1,4 @@
-FROM oven/bun:debian
+FROM --platform=linux/arm64 oven/bun:debian
 
 # Set non-interactive frontend flag
 ENV DEBIAN_FRONTEND=noninteractive
