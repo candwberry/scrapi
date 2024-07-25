@@ -14,17 +14,10 @@ puppeteer.use(AdBlockerPlugin({
 // check platform is windows
 const isWindows = process.platform === 'win32';
 
-let browser;
-if (isWindows) {
-    browser = await puppeteer.launch({
-        headless: true,
-    });
-} else {
-    browser = await puppeteer.launch({
+let browser = await puppeteer.launch({
         headless: true,
         executablePath: "/usr/bin/chromium-browser",
     });
-}
 
 export const GET: RequestHandler = async ({ request, url }) => {
     console.log(request);
