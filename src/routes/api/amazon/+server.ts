@@ -11,9 +11,20 @@ puppeteer.use(AdBlockerPlugin({
     interceptResolutionPriority: DEFAULT_INTERCEPT_RESOLUTION_PRIORITY
 }));
 
-let browser = await puppeteer.launch({
-    headless: true
-});
+// check platform is windows
+const isWindows = process.platform === 'win32';
+
+let browser;
+if (isWindows) {
+    browser = await puppeteer.launch({
+        headless: true,
+    });
+} else {
+    browser = await puppeteer.launch({
+        headless: true,
+        executablePath: "/usr/bin/chromium-browser",
+    });
+}
 
 export const GET: RequestHandler = async ({ request, url }) => {
     console.log(request);
@@ -31,18 +42,18 @@ export const GET: RequestHandler = async ({ request, url }) => {
     }
     const page = await browser.newPage();
     await page.setRequestInterception(true);
-        page.on('request', (req: HTTPRequest) => {
-            const resourceType: "image" | "stylesheet" | "font" | "media" | "websocket" | "script" | "document" | "texttrack" | "xhr" | "fetch" | "prefetch" | "eventsource" | "manifest" | "signedexchange" | "ping" | "cspviolationreport" | "preflight" | "other" = req.resourceType();
-            const url: string = req.url();
-            if (['image', 'stylesheet', 'font', 'media', 'websocket'].includes(resourceType) || 
-                url.startsWith('https://www.google-analytics.com') || 
-                url.startsWith('https://www.googletagmanager.com') || 
-                url.startsWith('https://www.facebook.com') || 
-                url.startsWith('https://connect.facebook.net'))
-                req.abort();
-            else 
-                req.continue();
-        });
+    page.on('request', (req: HTTPRequest) => {
+        const resourceType: "image" | "stylesheet" | "font" | "media" | "websocket" | "script" | "document" | "texttrack" | "xhr" | "fetch" | "prefetch" | "eventsource" | "manifest" | "signedexchange" | "ping" | "cspviolationreport" | "preflight" | "other" = req.resourceType();
+        const url: string = req.url();
+        if (['image', 'stylesheet', 'font', 'media', 'websocket'].includes(resourceType) ||
+            url.startsWith('https://www.google-analytics.com') ||
+            url.startsWith('https://www.googletagmanager.com') ||
+            url.startsWith('https://www.facebook.com') ||
+            url.startsWith('https://connect.facebook.net'))
+            req.abort();
+        else
+            req.continue();
+    });
     await page.goto(`https://www.amazon.co.uk/s?k=${query}&ref=nb_sb_noss_2`, { waitUntil: "domcontentloaded" });
     await page.waitForSelector('div[data-asin]');
     const items = await page.evaluate(() => {
