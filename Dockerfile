@@ -3,7 +3,17 @@ FROM oven/bun:debian
 # Set non-interactive frontend flag
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Copy project /home/app
+# Install Chromium and its dependencies
+RUN apt-get update && apt-get install -y \
+    chromium \
+    fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the Chrome executable path
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# Copy project to /home/scrapi
 COPY . /home/scrapi
 
 # Go to copied directory
