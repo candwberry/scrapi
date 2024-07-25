@@ -16,7 +16,7 @@ const isWindows = process.platform === 'win32';
 
 let browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        executablePath: isWindows ? '' : '/usr/bin/google-chrome',
 
     });
 
