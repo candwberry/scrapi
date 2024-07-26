@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import type { HTTPRequest } from 'puppeteer';
+import type { Browser, HTTPRequest } from 'puppeteer';
 import { DEFAULT_INTERCEPT_RESOLUTION_PRIORITY } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
@@ -11,66 +11,182 @@ puppeteer.use(AdBlockerPlugin({
     interceptResolutionPriority: DEFAULT_INTERCEPT_RESOLUTION_PRIORITY
 }));
 
-// check platform is windows
-const isWindows = process.platform === 'win32';
+let browser: Browser;
+let isBatchProcessing = false;
 
-let browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        timeout: 1000000
-    });
+async function initBrowser() {
+    try {
+        browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            timeout: 1000000
+        });
+    } catch (err) {
+        console.error("Failed to launch browser:", err);
+        throw err;
+    }
+}
+
+async function amazon(query: string) {
+    let page;
+    try {
+        if (!browser || !browser.connected) {
+            await initBrowser();
+        }
+
+        page = await browser.newPage();
+        await page.setRequestInterception(true);
+        page.on('request', (req: HTTPRequest) => {
+            const resourceType = req.resourceType();
+            const url = req.url();
+            if (['image', 'stylesheet', 'font', 'media', 'websocket'].includes(resourceType) ||
+                url.startsWith('https://www.google-analytics.com') ||
+                url.startsWith('https://www.googletagmanager.com') ||
+                url.startsWith('https://www.facebook.com') ||
+                url.startsWith('https://connect.facebook.net'))
+                req.abort();
+            else
+                req.continue();
+        });
+
+        await page.goto(`https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`, { waitUntil: "domcontentloaded" });
+        const results = await page.$$("[data-asin][data-component-type='s-search-result']");
+
+        const items = [];
+        for (let i = 0; i < results.length; i++) {
+            try {
+                let title = await results[i].$eval('.a-text-normal', node => node.textContent) ?? "NOT FOUND";
+                let price = await results[i].$eval('.a-price', node => node.textContent) ?? "-1";
+                //let decimal = await results[i].$eval('.a-price-fraction', node => node.textContent) ?? "00";
+                let shipping = "-1";
+                try{
+                    shipping = await results[i].$eval("[aria-label*='delivery' i]", node => node.textContent) ?? "-1";
+                }catch(err){
+                    console.error("Error getting shipping", err);
+                }
+                let thumbnail = await results[i].$eval('img.s-image', node => node.src) ?? "berry.png";
+                let href = await results[i].$eval('a.a-link-normal', node => node.href) ?? "about:blank";
+                console.log(price);
+
+                // Validation.
+                if (shipping.includes("FREE delivery")) shipping = "0.00";
+
+                items.push({ title, price: `${price}`.replace("..", ".").replaceAll('£', '').slice(price.length / 2 - 1), shipping, thumbnail, href });
+            } catch (err) {
+                console.error(`Error processing item ${i}:`, err);
+            }
+        }
+
+        return items;
+    } catch (err) {
+        console.error(`Error in amazon function for query "${query}":`, err);
+        return [];
+    } finally {
+        if (page) {
+            await page.close().catch(err => console.error("Error closing page:", err));
+        }
+    }
+}
 
 export const GET: RequestHandler = async ({ request, url }) => {
     console.log(request);
     console.log(url.searchParams);
     console.log(url);
+
+    const baseUrl = url.origin;
     const query = url.searchParams.get("query") ?? "";
-    if (query.trim().length === 0) {
-        error(400, "No query provided");
-    }
+    const batch = url.searchParams.get("batch") ?? "false";
 
-    if (browser.connected === false) {
-        browser = await puppeteer.launch({
-            headless: true
+    try {
+        if (batch === "true") {
+            const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc&limit=5000`);
+            const products = await resp.json();
+
+            const batchSize = 10;
+            const totalProducts = products.length;
+            const numBatches = Math.ceil(totalProducts / batchSize);
+
+            for (let i = 0; i < numBatches; i++) {
+                const start = i * batchSize;
+                const end = Math.min((i + 1) * batchSize, totalProducts);
+                const batchProducts = products.slice(start, end);
+
+                const batchPromises = batchProducts.map(async (product: { berry: string; title: string; barcode: string; supplierCode: string; supplier: string; }) => {
+                    try {
+                        const items = await amazon(product.barcode === "" ? product.title : product.barcode);
+                        console.log(items);
+
+                        if (items.length > 0) {
+                            const item = items[0];
+                            const price = item.price;
+                            const shipping = item.shipping;
+                            const href = item.href;
+                            const body = JSON.stringify([{ berry: product.berry, price, shipping, date: Date.now(), shop: "amazon", href }]);
+
+                            await fetch(`${baseUrl}/api/db/prices`, {
+                                method: "PUT",
+                                body: body,
+                                headers: {
+                                    "Content-Type": "application/json",
+                                },
+                            });
+                            await fetch(`${baseUrl}/api/db/products`, {
+                                method: "PUT",
+                                body: JSON.stringify([{
+                                    berry: product.berry,
+                                    barcode: product.barcode,
+                                    supplierCode: product.supplierCode,
+                                    supplier: product.supplier,
+                                    title: product.title,
+                                    lastUpdated: Date.now()
+                                }]),
+                                headers: {
+                                    "Content-Type": "application/json",
+                                },
+                            });
+                        }
+                    } catch (err) {
+                        console.error(`Error processing product ${product.berry}:`, err);
+                    }
+                });
+
+                await Promise.all(batchPromises);
+            }
+
+            return new Response(JSON.stringify({ message: "Batch processing completed" }), {
+                headers: {
+                    "content-type": "application/json"
+                }
+            });
+        }
+
+        if (query.trim().length === 0) {
+            error(400, "No query provided");
+        }
+
+        const items = await amazon(query);
+        
+        const firstItem = items.length > 0 ? items[0] : null;
+        const otherItems = items.slice(1);
+
+        return new Response(JSON.stringify({ first: firstItem, others: otherItems }), {
+            headers: {
+                'content-type': 'application/json'
+            }
         });
+    } catch (err) {
+        console.error("Error in GET handler:", err);
+        return new Response(JSON.stringify({ error: "An error occurred while processing your request" }), {
+            status: 500,
+            headers: {
+                'content-type': 'application/json'
+            }
+        });
+    } finally {
+        // Optionally close the browser after a certain period of inactivity
+        // This example closes it after each request, but you might want to implement a more sophisticated strategy
+        if (browser) {
+            await browser.close().catch(err => console.error("Error closing browser:", err));
+        }
     }
-    const page = await browser.newPage();
-    await page.setRequestInterception(true);
-    page.on('request', (req: HTTPRequest) => {
-        const resourceType: "image" | "stylesheet" | "font" | "media" | "websocket" | "script" | "document" | "texttrack" | "xhr" | "fetch" | "prefetch" | "eventsource" | "manifest" | "signedexchange" | "ping" | "cspviolationreport" | "preflight" | "other" = req.resourceType();
-        const url: string = req.url();
-        if (['image', 'stylesheet', 'font', 'media', 'websocket'].includes(resourceType) ||
-            url.startsWith('https://www.google-analytics.com') ||
-            url.startsWith('https://www.googletagmanager.com') ||
-            url.startsWith('https://www.facebook.com') ||
-            url.startsWith('https://connect.facebook.net'))
-            req.abort();
-        else
-            req.continue();
-    });
-    await page.goto(`https://www.amazon.co.uk/s?k=${query}&ref=nb_sb_noss_2`, { waitUntil: "domcontentloaded" });
-    await page.waitForSelector('div[data-asin]');
-    const items = await page.evaluate(() => {
-        const items = [];
-        for (const item of document.querySelectorAll('div[data-asin]')) {
-            const title = item.querySelector('span.a-text-normal')?.textContent ?? "Not found";
-            const price = item.querySelector('span.a-price-whole')?.textContent ?? "-1";
-            const shipping = item.querySelector('span.a-text-bold')?.textContent ?? "-1";
-            const thumbnail = item.querySelector('img.s-image')?.src ?? "berry.png";
-            const href = item.querySelector('a.a-link-normal')?.href ?? "about:blank";
-            items.push({ title, price, shipping, thumbnail, href });
-        }
-        console.log(items);
-        return items;
-    });
-    await browser.close();
-
-    const firstItem = items.length > 0 ? items[0] : null;
-    const otherItems = items.slice(1);
-
-    return new Response(JSON.stringify({ first: firstItem, others: otherItems }), {
-        headers: {
-            'content-type': 'application/json'
-        }
-    });
 };

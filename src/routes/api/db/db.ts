@@ -3,15 +3,21 @@ import { Database } from "bun:sqlite";
 import { createProductsTable, createPricesTable, createSupplierTable, createShopTable } from "./sql";
 const db = new Database("mydb.sqlite");
 
+// DROP prices table 
+//db.run(`DROP TABLE IF EXISTS prices;`);
 db.run(createProductsTable);
 db.run(createPricesTable);
 db.run(createSupplierTable);
 db.run(createShopTable);
 
-const err = (error: string, info: string) => new Response(
-    JSON.stringify({ error, info }),
-    { headers: { "content-type": "application/json" } }
-);
+const err = (error: string, info: string) => {
+    console.error(`${error}: ${info}`);
+
+    return new Response(
+        JSON.stringify({ error, info }),
+        { headers: { "content-type": "application/json" } }
+    );
+};
 
 const ok = (data: unknown) => new Response(
     JSON.stringify(data),
@@ -22,19 +28,20 @@ const ERR_INVALID_SELECT_PARAM = "Invalid select parameter";
 const ERR_INVALID_TABLE = "Invalid table";
 
 const PRODUCTS = db.query(`
-    INSERT INTO products (berry, barcode, supplierCode, supplier, title)
-    VALUES (?1, ?2, ?3, ?4, ?5)
+    INSERT INTO products (berry, barcode, supplierCode, supplier, title, lastUpdated)
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6)
     ON CONFLICT(berry) DO UPDATE SET
     berry = excluded.berry,
     barcode = excluded.barcode,
     supplierCode = excluded.supplierCode,
     supplier = excluded.supplier,
-    title = excluded.title;
+    title = excluded.title,
+    lastUpdated = excluded.lastUpdated;
 `);
 
 const PRICES = db.query(`
-    INSERT INTO prices (price, shipping, date, shop, href)
-    VALUES (?1, ?2, ?3, ?4, ?5)
+    INSERT INTO prices (berry, price, shipping, date, shop, href)
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6)
 `);
 
 const SUPPLIERS = db.query(`

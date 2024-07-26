@@ -6,6 +6,9 @@ import { db, ok, err, ERR_INVALID_SELECT_PARAM, ERR_INVALID_TABLE, PRODUCTS, PRI
 export const GET: RequestHandler = async ({ request, url, params }) => {
     const table: string = params.table ?? "sqlite_master";
     const select: string = url.searchParams.get("s") || "*";
+    const orderby: string = url.searchParams.get("orderby") || "";
+    const order: string = url.searchParams.get("order") || "asc";
+    const limit: number = parseInt(url.searchParams.get("limit") || "100");
 
     if (!(PARAMETERS.includes(select as Parameter)))
         return err(ERR_INVALID_SELECT_PARAM, `Valid select parameters are: ${PARAMETERS.join(", ")}`);
@@ -14,7 +17,7 @@ export const GET: RequestHandler = async ({ request, url, params }) => {
         return err(ERR_INVALID_TABLE, `Valid tables are: ${TABLES.join(", ")}`);
 
     try {
-        const result = db.query(`SELECT ${select} FROM ${table};`).all();
+        const result = db.query(`SELECT ${select} FROM ${table};` + (orderby ? ` ORDER BY ${orderby} ${order};` : "")).all().slice(0, limit);
         return ok(result);
     } catch (e: any) {
         return err("Invalid SQL", e.message);
@@ -38,15 +41,18 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
         let result: any;
         try {
             if (isProduct(body))
-                result = PRODUCTS.all(body.berry, body.barcode, body.supplierCode, body.supplier, body.title);
+                result = PRODUCTS.all(body.berry, body.barcode, body.supplierCode, body.supplier, body.title, body.lastUpdated);
             else if (isPrice(body))
-                result = PRICES.all(body.price, body.shipping, body.date, body.shop, body.href);
+                result = PRICES.all(body.berry, body.price, body.shipping, body.date, body.shop, body.href);
             else if (isSupplier(body))
                 result = SUPPLIERS.all(body.name);
             else if (isShop(body))
                 result = SHOPS.all(body.name, body.url);
-            else
+            else {
                 result = err("Invalid body", "Body must be a valid product, price, supplier or shop object");
+                console.error(result);
+                console.error(body);
+            }
         } catch (e: any) {
             result =  err("Invalid SQL", e.message);
         };
@@ -55,4 +61,25 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
     }
 
     return ok(results);
+}
+
+export const DELETE: RequestHandler = async ({ request, url, params }) => {
+    const table: string = params.table ?? "sqlite_master";
+    let lastUpdated = url.searchParams.get("lastUpdated") || "";
+    console.log(request);
+
+    let query = `DELETE FROM ${table}`;
+    if (lastUpdated.length > 0 && table === "products") {
+        query += ` WHERE lastUpdated < ${lastUpdated};`;
+    }
+
+    if (!(TABLES).includes(table as Table))
+        return err(ERR_INVALID_TABLE, `Valid tables are: ${TABLES.join(", ")}`);
+
+    try {
+        const result = db.query(`${query}`).all();
+        return ok(result);
+    } catch (e: any) {
+        return err("Invalid SQL", e.message);
+    };
 }

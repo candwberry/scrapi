@@ -24,8 +24,10 @@ export const GET: RequestHandler = async ({ request, url }) => {
             console.log(result);
 
             for (let i = 0; i < result.length; i++) {
+                //@ts-ignore
                 const name = result[i].name;
                 const count = db.query(`SELECT COUNT(*) FROM ${name}`).get();
+                //@ts-ignore
                 result[i].count = count["COUNT(*)"];
             }
             console.log(result);
@@ -51,6 +53,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
 
         const csvContent = [
             head.join(','),
+            //@ts-ignore
             ...result.map(row => head.map(header => JSON.stringify(row[header])).join(','))
         ].join('\n');
 

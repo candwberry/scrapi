@@ -2,14 +2,14 @@
   import Input from "$lib/components/SQLInput.svelte";
   import { onMount } from "svelte";
   import { writable } from "svelte/store";
-
+  import Switch from "$lib/components/Switch.svelte";
   import { createDialog, melt } from "@melt-ui/svelte";
   /** Internal helpers */
   import X from "lucide-svelte/icons/x";
   import { fade } from "svelte/transition";
   import { goto } from "$app/navigation";
   import Progress from "$lib/components/Progress.svelte";
-  import { createScrollArea } from '@melt-ui/svelte';
+  import { createScrollArea } from "@melt-ui/svelte";
 
   const {
     elements: {
@@ -23,8 +23,8 @@
       scrollbarX,
     },
   } = createScrollArea({
-    type: 'hover',
-    dir: 'ltr',
+    type: "hover",
+    dir: "ltr",
   });
 
   const progress = writable(0);
@@ -119,55 +119,75 @@
     reader.readAsText(file);
   }
 
+  let removeProductsNotInFile = writable(false);
+  $: console.log($removeProductsNotInFile);
   const handleAllProducts = async () => {
-  fileContents.shift(); // remove the header row
-  const products = fileContents.map((line) => {
-    const values = line.split(",");
-    return {
-      berry: values[columnNames.indexOf(berrySKUColumn)],
-      barcode: values[columnNames.indexOf(barcodeColumn)],
-      supplierCode: values[columnNames.indexOf(supplierCodeColumn)],
-      title: values[columnNames.indexOf(titleColumn)],
-      supplier: "NA",
-    };
-  });
+    fileContents.shift(); // remove the header row
+    const now = Date.now();
+    const products = fileContents.map((line) => {
+      const values = line.split(",");
+      return {
+        berry: values[columnNames.indexOf(berrySKUColumn)],
+        barcode: values[columnNames.indexOf(barcodeColumn)],
+        supplierCode: values[columnNames.indexOf(supplierCodeColumn)],
+        title: values[columnNames.indexOf(titleColumn)],
+        supplier: "NA",
+        lastUpdated: now,
+      };
+    });
 
-  let completed = 0;
-  const total = products.length;
-  const batchSize = 500;
-  
-  progress.set(0.0001);
-  for (let i = 0; i < products.length; i += batchSize) {
-    const batch = products.slice(i, i + batchSize);
-    console.log(`Processing batch ${i / batchSize + 1}`);
-    
-    try {
-      const resp = await fetch("/api/db/products", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(batch),
-      });
-      const data = await resp.json();
-      console.log(data);
-      if (data.error) {
-        console.error(data.error);
+    let completed = 0;
+    const total = products.length;
+    const batchSize = 500;
+
+    progress.set(0.0001);
+    for (let i = 0; i < products.length; i += batchSize) {
+      const batch = products.slice(i, i + batchSize);
+      console.log(`Processing batch ${i / batchSize + 1}`);
+
+      try {
+        const resp = await fetch("/api/db/products", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(batch),
+        });
+        const data = await resp.json();
+        console.log(data);
+        if (data.error) {
+          console.error(data.error);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        completed += batch.length;
+        console.log(`Completed: ${completed}`);
+        progress.set((completed / total) * 100);
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      completed += batch.length;
-      console.log(`Completed: ${completed}`);
-      progress.set((completed / total) * 100);
     }
-  }
 
-  open.set(false);
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  progress.set(0);
-};
+    open.set(false);
 
+    if (removeProductsNotInFile) {
+      // remove products that are not in the file
+      try {
+        const resp = await fetch(`/api/db/products?lastUpdated=${now}`, {
+          method: "DELETE",
+        });
+        const data = await resp.json();
+        console.log(data);
+        if (data.error) {
+          console.error(data.error);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    progress.set(0);
+    getAll();
+  };
 
   let error = "";
   let tableSelect: HTMLSelectElement;
@@ -181,7 +201,7 @@
       });
   }
 
-  onMount(async () => {
+  async function getAll() {
     const resp = await fetch("/api/db");
     const data = await resp.json();
     if (data.error) {
@@ -189,6 +209,7 @@
       return;
     }
 
+    tableSelect.innerHTML = "";
     data.forEach((table: { name: string; count: number }) => {
       const option = document.createElement("option");
       option.value = table.name;
@@ -198,6 +219,9 @@
     tableSelect.value = "products";
 
     selectAll("products");
+  }
+  onMount(async () => {
+    getAll();
   });
 
   export let query = "";
@@ -296,12 +320,12 @@
           transition:fade={{ duration: 150 }}
         />
         <div
-        class="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw]
+          class="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw]
         max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white
         p-6 shadow-lg"
-    use:melt={$exportContent}
-    transition:fade={{ duration: 150 }}
-      >
+          use:melt={$exportContent}
+          transition:fade={{ duration: 150 }}
+        >
           <h2
             use:melt={$exportTitle}
             class="m-0 text-lg font-medium text-black"
@@ -358,68 +382,74 @@
           transition:fade={{ duration: 150 }}
         />
         <div
-        class="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw]
+          class="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw]
         max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white
         p-6 shadow-lg"
-    use:melt={$content}
-    transition:fade={{ duration: 150 }}
-      >
-          <h2 use:melt={$title} class="m-0 text-lg font-medium text-black">
-            Upload Products
-          </h2>
+          use:melt={$content}
+          transition:fade={{ duration: 150 }}
+        >
+          <div class="flex flex-row justify-between items-center">
+            <h2 use:melt={$title} class="m-0 text-lg font-medium text-black">
+              Upload Products
+            </h2>
+          </div>
           <div class="relative my-4">
             {#if $progress > 0}
-            <Progress value={progress} />
+              <Progress value={progress} />
             {:else}
-            <label
-              for="file"
-              class="flex items-center justify-center w-full h-40 px-4 transition bg-white border-2 border-berry-600 border-dashed rounded-md appearance-none cursor-pointer hover:border-berry-700 focus:outline-none"
-              on:dragover|preventDefault
-              on:drop|preventDefault={handleFileDrop}
-            >
-              <span class="flex items-center space-x-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="w-6 h-6 text-gray-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
-                <span class="font-medium text-gray-600">
-                  Drop files to Upload, or
-                  <span class="text-berry-600 underline">browse</span>
+              <label
+                for="file"
+                class="flex items-center justify-center w-full h-40 px-4 transition bg-white border-2 border-berry-600 border-dashed rounded-md appearance-none cursor-pointer hover:border-berry-700 focus:outline-none"
+                on:dragover|preventDefault
+                on:drop|preventDefault={handleFileDrop}
+              >
+                <span class="flex items-center space-x-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-6 h-6 text-gray-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                  <span class="font-medium text-gray-600">
+                    Drop files to Upload, or
+                    <span class="text-berry-600 underline">browse</span>
+                  </span>
                 </span>
-              </span>
-              <input
-                id="file"
-                type="file"
-                accept=".csv"
-                class="hidden"
-                on:change={handleFileUpload}
-              />
-            </label>
+                <input
+                  id="file"
+                  type="file"
+                  accept=".csv"
+                  class="hidden"
+                  on:change={handleFileUpload}
+                />
+              </label>
             {/if}
           </div>
 
+
           {#if fileName}
             <p class="font-bold">Selected file: {fileName}</p>
+            {#if $progress == 0}
+
             <p class="mb-4">
               Select the column names that match up to each field.<br />I will
               try match them for you.
             </p>
+            {/if}
           {/if}
+          {#if $progress == 0}
 
-          
           {#if columnNames.length > 0}
             <div class="mb-4">
-              <label for="berrySKU" class="block mb-2">Berry SKU</label>
+              <label for="berrySKU" class="block mb-2 font-bold">Berry SKU</label>
               <select
                 id="berrySKU"
                 class="w-full p-2 border rounded"
@@ -432,7 +462,7 @@
             </div>
 
             <div class="mb-4">
-              <label for="supplierCode" class="block mb-2">Supplier Code</label>
+              <label for="supplierCode" class="block mb-2 font-bold">Supplier Code</label>
               <select
                 id="supplierCode"
                 class="w-full p-2 border rounded"
@@ -445,7 +475,7 @@
             </div>
 
             <div class="mb-4">
-              <label for="barcode" class="block mb-2">Barcode</label>
+              <label for="barcode" class="block mb-2 font-bold">Barcode</label>
               <select
                 id="barcode"
                 class="w-full p-2 border rounded"
@@ -458,7 +488,7 @@
             </div>
 
             <div class="mb-4">
-              <label for="title" class="block mb-2">Title</label>
+              <label for="title" class="block mb-2 font-bold">Title</label>
               <select
                 id="title"
                 class="w-full p-2 border rounded"
@@ -470,25 +500,34 @@
               </select>
             </div>
           {/if}
+          {/if}
 
-          <div class="mt-6 flex justify-end gap-4">
-            <button
+          {#if fileName}
+          <div class="mt-6 flex justify-between gap-4 items-center">
+            <div class="flex flex-row">
+                <p><strong>Delete old</strong></p>
+                <Switch bind:value={removeProductsNotInFile}/>
+              </div>
+              <div class="flex flex-row gap-4">
+                <button
               use:melt={$close}
               class="inline-flex h-8 items-center justify-center rounded-sm
-                      bg-zinc-100 px-4 font-medium leading-none text-zinc-600"
-            >
+              bg-zinc-100 px-4 font-medium leading-none text-zinc-600"
+              >
               Cancel
             </button>
             <button
-              on:click={handleAllProducts}
-              class="inline-flex h-8 items-center justify-center rounded-sm
-                      bg-berry-100 px-4 font-medium leading-none text-berry-900"
+            on:click={handleAllProducts}
+            class="inline-flex h-8 items-center justify-center rounded-sm
+            bg-berry-100 px-4 font-medium leading-none text-berry-900"
             >
-              Add Products
-            </button>
-          </div>
-          <button
-            use:melt={$close}
+            Add Products
+          </button>              
+        </div>    
+      </div>
+      {/if}
+      <button
+      use:melt={$close}
             aria-label="close"
             class="absolute right-4 top-4 inline-flex h-6 w-6 appearance-none
                   items-center justify-center rounded-full p-1 text-berry-800
@@ -516,46 +555,45 @@
       <div class="p-4">
         <h4 class="mb-4 font-semibold leading-none">Results</h4>
 
-<table class="w-full">
-  <thead>
-    <tr>
-      <!-- Generate table headers based on the keys of the first row -->
-      {#if $rows.length > 0}
-        {#each Object.keys($rows[0]) as column}
-          <th class="bg-gray-200 p-2">{column}</th>
-        {/each}
-      {/if}
-    </tr>
-  </thead>
-  <tbody>
-    <!-- Generate table rows based on the rows in the writable store -->
-    {#each $rows as row}
-      <tr>
-        {#each Object.values(row) as value}
-          <td class="p-2">{value}</td>
-        {/each}
-      </tr>
-    {/each}
-  </tbody>
-</table>
+        <table class="w-full">
+          <thead>
+            <tr>
+              <!-- Generate table headers based on the keys of the first row -->
+              {#if $rows.length > 0}
+                {#each Object.keys($rows[0]) as column}
+                  <th class="bg-gray-200 p-2">{column}</th>
+                {/each}
+              {/if}
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Generate table rows based on the rows in the writable store -->
+            {#each $rows as row}
+              <tr>
+                {#each Object.values(row) as value}
+                  <td class="p-2">{value}</td>
+                {/each}
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div
+    use:melt={$scrollbarY}
+    class="flex h-full w-2.5 touch-none select-none border-l border-l-transparent bg-magnum-800/10 p-px transition-colors"
+  >
+    <div
+      use:melt={$thumbY}
+      class="relative flex-1 rounded-full bg-magnum-600"
+    />
+  </div>
+  <div
+    use:melt={$scrollbarX}
+    class="flex h-2.5 w-full touch-none select-none border-t border-t-transparent bg-magnum-800/10 p-px"
+  >
+    <div use:melt={$thumbX} class="relative rounded-full bg-magnum-600" />
+  </div>
+  <div use:melt={$corner} />
 </div>
-</div>
-</div>
-<div
-use:melt={$scrollbarY}
-class="flex h-full w-2.5 touch-none select-none border-l border-l-transparent bg-magnum-800/10 p-px transition-colors"
->
-<div
-  use:melt={$thumbY}
-  class="relative flex-1 rounded-full bg-magnum-600"
-/>
-</div>
-<div
-use:melt={$scrollbarX}
-class="flex h-2.5 w-full touch-none select-none border-t border-t-transparent bg-magnum-800/10 p-px"
->
-<div use:melt={$thumbX} class="relative rounded-full bg-magnum-600" />
-</div>
-<div use:melt={$corner} />
-</div>
-

@@ -1,13 +1,7 @@
 <script>
-  import Progress from "$lib/components/Progress.svelte";
   import { writable } from "svelte/store";
   import Input from "$lib/components/Input.svelte";
-  import Select from "$lib/components/Select.svelte";
-  import Slider from "$lib/components/Slider.svelte";
   import { createScrollArea, melt } from '@melt-ui/svelte';
-  import Switch from "$lib/components/Switch.svelte";
-  import NumEnter from "$lib/svg/NumEnter.svelte";
-  import NumZero from "$lib/svg/NumZero.svelte";
   import Combobox from "$lib/components/Combobox.svelte";
   import { mode } from '$lib/stores';
 
@@ -27,7 +21,7 @@
     dir: 'ltr',
   });
 
-  const progress = writable(10);
+  const progress = writable(0);
   const limit = writable(20);
   let query = "";
 
@@ -61,30 +55,45 @@
     }
   }
 
+  async function batch() {
+    switch ($mode) {
+      case "ebay":
+        const resp = fetch("/api/ebay?batch=true");
+        break;
+      case "amazon":
+        const resp2 = fetch("/api/amazon?batch=true");
+        break;
+      default:
+        alert("Invalid mode? " + $mode);
+    }
+  }
+
   $: console.log($mode);
 </script>
 
-<Progress value={progress} />
-<div class="flex flex-row gap-4 items-center bg-black/10 p-[1rem] rounded-[1rem]">
-</div>
-
+<p class="text-2xl font-bold border-b border-berry-600 pb-2 mb-4">Dashboard</p>
 <!-- First Item -->
 <div class="grid grid-cols-5 gap-4">
-  <div class="search-result col-span-2 flex items-start p-4 w-full bg-blue-100 rounded-lg">
-    <div class="thumbnail mr-4">
-      <img src={$lastResponse.first.thumbnail} alt="Thumbnail" class="w-20 h-20 object-cover" />
-    </div>
-    <div class="content flex-grow">
-      <h3 class="text-xl text-blue-600 hover:underline mb-1">
-        <a href={$lastResponse.first.href}>{$lastResponse.first.title}</a>
-      </h3>
-      <div class="text-sm text-green-700 mb-1">£{$lastResponse.first.price} + <span class="text-xs text-gray-600 mb-2">£{$lastResponse.first.shipping} shipping</span></div>
-    </div>
+  <div class="bg-black/10 rounded-lg p-4 gap-4 flex flex-row col-span-1 justify-between items-center">
+    <Combobox />
+    <!--<img src={["ebay", "amazon", "google"].includes($mode) ? $mode+".png" : "no-image.png"} class="w-10 h-10" alt="Amazon Logo" />-->
   </div>
   <div class="bg-black/10 rounded-lg p-4 flex flex-col col-span-2 justify-between">
     <div class="flex flex-row justify-between items-center font-bold">
+      Batch Processing
+      <button class="bg-berry-600 text-white p-2 rounded-lg flex flex-row gap-4" on:click={batch}>
+        <span>Launch {$mode} batch process.</span>
+    </div>
+    <div class="flex flex-row justify-between">
+      <!--<button on:click={api} class="bg-red-600 text-white p-2 rounded-lg">Reject </button>
+      <button on:click={api} class="bg-berry-600 text-white p-2 rounded-lg flex flex-row gap-4">Accept</button>-->
+    </div>
+
+  </div>
+
+  <div class="bg-black/10 rounded-lg p-4 flex flex-col col-span-2 justify-between">
+    <div class="flex flex-row justify-between items-center font-bold">
       Manual Mode
-      <Switch  />
     </div>
     <div class="flex flex-row justify-between">
       <Input name="search" callback={api} bind:value={query}/>
@@ -93,9 +102,16 @@
     </div>
 
   </div>
-  <div class="bg-black/10 rounded-lg p-4 gap-4 flex flex-row col-span-1 justify-between items-center">
-    <Combobox />
-    <!--<img src={["ebay", "amazon", "google"].includes($mode) ? $mode+".png" : "no-image.png"} class="w-10 h-10" alt="Amazon Logo" />-->
+</div>
+<div class="search-result col-span-2 flex items-start p-4 w-full bg-blue-100 rounded-lg">
+  <div class="thumbnail mr-4">
+    <img src={$lastResponse.first.thumbnail} alt="Thumbnail" class="w-20 h-20 object-cover" />
+  </div>
+  <div class="content flex-grow">
+    <h3 class="text-xl text-blue-600 hover:underline mb-1">
+      <a href={$lastResponse.first.href}>{$lastResponse.first.title}</a>
+    </h3>
+    <div class="text-sm text-green-700 mb-1">£{$lastResponse.first.price} + <span class="text-xs text-gray-600 mb-2">£{$lastResponse.first.shipping} shipping</span></div>
   </div>
 </div>
 

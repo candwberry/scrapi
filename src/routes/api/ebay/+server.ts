@@ -28,7 +28,79 @@ export const GET: RequestHandler = async ({ request, url }) => {
     console.log(request);
     console.log(url.searchParams);
     console.log(url);
+
+    const baseUrl = url.origin;
     const query = url.searchParams.get("query") ?? "";
+    const batch = url.searchParams.get("batch") ?? "false";
+    const rateLimit = url.searchParams.get("rateLimit") ?? "false";
+    
+    if (rateLimit === "true") {
+        const devApi = await eBay.developer.analytics.getRateLimits("buy", "browse");
+        
+        return new Response(JSON.stringify(devApi.rateLimits[0].resources[1]), {
+            headers: {
+                "content-type": "application/json"
+            }
+        });
+    }
+
+    if (batch === "true") {
+        console.log("HELLO");
+        // call /api/db/products to get all products
+        const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc&limit=5000`); // 5000 is eBay API call limit.
+        const products = await resp.json();
+
+        // now loop through, call ebay for each product, and call PUT to /api/db/price to create a price object
+        const batchSize = 10;
+        const totalProducts = products.length;
+        const numBatches = Math.ceil(totalProducts / batchSize);
+
+        for (let i = 0; i < numBatches; i++) {
+            const start = i * batchSize;
+            const end = Math.min((i + 1) * batchSize, totalProducts);
+            const batchProducts = products.slice(start, end);
+
+            const batchPromises = batchProducts.map(async (product: { barcode: string; title: string; berry: any; supplierCode: any; supplier: any; }) => {
+                const items = await ebay(product.barcode === "" ? product.title : product.barcode, "1", "price", "buyingOptions:{FIXED_PRICE},conditions:{NEW},sellerAccountTypes:{BUSINESS}");
+                const itemSummaries = items.itemSummaries ?? [];
+                if (itemSummaries.length > 0) {
+                    const item = itemSummaries[0];
+                    const price = item.price.value;
+                    const shipping = item.shippingOptions?.find((option: any) => option.shippingCostType === "FIXED")?.shippingCost.value ?? "-1";
+                    const href = item.itemWebUrl;
+                    const body = JSON.stringify([{ berry: product.berry, price, shipping, date: Date.now(), shop: "ebay", href }]);
+
+                    // console.log(body);
+                    // console.log(product);
+                    await fetch(`${baseUrl}/api/db/prices`, {
+                        method: "PUT",
+                        body: body,
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    });
+                    await fetch(`${baseUrl}/api/db/products`, {
+                        method: "PUT",
+                        body: JSON.stringify([{
+                            berry: product.berry,
+                            barcode: product.barcode,
+                            supplierCode: product.supplierCode,
+                            supplier: product.supplier,
+                            title: product.title,
+                            lastUpdated: Date.now()
+                        }]),
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    }
+                    )
+                }
+            });
+
+            await Promise.all(batchPromises);
+        }
+    }
+
     if (query.trim().length === 0) {
         error(400, "No query provided");
     }
@@ -38,7 +110,6 @@ export const GET: RequestHandler = async ({ request, url }) => {
     const filter = url.searchParams.get("filter") ?? "buyingOptions:{FIXED_PRICE},conditions:{NEW},sellerAccountTypes:{BUSINESS}";
 
     const items = await ebay(query, limit, sort, filter);
-    console.log(items);
     const itemSummaries = items.itemSummaries ?? [];
     
     const formatItem = (item: any) => ({

@@ -1,6 +1,9 @@
 <script>
   let commandInput = "";
-  let commandHistory = [];
+  let commandHistory = [
+    "Welcome! This terminal runs commands on the Raspberry Pi.",
+    "e.g. echo 'Hello, World!', would output 'Hello, World!'",
+  ];
 
   async function sendCommand() {
     if (commandInput.trim() !== "") {
@@ -39,7 +42,7 @@
     </div>
     <div id="messages">
       {#each commandHistory as item}
-        <div class="text-white font-mono mb-2">{item}</div>
+      <pre class="text-white font-mono mb-2 whitespace-pre-wrap">{item}</pre>
       {/each}
       <div id="input" 
         class="text-white font-mono"

@@ -3,13 +3,14 @@ type Product = {
     barcode: string,
     supplierCode: string,
     supplier: string,
-    title: string
+    title: string,
+    lastUpdated: string
 }; 
 
 type Price = {
-    id: number,
-    price: number,
-    shipping: number,
+    berry: string,
+    price: string,
+    shipping: string,
     date: string,
     shop: string,
     href: string
@@ -30,16 +31,17 @@ function isProduct(obj: any): obj is Product {
         typeof obj.barcode === 'string' &&
         typeof obj.supplierCode === 'string' &&
         typeof obj.supplier === 'string' &&
-        typeof obj.title === 'string'
+        typeof obj.title === 'string' &&
+        typeof obj.lastUpdated === 'number'
     );
 }
 
 function isPrice(obj: any): obj is Price {
     return (
-        typeof obj.id === 'number' &&
-        typeof obj.price === 'number' &&
-        typeof obj.shipping === 'number' &&
-        typeof obj.date === 'string' &&
+        typeof obj.berry === 'string' &&
+        typeof obj.price === 'string' &&
+        typeof obj.shipping === 'string' &&
+        typeof obj.date === 'number' &&
         typeof obj.shop === 'string' &&
         typeof obj.href === 'string'
     );
@@ -66,11 +68,12 @@ const createProductsTable = `CREATE TABLE IF NOT EXISTS products (
     barcode TEXT,
     supplierCode TEXT,
     supplier TEXT,
-    title TEXT
+    title TEXT,
+    lastUpdated INTEGER
 );`;
 
 const createPricesTable = `CREATE TABLE IF NOT EXISTS prices (
-    id INTEGER PRIMARY KEY,
+    berry TEXT,
     price REAL,
     shipping REAL,
     date TEXT,
@@ -84,7 +87,8 @@ const createSupplierTable = `CREATE TABLE IF NOT EXISTS suppliers (
 
 const createShopTable = `CREATE TABLE IF NOT EXISTS shops (
     name TEXT PRIMARY KEY,
-    url TEXT
+    url TEXT,
+    priceRegex TEXT
 );`;
 
 export type {

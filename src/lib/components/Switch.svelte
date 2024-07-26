@@ -1,6 +1,8 @@
 <script lang="ts">
     import { createSwitch, melt } from '@melt-ui/svelte';
+    import { writable } from 'svelte/store';
   
+    export let value = writable(false);
     const {
       elements: { root, input },
     } = createSwitch();
@@ -22,7 +24,7 @@
       >
         <span class="thumb block rounded-full bg-white transition" />
       </button>
-      <input use:melt={$input} />
+      <input use:melt={$input} bind:value={value}/>
     </div>
   </form>
   
