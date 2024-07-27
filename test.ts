@@ -1,6 +1,7 @@
 import {GlobalKeyboardListener} from "node-global-key-listener";
 import { appendFile } from "node:fs/promises";
 let listen = false;
+
 new GlobalKeyboardListener().addListener(function (e, down) { 
     if (e.name == "F8") {
         listen = true;

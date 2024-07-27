@@ -25,3 +25,6 @@ bun.lockb
 
 # Bash scripts
 server-fresh-start.sh
+
+# Test folder
+/test
