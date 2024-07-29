@@ -107,8 +107,8 @@ async function handleManualSelection(url: string) {
                 
                 return el.parentElement ? getUniqueSelector(el.parentElement, false) + ' > ' + str : str;
             }
+        });
         // Wait for the click to occur
-        await clickPromise;
         console.log("UFF");
 
     } catch (err) {
