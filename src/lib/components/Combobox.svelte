@@ -18,18 +18,18 @@
     let mangas: Manga[] = [
       {
           author: 'www.ebay.co.uk',
-          title: 'eBay',
+          title: 'ebay',
           disabled: false,
       },
       {
         author: 'www.amazon.co.uk',
-        title: 'Amazon',
+        title: 'amazon',
         disabled: false,
       },
       {
         author: 'www.google.com',
-        title: 'Google',
-        disabled: true,
+        title: 'google',
+        disabled: false,
       }
     ];
   

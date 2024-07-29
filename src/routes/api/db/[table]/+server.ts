@@ -5,6 +5,36 @@ import { db, ok, err, ERR_INVALID_SELECT_PARAM, ERR_INVALID_TABLE, PRODUCTS, PRI
 
 export const GET: RequestHandler = async ({ request, url, params }) => {
     const table: string = params.table ?? "sqlite_master";
+    const productPrices: string = url.searchParams.get("berry") || "";
+
+    if (productPrices.trim() !== "") {
+        // So this will be a berry code. 
+        // We will need to find the most recent price for this berry code from both amazon and eBay, and return them.
+
+        /*
+        SELECT * FROM (
+            SELECT * FROM prices 
+            WHERE berry = ? AND shop = 'ebay'
+            ORDER BY date DESC
+            LIMIT 1
+        ) AS ebay_price
+        UNION ALL
+        SELECT * FROM (
+            SELECT * FROM prices 
+            WHERE berry = ? AND shop = 'amazon'
+            ORDER BY date DESC
+            LIMIT 1
+        ) AS amazon_price
+        */
+
+        try {
+            const result = db.query(`SELECT * FROM (SELECT * FROM prices WHERE berry = ? AND shop = 'ebay' ORDER BY date DESC LIMIT 1) AS ebay_price UNION ALL SELECT * FROM (SELECT * FROM prices WHERE berry = ? AND shop = 'amazon' ORDER BY date DESC LIMIT 1) AS amazon_price;`).all(productPrices, productPrices);
+            return ok(result);
+        } catch (e: any) {
+            return err("Invalid SQL?", e.message); // now i think thats not a good or accurate error message.
+        };
+    }
+
     const select: string = url.searchParams.get("s") || "*";
     const orderby: string = url.searchParams.get("orderby") || "";
     const order: string = url.searchParams.get("order") || "asc";

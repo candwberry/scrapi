@@ -19,6 +19,7 @@
   const treeItems: TreeItem[] = [
     { title: 'Home', icon: 'home' },
     { title: 'Database', icon: 'database' },
+    { title: 'Labels', icon: 'tag' },
     {
       title: 'Tools',
       icon: 'folder',

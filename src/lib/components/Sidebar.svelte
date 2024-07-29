@@ -9,7 +9,8 @@
   import SquareTerminal from 'lucide-svelte/icons/square-terminal';
   import FileSpreadsheet from 'lucide-svelte/icons/file-spreadsheet';
   import Hammer from 'lucide-svelte/icons/hammer';
-  type Icon = 'folder' |'home' | 'schedule' | 'database' | 'settings' | 'terminal' | 'excel' | 'hammer';
+  import Tag from 'lucide-svelte/icons/tag';
+  type Icon = 'folder' |'home' | 'schedule' | 'database' | 'settings' | 'terminal' | 'excel' | 'hammer' | 'tag';
 
   export type TreeItem = {
     title: string;
@@ -29,6 +30,7 @@
     terminal: SquareTerminal,
     excel: FileSpreadsheet,
     hammer: Hammer,
+    tag: Tag,
   };
 </script>
 

@@ -106,19 +106,29 @@
       errorArray = data.errorArray;
       rateLimit = data.limit;
       rateRemaining = data.remaining;
+
+      const response2 = await fetch("/api/amazon?batch=check");
+      let data2 = await response2.json();
+      console.log(data2);
+      data2 = data2["isBatchProcessing"];
+      amazonStatus = data2.status;
+      amazonTotal = data2.total;
+      amazonProcessed = data2.processed;
+      amazonErrorArray = data2.errorArray;
+      
     } catch (error) {
       console.error("Error checking batch status:", error);
     }
   }
 
-  function startBatchProcessing() {
+  function startBatchProcessing(modemode) {
     const itemsPerSearch = document.getElementById("items-per-search").value;
     const businessesOnly = document.getElementById("businesses-only").checked;
     const priceType = document.querySelector(
       'input[name="price-type"]:checked',
     ).value;
     const queryPriority = productFields;
-    fetch(`/api/ebay?batch=true`)
+    fetch(`/api/${modemode}?batch=true`)
       .then(() => {
         status = true;
       })
@@ -127,8 +137,8 @@
       });
   }
 
-  function stopBatchProcessing() {
-    fetch(`/api/ebay?batch=stop`)
+  function stopBatchProcessing(modemode) {
+    fetch(`/api/${modemode}?batch=stop`)
       .then(() => {
       })
       .catch((error) => {
@@ -162,6 +172,28 @@
     }
   }
 
+  const {
+    elements: {
+      trigger: amazonTrigger,
+      overlay: amazonOverlay,
+      content: amazonContent,
+      title: amazonTitle,
+      description: amazonDescription,
+      close: amazonClose,
+      portalled: amazonPortalled,
+    },
+    states: { open: amazonOpen },
+  } = createDialog({
+    forceVisible: true,
+  });
+
+  // Add Amazon-specific variables and functions
+  let amazonStatus = false;
+  let amazonTotal = 0;
+  let amazonProcessed = 0;
+  let amazonErrorArray = [];
+
+
   
 </script>
 
@@ -170,7 +202,8 @@
     <p
       class="text-2xl font-bold border-b flex justify-between flex-row items-center border-berry-600 pb-2 mb-4"
     >
-      eBay <button
+      eBay <span class="text-xs ">{rateRemaining} / {rateLimit} API calls</span>
+      <button
         use:melt={$trigger}
         on:click={() => {mode.set("ebay");}}
         class="inline-flex items-center justify-center rounded-full px-4 py-3
@@ -187,14 +220,17 @@
           {status ? "Currently running!" : "Not running."}
         </p>
         <p>{processed} / {total} Items</p>
-        <p>{rateRemaining} / {rateLimit} API calls</p>
       </div>
       <div>
         <button
           class="bg-berry-600 text-white rounded-lg px-4 py-2 font-bold"
           on:click={status === false
-            ? startBatchProcessing
-            : stopBatchProcessing}
+            ? () => {
+                startBatchProcessing("ebay");
+              }
+            : () => {
+                stopBatchProcessing("ebay");
+            }}
         >
           {status === false ? "LAUNCH" : "STOP"}
         </button>
@@ -268,10 +304,112 @@
     </div>
   </div>
   <div class="w-1/3 p-2 flex flex-col">
-    <p class="text-2xl font-bold border-b border-berry-600 pb-2 mb-4">Amazon</p>
+    <p
+      class="text-2xl font-bold border-b flex justify-between flex-row items-center border-berry-600 pb-2 mb-4"
+    >
+      Amazon <button
+        use:melt={$trigger}
+        on:click={() => {mode.set("amazon");}}
+        class="inline-flex items-center justify-center rounded-full px-4 py-3
+      font-medium leading-none bg-berry-100 text-lg shadow hover:opacity-90 gap-3"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#009845"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"></path></svg>
+      </button>
+    </p>
+    <div
+      class="bg-berry-600/10 rounded-xl h-30 w-full flex p-4 flex-row justify-between items-center"
+    >
+      <div class="flex flex-col">
+        <p class="font-bold">
+          {amazonStatus ? "Currently running!" : "Not running."}
+        </p>
+        <p>{amazonProcessed} / {amazonTotal} Items</p>
+      </div>
+      <div>
+        <button
+          class="bg-berry-600 text-white rounded-lg px-4 py-2 font-bold"
+          on:click={amazonStatus === false
+            ? () => {
+                startBatchProcessing("amazon");
+              }
+            : () => {
+                stopBatchProcessing("amazon");
+            }}
+        >
+          {amazonStatus === false ? "LAUNCH" : "STOP"}
+        </button>
+      </div>
+    </div>
+    <div class="bg-blue-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-6">
+      <div class="flex flex-col gap-2">
+        <label for="amazon-items-per-search" class="font-bold">Items per search:</label>
+        <input
+          type="number"
+          id="amazon-items-per-search"
+          class="w-full rounded-xl bg-white caret-berry-700 px-3 focus:outline-none shadow h-10"
+          value="10"
+        />
+      </div>
+      <div class="grid grid-cols-2">
+        <div class="flex flex-col">
+          <label class="font-bold">Prime only:</label>
+          <div class="flex flex-row gap-4">
+            <input
+              type="checkbox"
+              id="amazon-prime-only"
+              class="rounded"
+              checked
+            />
+            <label for="amazon-prime-only">Yes</label>
+          </div>
+        </div>
+        <div class="flex flex-col">
+        </div>
+      </div>
+      <div class="w-full flex flex-col gap-4">
+        <h3 class="font-bold">Query Priority:</h3>
+        <ul class="w-full">
+          {#each productFields as field, index (field)}
+            <li
+              animate:flip={{ duration: 300 }}
+              draggable={true}
+              on:dragstart={(event) => dragStart(event, index)}
+              on:dragover={(event) => dragOver(event, index)}
+              class="bg-white shadow rounded-lg p-2 mb-2 cursor-move"
+            >
+              {field}
+            </li>
+          {/each}
+        </ul>
+      </div>
+    </div>
+    <div
+      class="bg-red-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-4 h-40 overflow-y-auto"
+      role="alert"
+    >
+      <strong class="font-bold">Errors:</strong>
+      <ul>
+        {#each amazonErrorArray as error}
+          <li><strong>{error.error}:</strong> {error.info}</li>
+        {/each}
+      </ul>
+    </div>
   </div>
+  
   <div class="w-1/3 p-2 flex flex-col">
-    <p class="text-2xl font-bold border-b border-berry-600 pb-2 mb-4">Google</p>
+    <p
+      class="text-2xl font-bold border-b flex justify-between flex-row items-center border-berry-600 pb-2 mb-4"
+    >
+      Google <button
+        use:melt={$trigger}
+        on:click={() => {mode.set("google");}}
+        class="inline-flex items-center justify-center rounded-full px-4 py-3
+      font-medium leading-none bg-berry-100 text-lg shadow hover:opacity-90 gap-3"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#009845"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"></path></svg>
+      </button>
+    </p>
+    <p class="font-bold">Coming soon..</p>
   </div>
 </div>
 {#if $open}

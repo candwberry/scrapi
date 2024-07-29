@@ -4,12 +4,88 @@
   import { writable } from "svelte/store";
   import Switch from "$lib/components/Switch.svelte";
   import { createDialog, melt } from "@melt-ui/svelte";
-  /** Internal helpers */
   import X from "lucide-svelte/icons/x";
   import { fade } from "svelte/transition";
   import { goto } from "$app/navigation";
   import Progress from "$lib/components/Progress.svelte";
   import { createScrollArea } from "@melt-ui/svelte";
+  import Tooltip from "$lib/components/Tooltip.svelte";
+  import { debounce } from "lodash";
+  let tooltipContent = "";
+
+let tooltipX = 0;
+let tooltipY = 0;
+
+let dbSearchQuery = '';
+  let clientSearchQuery = '';
+  let allRows = writable([]);
+  let filteredRows = writable([]);
+
+  async function searchDatabase(query: string) {
+    if (query.length < 3) return; // Only search if query is at least 3 characters long
+    try {
+      const response = await fetch(`/api/db/products/${query}`);
+      const data = await response.json();
+      allRows.set(data);
+      applyClientFilter(data);
+    } catch (error) {
+      console.error("Error fetching product details:", error);
+    }
+  }
+  function applyClientFilter(rows: any[]) {
+    if (!clientSearchQuery) {
+      filteredRows.set(rows);
+      return;
+    }
+    const lowercaseQuery = clientSearchQuery.toLowerCase();
+    const filtered = rows.filter(row => 
+      Object.values(row).some(value => 
+        String(value).toLowerCase().includes(lowercaseQuery)
+      )
+    );
+    filteredRows.set(filtered);
+  }
+
+  // Watch for changes in the client search query
+  $: {
+    applyClientFilter($allRows);
+    console.log("Client search query changed:", clientSearchQuery);
+  }
+
+  // Modified selectAll function
+  async function selectAll(table: string) {
+    await fetch(`/api/db/${table}`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        allRows.set(data);
+        applyClientFilter(data);
+      });
+  }
+
+
+async function fetchProductDetails(berry: string) {
+  try {
+    const response = await fetch(`/api/db/products?berry=${berry}`);
+    const data = await response.json();
+    // [] of {shop: "", price:""}. Find ebay price:
+    const ebayPrice = data.find((product: { shop: string }) => product.shop === "ebay");
+    const amazonPrice = data.find((product: { shop: string }) => product.shop === "amazon");
+    let resp = "";
+    if (ebayPrice) {
+      resp += `Ebay: <strong>£${ebayPrice.price}</strong>`;
+    }
+    if (amazonPrice) {
+      resp += `<br>Amazon: <strong>£${amazonPrice.price}</strong>`;
+    }
+    return resp;
+  } catch (error) {
+    console.error("Error fetching product details:", error);
+    return "Error fetching product details";
+  }
+}
+
+
 
   const {
     elements: {
@@ -192,7 +268,7 @@
   let error = "";
   let tableSelect: HTMLSelectElement;
   // lets call api/db?tables=get
-  async function selectAll(table: string) {
+  async function selectAllOld(table: string) {
     await fetch(`/api/db/${table}`)
       .then((res) => res.json())
       .then((data) => {
@@ -200,6 +276,10 @@
         rows.set(data);
       });
   }
+
+    // Debounced version of searchDatabase
+    const debouncedSearchDatabase = debounce(searchDatabase, 300);
+
 
   async function getAll() {
     const resp = await fetch("/api/db");
@@ -226,15 +306,19 @@
 
   export let query = "";
   async function customQuery() {
+    console.log(query);
     await fetch(`/api/db?query=${query}`)
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
         if (data.error) {
-          error = data.error;
+          // error = data.error;
+          alert(error);
           return;
         }
         rows.set(data);
+        allRows.set(data);
+        applyClientFilter($allRows);
       })
       .catch((err) => {
         error = err;
@@ -254,7 +338,7 @@
     forceVisible: true,
   });
 
-  let exportOption = "products";
+  let exportOption = "productsWithLatestPrices";
 
   async function handleExport() {
     try {
@@ -296,7 +380,7 @@
     </button>
     <button
       use:melt={$exportTrigger}
-      class="inline-flex items-center justify-center rounded-xl bg-berry-700 px-4 py-3
+      class="inline-flex items-center justify-center rounded-xl bg-berry-600 px-4 py-3
     font-medium leading-none text-white shadow hover:opacity-90 gap-3"
     >
       EXPORT
@@ -341,6 +425,7 @@
               class="w-full p-2 border rounded"
               bind:value={exportOption}
             >
+              <option value="productsWithLatestPrices">Products with Prices</option>
               <option value="products">All Products</option>
               <option value="prices">All Prices</option>
             </select>
@@ -541,40 +626,82 @@
       </div>
     {/if}
   </div>
+
+  <input
+  type="text"
+  placeholder="Search database (Berry SKU)"
+  bind:value={dbSearchQuery}
+  on:input={() => debouncedSearchDatabase(dbSearchQuery)}
+  class="p-2 rounded-lg w-full shadow"
+/>
+
+<!-- Client-side search bar -->
+<input
+  type="text"
+  placeholder="Search current results"
+  bind:value={clientSearchQuery}
+  class="p-2 rounded-lg w-full shadow"
+/>
+
   <Input name="query" bind:value={query} callback={customQuery} />
 </div>
 
-<p class="text-red-500 font-xs h-5">
+<p class="text-red-500 font-xs "> <!--h-5-->
   {error}
 </p>
 
-<div
-  use:melt={$root}
-  class="relative h-full w-full overflow-hidden rounded-md border bg-white text-magnum-900 shadow-lg"
->
-  <div use:melt={$viewport} class="h-full w-full rounded-[inherit]">
+
+<div use:melt={$root} class="relative h-full w-full max-w-full overflow-hidden rounded-md border bg-white text-magnum-900 shadow-lg">
+  <div use:melt={$viewport} class="h-full w-full max-w-full rounded-[inherit]">
     <div use:melt={$scrollContent}>
       <div class="p-4">
         <h4 class="mb-4 font-semibold leading-none">Results</h4>
 
-        <table class="w-full">
+        <table class="w-full max-w-full">
           <thead>
             <tr>
               <!-- Generate table headers based on the keys of the first row -->
-              {#if $rows.length > 0}
-                {#each Object.keys($rows[0]) as column}
-                  <th class="bg-gray-200 p-2">{column}</th>
+              {#if $filteredRows.length > 0}
+                {#each Object.keys($filteredRows[0]) as column}
+                  {#if column === "berry"}
+                    <th class="bg-berry-200 p-2 break-all">{column}</th>
+                  {:else}
+                    <th class="bg-gray-200 p-2 break-all">{column}</th>
+                  {/if}
                 {/each}
               {/if}
             </tr>
           </thead>
           <tbody>
-            <!-- Generate table rows based on the rows in the writable store -->
-            {#each $rows as row}
+            {#each $filteredRows as row}
               <tr>
-                {#each Object.values(row) as value}
-                  <td class="p-2">{value}</td>
+                {#if row.berry}
+                  <td
+                    class="p-2 bg-berry-200 cursor-pointer"
+                    on:mouseenter={async (event) => {
+                      tooltipContent = await fetchProductDetails(row.berry);
+                      tooltipX = event.clientX;
+                      tooltipY = event.clientY;
+                    }}
+                    on:mouseleave={() => {
+                      tooltipContent = "";
+                    }}
+                  >
+                    {row.berry}
+                  </td>
+                {/if}
+                {#each Object.entries(row) as [key, value]}
+                  {#if key !== 'berry' && key !== 'href'}
+                    <td class="p-2 break-all">{value}</td>
+                  {/if}
                 {/each}
+                {#if row.href}
+                  <td class="p-2 break-all w-[600px] min-w-[600px] text-blue-500">
+                    <a href={row.href} target="_blank" rel="noopener noreferrer">
+                      {row.href}
+                    </a>
+                  </td>
+                {/if}
               </tr>
             {/each}
           </tbody>
@@ -582,6 +709,7 @@
       </div>
     </div>
   </div>
+
   <div
     use:melt={$scrollbarY}
     class="flex h-full w-2.5 touch-none select-none border-l border-l-transparent bg-magnum-800/10 p-px transition-colors"
@@ -599,3 +727,4 @@
   </div>
   <div use:melt={$corner} />
 </div>
+<Tooltip content={tooltipContent} x={tooltipX} y={tooltipY} />

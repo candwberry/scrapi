@@ -41,10 +41,6 @@ const isBatchProcessing = {
 };
 
 export const GET: RequestHandler = async ({ request, url }) => {
-    //console.log(request);
-    //console.log(url.searchParams);
-    //console.log(url);
-
     const baseUrl = url.origin;
     const query = url.searchParams.get("query") ?? "";
     const batch = url.searchParams.get("batch") ?? "false";

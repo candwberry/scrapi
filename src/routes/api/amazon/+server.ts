@@ -12,12 +12,19 @@ puppeteer.use(AdBlockerPlugin({
 }));
 
 let browser: Browser;
-let isBatchProcessing = false;
+const isBatchProcessing = {
+    status: false,
+    total: 0,
+    processed: 0,
+    errorArray: [
+l    ],
+};
+
 
 async function initBrowser() {
     try {
         browser = await puppeteer.launch({
-            headless: true,
+            headless: false,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
             timeout: 1000000
         });
@@ -69,7 +76,7 @@ async function amazon(query: string) {
                 console.log(price);
 
                 // Validation.
-                if (shipping.includes("FREE delivery")) shipping = "0.00";
+                if (shipping.toLowerCase().includes("free delivery")) shipping = "0.00";
 
                 items.push({ title, price: `${price}`.replace("..", ".").replaceAll('£', '').slice(price.length / 2 - 1), shipping, thumbnail, href });
             } catch (err) {
@@ -89,37 +96,55 @@ async function amazon(query: string) {
 }
 
 export const GET: RequestHandler = async ({ request, url }) => {
-    console.log(request);
-    console.log(url.searchParams);
-    console.log(url);
-
     const baseUrl = url.origin;
     const query = url.searchParams.get("query") ?? "";
     const batch = url.searchParams.get("batch") ?? "false";
 
-    if (batch === "check") {
+    if (batch === "stop") {
+        isBatchProcessing.status = false;
         return new Response(JSON.stringify({ isBatchProcessing }), {
             headers: {
                 "content-type": "application/json"
             }
         });
-    };
+    }
+    if (batch === "check") {
+        //console.log(isBatchProcessing);
+        return new Response(JSON.stringify({ isBatchProcessing }), {
+            headers: {
+                "content-type": "application/json"
+            }
+        });
+    }
     
     try {
         if (batch === "true") {
-            isBatchProcessing = true;
-            try {
-                const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc&limit=5000`);
+                try {
+                const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc`);
                 const products = await resp.json();
-
-                const batchSize = 10;
+                isBatchProcessing.status = true;
+                isBatchProcessing.total = products.length;
+                isBatchProcessing.processed = 0;
+                isBatchProcessing.errorArray = [];
+    
+                const batchSize = 1; // increasing this makes
+                // the browser available check fail for whatever number that is, so youll get N browsers opening at once
+                // we can prevent this by checking if a browser is loading, but its just easier to do this anyway i would think.
                 const totalProducts = products.length;
                 const numBatches = Math.ceil(totalProducts / batchSize);
 
                 for (let i = 0; i < numBatches; i++) {
+                    if (!isBatchProcessing.status) {
+                        return new Response(JSON.stringify({ isBatchProcessing }), {
+                            headers: {
+                                "content-type": "application/json"
+                            }
+                        });
+                    }
                     const start = i * batchSize;
                     const end = Math.min((i + 1) * batchSize, totalProducts);
                     const batchProducts = products.slice(start, end);
+                    isBatchProcessing.processed += batchProducts.length;
 
                     const batchPromises = batchProducts.map(async (product: { berry: string; title: string; barcode: string; supplierCode: string; supplier: string; }) => {
                         try {
@@ -177,7 +202,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
                     }
                 });
             } finally {
-                isBatchProcessing = false;
+                isBatchProcessing.status = false;
             }
         }
 
@@ -204,8 +229,6 @@ export const GET: RequestHandler = async ({ request, url }) => {
             }
         });
     } finally {
-        // Optionally close the browser after a certain period of inactivity
-        // This example closes it after each request, but you might want to implement a more sophisticated strategy
         if (browser) {
             await browser.close().catch(err => console.error("Error closing browser:", err));
         }

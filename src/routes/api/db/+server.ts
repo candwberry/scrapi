@@ -39,14 +39,48 @@ export const GET: RequestHandler = async ({ request, url }) => {
     };
 
     const EXPOS = [
-        "products", "prices"
+        "products", "prices", "productsWithLatestPrices"
     ];
 
     if (!EXPOS.includes(expo))
         return err("Invalid export", `Valid exports are: ${EXPOS.join(", ")}`);
 
     try {
-        const result: unknown[] = db.query(`SELECT * FROM ${expo};`).all();
+        let query = `SELECT * FROM ${expo};`;
+        if (expo === "productsWithLatestPrices") {
+            query = `
+            SELECT 
+    p.berry,
+    e.price AS ebay_price,
+    e.date AS ebay_date,
+    a.price AS amazon_price,
+    a.date AS amazon_date
+FROM 
+    products p
+LEFT JOIN 
+    (SELECT berry, price, date
+     FROM prices
+     WHERE shop = 'ebay'
+     AND (berry, date) IN (
+         SELECT berry, MAX(date)
+         FROM prices
+         WHERE shop = 'ebay'
+         GROUP BY berry
+     )) e ON p.berry = e.berry
+LEFT JOIN 
+    (SELECT berry, price, date
+     FROM prices
+     WHERE shop = 'amazon'
+     AND (berry, date) IN (
+         SELECT berry, MAX(date)
+         FROM prices
+         WHERE shop = 'amazon'
+         GROUP BY berry
+     )) a ON p.berry = a.berry;`
+      console.log("HI");
+        }
+
+        const result: unknown[] = db.query(query).all();
 
         // Convert to CSV
         const head = Object.keys(result[0] as object);
