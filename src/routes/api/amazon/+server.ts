@@ -17,7 +17,7 @@ const isBatchProcessing = {
     total: 0,
     processed: 0,
     errorArray: [
-l    ],
+    ],
 };
 
 
