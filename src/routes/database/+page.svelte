@@ -516,13 +516,15 @@
               >
               Cancel
             </button>
+            {#if $progress == 0}
             <button
             on:click={handleAllProducts}
             class="inline-flex h-8 items-center justify-center rounded-sm
             bg-berry-100 px-4 font-medium leading-none text-berry-900"
             >
             Add Products
-          </button>              
+          </button>             
+            {/if} 
         </div>    
       </div>
       {/if}

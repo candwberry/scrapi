@@ -16,11 +16,11 @@
     };
   
     let mangas: Manga[] = [
-        {
-            author: 'www.ebay.co.uk',
-            title: 'eBay',
-            disabled: false,
-        },
+      {
+          author: 'www.ebay.co.uk',
+          title: 'eBay',
+          disabled: false,
+      },
       {
         author: 'www.amazon.co.uk',
         title: 'Amazon',
@@ -63,16 +63,21 @@
       : mangas;
 
     import { mode } from '$lib/stores';
-    // update mode with input
-    $: console.log($inputValue);
     $: mode.set($inputValue.toLowerCase());
+    // make sure inputValue also updates when mode changes
+    // this looks like it would infinite loop but I assume svelte catches this on purpose?
+    // i hope thats a correct assumption LOl.
+    
+    $: $inputValue = $mode;
+    $: console.log($inputValue);
+
   </script>
   
-  <div class="flex flex-col gap-1">
+  <div class="flex flex-col ">
     <!-- svelte-ignore a11y-label-has-associated-control - $label contains the 'for' attribute -->
     <label use:melt={$label}>
       <span class="text-sm font-medium text-berry-900"
-        >Choose the shop</span
+        ></span
       >
     </label>
   
@@ -83,7 +88,7 @@
             px-3 pr-12 text-black w-full"
         placeholder="eBay, Amazon, Google..."
       />
-      <div class="absolute right-2 top-1/2 z-10 -translate-y-1/2 text-berry-900">
+      <div class="absolute right-2 top-1/2 z-[999] -translate-y-1/2 text-berry-900">
         {#if $open}
           <ChevronUp class="size-4" />
         {:else}
@@ -94,13 +99,13 @@
   </div>
   {#if $open}
     <ul
-      class=" z-10 flex max-h-[300px] flex-col w-full overflow-hidden rounded-lg"
+      class="z-[999] flex max-h-[300px] flex-col w-full overflow-hidden rounded-lg"
       use:melt={$menu}
       transition:fly={{ duration: 150, y: -5 }}
     >
       <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
       <div
-        class="flex max-h-full w-full flex-col gap-0 overflow-y-auto bg-white px-2 py-2 text-black"
+        class="flex max-h-full z-50 w-full flex-col gap-0 overflow-y-auto bg-white px-2 py-2 text-black"
         tabindex="0"
       >
         {#each filteredMangas as manga, index (index)}
@@ -134,6 +139,11 @@
     .check {
       @apply absolute left-2 top-1/2 text-berry-500;
       translate: 0 calc(-50% + 1px);
+    }
+
+    /* make sure everything is ON TOP */
+    * {
+      @apply z-10;
     }
   </style>
   

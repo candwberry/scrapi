@@ -19,10 +19,14 @@ const err = (error: string, info: string) => {
     );
 };
 
-const ok = (data: unknown) => new Response(
-    JSON.stringify(data),
-    { headers: { "content-type": "application/json" } }
-);
+const ok = (data: unknown) => {
+    console.log(JSON.stringify(data) + "\nEOD");
+
+    return new Response(
+        JSON.stringify(data),
+        { headers: { "content-type": "application/json" } }
+    );
+}
 
 const ERR_INVALID_SELECT_PARAM = "Invalid select parameter";
 const ERR_INVALID_TABLE = "Invalid table";

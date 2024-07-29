@@ -28,10 +28,10 @@
         { title: 'Shell', icon: 'terminal' },
       ],
     },
-    {
-      title: 'Settings',
-      icon: 'settings',
-    },
+    //{
+     // title: 'Settings',
+     // icon: 'settings',
+    //},
   ];
 </script>
 

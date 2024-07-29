@@ -1,4 +1,3 @@
-import ebay from "$lib/ebay";
 import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
@@ -18,7 +17,6 @@ export const handleWebsocket = {
 			if (data.type !== undefined && data.data !== undefined)
 				switch (data.type) {
 					case 'ebay':
-						const resp =  await ebay(data.data);
 						ws.send(JSON.stringify({ type: 'ebay', data: JSON.stringify(resp) }));
 						break;
 

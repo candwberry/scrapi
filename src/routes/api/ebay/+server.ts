@@ -22,17 +22,51 @@ async function ebay(query: string, limit: string, sort: string, filter: string) 
     });
 
     return items;
-}
+};
+
+const isBatchProcessing = {
+    status: false,
+    total: 0,
+    processed: 0,
+    errorArray: [
+        { error: "ERR-404", info: "This is just a test :)" },
+        { error: "ERR-404", info: "This is just a test :)" },
+        { error: "ERR-404", info: "This is just a test :)" },
+        { error: "ERR-404", info: "This is just a test :)" },
+        { error: "ERR-404", info: "This is just a test :)" },
+        { error: "ERR-404", info: "This is just a test :)" },
+    ],
+    limit: 5000,
+    remaining: 5000,
+};
 
 export const GET: RequestHandler = async ({ request, url }) => {
-    console.log(request);
-    console.log(url.searchParams);
-    console.log(url);
+    //console.log(request);
+    //console.log(url.searchParams);
+    //console.log(url);
 
     const baseUrl = url.origin;
     const query = url.searchParams.get("query") ?? "";
     const batch = url.searchParams.get("batch") ?? "false";
     const rateLimit = url.searchParams.get("rateLimit") ?? "false";
+
+    if (batch === "stop") {
+        checkRateLimits();
+        isBatchProcessing.status = false;
+        return new Response(JSON.stringify({ isBatchProcessing }), {
+            headers: {
+                "content-type": "application/json"
+            }
+        });
+    }
+    if (batch === "check") {
+        //console.log(isBatchProcessing);
+        return new Response(JSON.stringify({ isBatchProcessing }), {
+            headers: {
+                "content-type": "application/json"
+            }
+        });
+    }
     
     if (rateLimit === "true") {
         const devApi = await eBay.developer.analytics.getRateLimits("buy", "browse");
@@ -45,17 +79,30 @@ export const GET: RequestHandler = async ({ request, url }) => {
     }
 
     if (batch === "true") {
-        console.log("HELLO");
+        checkRateLimits()
         // call /api/db/products to get all products
-        const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc&limit=5000`); // 5000 is eBay API call limit.
+        const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc&limit=${isBatchProcessing.remaining}`); // 5000 is eBay API call limit.
         const products = await resp.json();
+        isBatchProcessing.status = true;
+        isBatchProcessing.total = products.length;
+        isBatchProcessing.processed = 0;
+        isBatchProcessing.errorArray = [];
+        const totalProducts = products.length;
 
         // now loop through, call ebay for each product, and call PUT to /api/db/price to create a price object
         const batchSize = 10;
-        const totalProducts = products.length;
         const numBatches = Math.ceil(totalProducts / batchSize);
 
         for (let i = 0; i < numBatches; i++) {
+            
+            if (!isBatchProcessing.status) {
+                return new Response(JSON.stringify({ isBatchProcessing }), {
+                    headers: {
+                        "content-type": "application/json"
+                    }
+                });
+            }
+            isBatchProcessing.processed = i * batchSize;
             const start = i * batchSize;
             const end = Math.min((i + 1) * batchSize, totalProducts);
             const batchProducts = products.slice(start, end);
@@ -99,6 +146,13 @@ export const GET: RequestHandler = async ({ request, url }) => {
 
             await Promise.all(batchPromises);
         }
+
+        isBatchProcessing.status = false;
+        return new Response(JSON.stringify({ isBatchProcessing }), {
+            headers: {
+                "content-type": "application/json"
+            }
+        });
     }
 
     if (query.trim().length === 0) {
@@ -129,3 +183,14 @@ export const GET: RequestHandler = async ({ request, url }) => {
         }
     });
 }
+
+
+async function checkRateLimits() {
+    const devApi = await eBay.developer.analytics.getRateLimits("buy", "browse");
+    const limits =  devApi.rateLimits[0].resources[0].rates[0];
+    isBatchProcessing.remaining = limits.remaining;
+    isBatchProcessing.limit = limits.limit;
+}
+
+checkRateLimits();
+// setInterval

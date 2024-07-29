@@ -97,67 +97,88 @@ export const GET: RequestHandler = async ({ request, url }) => {
     const query = url.searchParams.get("query") ?? "";
     const batch = url.searchParams.get("batch") ?? "false";
 
+    if (batch === "check") {
+        return new Response(JSON.stringify({ isBatchProcessing }), {
+            headers: {
+                "content-type": "application/json"
+            }
+        });
+    };
+    
     try {
         if (batch === "true") {
-            const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc&limit=5000`);
-            const products = await resp.json();
+            isBatchProcessing = true;
+            try {
+                const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc&limit=5000`);
+                const products = await resp.json();
 
-            const batchSize = 10;
-            const totalProducts = products.length;
-            const numBatches = Math.ceil(totalProducts / batchSize);
+                const batchSize = 10;
+                const totalProducts = products.length;
+                const numBatches = Math.ceil(totalProducts / batchSize);
 
-            for (let i = 0; i < numBatches; i++) {
-                const start = i * batchSize;
-                const end = Math.min((i + 1) * batchSize, totalProducts);
-                const batchProducts = products.slice(start, end);
+                for (let i = 0; i < numBatches; i++) {
+                    const start = i * batchSize;
+                    const end = Math.min((i + 1) * batchSize, totalProducts);
+                    const batchProducts = products.slice(start, end);
 
-                const batchPromises = batchProducts.map(async (product: { berry: string; title: string; barcode: string; supplierCode: string; supplier: string; }) => {
-                    try {
-                        const items = await amazon(product.barcode === "" ? product.title : product.barcode);
-                        console.log(items);
+                    const batchPromises = batchProducts.map(async (product: { berry: string; title: string; barcode: string; supplierCode: string; supplier: string; }) => {
+                        try {
+                            const items = await amazon(product.barcode === "" ? product.title : product.barcode);
+                            console.log(items);
 
-                        if (items.length > 0) {
-                            const item = items[0];
-                            const price = item.price;
-                            const shipping = item.shipping;
-                            const href = item.href;
-                            const body = JSON.stringify([{ berry: product.berry, price, shipping, date: Date.now(), shop: "amazon", href }]);
+                            if (items.length > 0) {
+                                const item = items[0];
+                                const price = item.price;
+                                const shipping = item.shipping;
+                                const href = item.href;
+                                const body = JSON.stringify([{ berry: product.berry, price, shipping, date: Date.now(), shop: "amazon", href }]);
 
-                            await fetch(`${baseUrl}/api/db/prices`, {
-                                method: "PUT",
-                                body: body,
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                            });
-                            await fetch(`${baseUrl}/api/db/products`, {
-                                method: "PUT",
-                                body: JSON.stringify([{
-                                    berry: product.berry,
-                                    barcode: product.barcode,
-                                    supplierCode: product.supplierCode,
-                                    supplier: product.supplier,
-                                    title: product.title,
-                                    lastUpdated: Date.now()
-                                }]),
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                            });
+                                await fetch(`${baseUrl}/api/db/prices`, {
+                                    method: "PUT",
+                                    body: body,
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                });
+                                await fetch(`${baseUrl}/api/db/products`, {
+                                    method: "PUT",
+                                    body: JSON.stringify([{
+                                        berry: product.berry,
+                                        barcode: product.barcode,
+                                        supplierCode: product.supplierCode,
+                                        supplier: product.supplier,
+                                        title: product.title,
+                                        lastUpdated: Date.now()
+                                    }]),
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                });
+                            }
+                        } catch (err) {
+                            console.error(`Error processing product ${product.berry}:`, err);
                         }
-                    } catch (err) {
-                        console.error(`Error processing product ${product.berry}:`, err);
+                    });
+
+                    await Promise.all(batchPromises);
+                }
+
+                return new Response(JSON.stringify({ message: "Batch processing completed" }), {
+                    headers: {
+                        "content-type": "application/json"
                     }
                 });
-
-                await Promise.all(batchPromises);
+            } catch (err) {
+                console.error("Error in batch processing:", err);
+                return new Response(JSON.stringify({ error: "An error occurred while processing your request" }), {
+                    status: 500,
+                    headers: {
+                        "content-type": "application/json"
+                    }
+                });
+            } finally {
+                isBatchProcessing = false;
             }
-
-            return new Response(JSON.stringify({ message: "Batch processing completed" }), {
-                headers: {
-                    "content-type": "application/json"
-                }
-            });
         }
 
         if (query.trim().length === 0) {

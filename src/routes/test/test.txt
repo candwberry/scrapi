@@ -1,7 +1,7 @@
 <script>
   import { onDestroy, onMount } from "svelte";
   import { flip } from "svelte/animate";
-  import { createDialog, melt, createScrollArea } from "@melt-ui/svelte";
+  import { createDialog, createScrollArea } from "@melt-ui/svelte";
   import { fade } from "svelte/transition";
   import { mode } from "$lib/stores";
   import Input from "$lib/components/Input.svelte";
@@ -128,12 +128,11 @@
   }
 
   function stopBatchProcessing() {
-    fetch(`/api/ebay?batch=stop`)
-      .then(() => {
-      })
-      .catch((error) => {
-        console.error("Error stopping batch processing:", error);
-      });
+    clearInterval(intervalId);
+    status = false;
+    total = 0;
+    processed = 0;
+    errorArray = [];
   }
 
   onMount(async () => {
@@ -162,111 +161,183 @@
     }
   }
 
-  
+  import { createCollapsible, melt } from '@melt-ui/svelte';
+  import ChevronsUpDown from "lucide-svelte/icons/chevrons-up-down";
+  import X from "lucide-svelte/icons/x";
+  import { slide } from 'svelte/transition';
+
+  const {
+    elements: { root: statusRoot, content: statusContent, trigger: statusTrigger },
+    states: { open: statusOpen },
+  } = createCollapsible({
+    forceVisible: true,
+  });
+
+  const {
+    elements: { root: settingsRoot, content: settingsContent, trigger: settingsTrigger },
+    states: { open: settingsOpen },
+  } = createCollapsible({
+    forceVisible: true,
+  });
+
+  const {
+    elements: { root: queryRoot, content: queryContent, trigger: queryTrigger },
+    states: { open: queryOpen },
+  } = createCollapsible({
+    forceVisible: true,
+  });
+
+  const {
+    elements: { root: errorsRoot, content: errorsContent, trigger: errorsTrigger },
+    states: { open: errorsOpen },
+  } = createCollapsible({
+    forceVisible: true,
+  });
 </script>
 
 <div class="flex flex-row gap-16 h-full">
   <div class="w-1/3 p-2 flex flex-col">
-    <p
-      class="text-2xl font-bold border-b flex justify-between flex-row items-center border-berry-600 pb-2 mb-4"
-    >
-      eBay <button
+    <p class="text-2xl font-bold border-b flex justify-between flex-row items-center border-berry-600 pb-2 mb-4">
+      eBay 
+      <button
         use:melt={$trigger}
         on:click={() => {mode.set("ebay");}}
-        class="inline-flex items-center justify-center rounded-full px-4 py-3
-      font-medium leading-none bg-berry-100 text-lg shadow hover:opacity-90 gap-3"
+        class="inline-flex items-center justify-center rounded-full px-4 py-3 font-medium leading-none bg-berry-100 text-lg shadow hover:opacity-90 gap-3"
       >
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#009845"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"></path></svg>
       </button>
     </p>
-    <div
-      class="bg-berry-600/10 rounded-xl h-30 w-full flex p-4 flex-row justify-between items-center"
-    >
-      <div class="flex flex-col">
-        <p class="font-bold">
-          {status ? "Currently running!" : "Not running."}
-        </p>
-        <p>{processed} / {total} Items</p>
-        <p>{rateRemaining} / {rateLimit} API calls</p>
-      </div>
-      <div>
-        <button
-          class="bg-berry-600 text-white rounded-lg px-4 py-2 font-bold"
-          on:click={status === false
-            ? startBatchProcessing
-            : stopBatchProcessing}
-        >
-          {status === false ? "LAUNCH" : "STOP"}
-        </button>
-      </div>
-    </div>
-    <div class="bg-blue-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-6">
-      <div class="flex flex-col gap-2">
-        <label for="items-per-search" class="font-bold">Items per search:</label
-        >
-        <input
-          type="number"
-          id="items-per-search"
-          class="w-full rounded-xl bg-white caret-berry-700 px-3 focus:outline-none shadow h-10"
-          value="10"
-        />
-      </div>
-      <div class="grid grid-cols-2">
-        <div class="flex flex-col">
-          <label class="font-bold">Businesses only:</label>
-          <div class="flex flex-row gap-4">
-            <input
-              type="checkbox"
-              id="businesses-only"
-              class="rounded"
-              checked
-            />
-            <label for="businesses-only">Yes</label>
+
+    <!-- Status Section -->
+    <div use:melt={$statusRoot} class="mb-4">
+      <button
+        use:melt={$statusTrigger}
+        class="w-full flex items-center justify-between p-4 bg-berry-100 rounded-t-lg"
+      >
+        <span class="font-semibold">Status</span>
+        <ChevronsUpDown class="size-4" />
+      </button>
+      {#if $statusOpen}
+        <div use:melt={$statusContent} transition:slide>
+          <div class="bg-berry-600/10 rounded-b-xl w-full flex p-4 flex-row justify-between items-center">
+            <div class="flex flex-col">
+              <p class="font-bold">
+                {status ? "Currently running!" : "Not running."}
+              </p>
+              <p>{processed} / {total} Items</p>
+              <p>{rateRemaining} / {rateLimit} API calls remaining</p>
+            </div>
+            <div>
+              <button
+                class="bg-berry-600 text-white rounded-lg px-4 py-2 font-bold"
+                on:click={status === false ? startBatchProcessing : stopBatchProcessing}
+              >
+                {status === false ? "LAUNCH" : "STOP"}
+              </button>
+            </div>
           </div>
         </div>
-        <div class="flex flex-col">
-          <label class="font-bold">Price type:</label>
-          <div class="flex gap-4">
-            <label class="flex items-center gap-2">
-              <input type="radio" name="price-type" value="fixed" checked />
-              Fixed
-            </label>
-            <label class="flex items-center gap-2">
-              <input type="radio" name="price-type" value="auction" />
-              Fixed & Auction
-            </label>
+      {/if}
+    </div>
+
+    <!-- Settings Section -->
+    <div use:melt={$settingsRoot} class="mb-4">
+      <button
+        use:melt={$settingsTrigger}
+        class="w-full flex items-center justify-between p-4 bg-berry-100 rounded-t-lg"
+      >
+        <span class="font-semibold">Settings</span>
+        <ChevronsUpDown class="size-4" />
+      </button>
+      {#if $settingsOpen}
+        <div use:melt={$settingsContent} transition:slide>
+          <div class="bg-blue-600/10 rounded-b-xl w-full flex flex-col p-4 gap-6">
+            <div class="flex flex-col gap-2">
+              <label for="items-per-search" class="font-bold">Items per search:</label>
+              <input
+                type="number"
+                id="items-per-search"
+                class="w-full rounded-xl bg-white caret-berry-700 px-3 focus:outline-none shadow h-10"
+                value="10"
+              />
+            </div>
+            <div class="grid grid-cols-2">
+              <div class="flex flex-col">
+                <label class="font-bold">Businesses only:</label>
+                <div class="flex flex-row gap-4">
+                  <input
+                    type="checkbox"
+                    id="businesses-only"
+                    class="rounded"
+                    checked
+                  />
+                  <label for="businesses-only">Yes</label>
+                </div>
+              </div>
+              <div class="flex flex-col">
+                <label class="font-bold">Price type:</label>
+                <div class="flex gap-4">
+                  <label class="flex items-center gap-2">
+                    <input type="radio" name="price-type" value="fixed" checked />
+                    Fixed
+                  </label>
+                  <label class="flex items-center gap-2">
+                    <input type="radio" name="price-type" value="auction" />
+                    Fixed & Auction
+                  </label>
+                </div>
+              </div>
+    
+            </div>
+            <div class=" w-full flex flex-col gap-4">
+              <h3 class="font-bold">Query Priority:</h3>
+              <ul class="w-full">
+                {#each productFields as field, index (field)}
+                  <li
+                    animate:flip={{ duration: 300 }}
+                    draggable={true}
+                    on:dragstart={(event) => dragStart(event, index)}
+                    on:dragover={(event) => dragOver(event, index)}
+                    class="bg-white shadow rounded-lg p-2 mb-2 cursor-move"
+                  >
+                    {field}
+                  </li>
+                {/each}
+              </ul>
+            </div>
+
           </div>
         </div>
-      </div>
-      <div class="w-full flex flex-col gap-4">
-        <h3 class="font-bold">Query Priority:</h3>
-        <ul class="w-full">
-          {#each productFields as field, index (field)}
-            <li
-              animate:flip={{ duration: 300 }}
-              draggable={true}
-              on:dragstart={(event) => dragStart(event, index)}
-              on:dragover={(event) => dragOver(event, index)}
-              class="bg-white shadow rounded-lg p-2 mb-2 cursor-move"
-            >
-              {field}
-            </li>
-          {/each}
-        </ul>
-      </div>
+      {/if}
     </div>
-    <div
-      class="bg-red-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-4 h-40 overflow-y-auto"
-      role="alert"
-    >
-      <strong class="font-bold">Errors:</strong>
-      <ul>
-        {#each errorArray as error}
-          <li><strong>{error.error}:</strong> {error.info}</li>
-        {/each}
-      </ul>
+
+    <!-- Errors Section -->
+    <div use:melt={$errorsRoot} class="mb-4">
+      <button
+        use:melt={$errorsTrigger}
+        class="w-full flex items-center justify-between p-4 bg-berry-100 rounded-t-lg"
+      >
+        <span class="font-semibold">Errors</span>
+        <ChevronsUpDown class="size-4" />
+      </button>
+      {#if $errorsOpen}
+        <div use:melt={$errorsContent} transition:slide>
+          <div
+            class="bg-red-600/10 rounded-b-xl w-full flex flex-col p-4 gap-4 h-40 overflow-y-auto"
+            role="alert"
+          >
+            <strong class="font-bold">Errors:</strong>
+            <ul>
+              {#each errorArray as error}
+                <li><strong>{error.error}:</strong> {error.info}</li>
+              {/each}
+            </ul>
+          </div>
+        </div>
+      {/if}
     </div>
   </div>
+
   <div class="w-1/3 p-2 flex flex-col">
     <p class="text-2xl font-bold border-b border-berry-600 pb-2 mb-4">Amazon</p>
   </div>
@@ -274,6 +345,7 @@
     <p class="text-2xl font-bold border-b border-berry-600 pb-2 mb-4">Google</p>
   </div>
 </div>
+
 {#if $open}
   <div class="" use:melt={$portalled}>
     <div

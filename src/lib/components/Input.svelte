@@ -11,12 +11,12 @@
 </script>
 
 <form class="w-full">
-  <div class="flex flex-row py-2items-center justify-between h-10 w-full rounded-xl bg-white   text-berry-700 focus: outline-none">
+  <div class="h-10 flex  flex-row items-center justify-between h-10 w-full rounded-xl bg-white text-berry-700 focus: outline-none">
     <input
       bind:value
       type="text"
       id={name}
-      class="h-10 w-full rounded-md bg-white text-berry-700 pl-3 focus:outline-none"
+      class="h-10 w-full rounded-md bg-white border border-berry-600 border-solid border-[2px] rounded-r-none text-berry-700 pl-3 focus:outline-none"
       placeholder="Search"
     />
     <button on:click={callback} class="p-0 bg-berry-600 w-[50px] h-full rounded-r-xl flex items-center justify-center">
