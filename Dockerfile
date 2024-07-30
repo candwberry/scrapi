@@ -9,9 +9,6 @@ RUN curl -fsSL https://bun.sh/install | bash
 # Add Bun to PATH
 ENV PATH="/root/.bun/bin:${PATH}"
 
-# Set the Chrome executable path
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
-
 # Copy project to /home/scrapi
 COPY . /home/scrapi
 
