@@ -210,7 +210,9 @@ async function fetchProductDetails(berry: string) {
         supplierCode: values[columnNames.indexOf(supplierCodeColumn)],
         title: values[columnNames.indexOf(titleColumn)],
         supplier: "NA",
-        lastUpdated: now,
+        amazonLast: 0,
+        ebayLast: 0,
+        googleLast: 0,
       };
     });
 
