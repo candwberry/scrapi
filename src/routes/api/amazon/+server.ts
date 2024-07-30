@@ -57,7 +57,7 @@ async function amazon(query: string) {
                 req.continue();
         });
 
-        await page.goto(`https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`, { waitUntil: "domcontentloaded" });
+        await page.goto(`https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`, { waitUntil: "networkidle0" });
         const results = await page.$$("[data-asin][data-component-type='s-search-result']");
 
         const items = [];
