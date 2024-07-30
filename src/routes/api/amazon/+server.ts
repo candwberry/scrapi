@@ -87,7 +87,7 @@ async function amazon(query: string) {
         });*/
 
         clog("GOING TO PAGE");
-        await page.goto(`https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`, { waitUntil: "networkidle0" });
+        await page.goto(`https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`, { waitUntil: "domcontentloaded" });
         clog("PAGE LOADED AS FAR AS WE CAN TELL");
         const results = await page.$$("[data-asin][data-component-type='s-search-result']");
         clog("TRIED");
