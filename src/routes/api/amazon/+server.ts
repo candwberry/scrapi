@@ -24,16 +24,28 @@ const isBatchProcessing = {
 async function initBrowser() {
     // /usr/bin/chromium --no-sandbox --headless --disable-gpu --disable-dev-shm-usage --remote-debugging-port=9222 --disable-software-rasterizer
     try {
+        log("LAUNCHING BROWSER");
         browser = await puppeteer.launch({
             headless: true,
             args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222', '--disable-software-rasterizer', '--disable-features=NetworkServiceInProcess2'],
             executablePath: '/usr/bin/chromium',
             timeout: 1000000
         });
+        log("BROWSER LAUNCHED");
     } catch (err) {
-        console.error("Failed to launch browser:", err);
+        error("Failed to launch browser:", err);
         throw err;
     }
+}
+
+function log(msg: string) {
+    console.log(msg);
+    isBatchProcessing.errorArray.push(msg);
+}
+
+function error(msg: string, error: any) {
+    log(msg);
+    console.error(error);
 }
 
 async function amazon(query: string) {
@@ -42,6 +54,7 @@ async function amazon(query: string) {
         if (!browser || !browser.connected)
             await initBrowser();
 
+        console.log("NEWPAGE");
         page = await browser.newPage();
         await page.setRequestInterception(true);
         page.on('request', (req: HTTPRequest) => {
@@ -57,8 +70,11 @@ async function amazon(query: string) {
                 req.continue();
         });
 
+        log("GOING TO PAGE");
         await page.goto(`https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`, { waitUntil: "networkidle0" });
+        log("PAGE LOADED AS FAR AS WE CAN TELL");
         const results = await page.$$("[data-asin][data-component-type='s-search-result']");
+        log("TRIED");
 
         const items = [];
         for (let i = 0; i < results.length; i++) {
@@ -81,17 +97,17 @@ async function amazon(query: string) {
 
                 items.push({ title, price: `${price}`.replace("..", ".").replaceAll('£', '').slice(price.length / 2 - 1), shipping, thumbnail, href });
             } catch (err) {
-                console.error(`Error processing item ${i}:`, err);
+                error(`Error processing item ${i}:`, err);
             }
         }
 
         return items;
     } catch (err) {
-        console.error(`Error in amazon function for query "${query}":`, err);
+        error(`Error in amazon function for query "${query}":`, err);
         return [];
     } finally {
         if (page) {
-            await page.close().catch(err => console.error("Error closing page:", err));
+            await page.close().catch(err => error("Error closing page:", err));
         }
     }
 }
