@@ -1,4 +1,4 @@
-FROM node:16-bullseye-slim
+FROM ubuntu:22.04
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
@@ -23,7 +23,6 @@ RUN apt update -qq \
       fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /src/*.deb
-
 
 # Install Bun
 RUN curl -fsSL https://bun.sh/install | bash
