@@ -23,13 +23,13 @@
   async function manualApi() {
     switch ($mode) {
       case "ebay":
-        const resp = await fetch("/api/ebay?query=" + query);
+        const resp = await fetch("/api/ebay?query=" + encodeURIComponent(query));
         const data = await resp.json();
         manualResponse.set(data);
         console.log(data);
         break;
       case "amazon":
-        const resp2 = await fetch("/api/amazon?query=" + query);
+        const resp2 = await fetch("/api/amazon?query=" + encodeURIComponent(query));
         const data2 = await resp2.json();
         manualResponse.set(data2);
         console.log(data2);
@@ -116,6 +116,16 @@
       amazonProcessed = data2.processed;
       amazonErrorArray = data2.errorArray;
       
+      const response3 = await fetch("/api/google?batch=check");
+    let data3 = await response3.json();
+    console.log(data3);
+    data3 = data3["isBatchProcessing"];
+    googleStatus = data3.status;
+    googleTotal = data3.total;
+    googleProcessed = data3.processed;
+    googleErrorArray = data3.errorArray;
+
+
     } catch (error) {
       console.error("Error checking batch status:", error);
     }
@@ -194,7 +204,12 @@
   let amazonErrorArray = [];
 
 
-  
+  // Add Google-specific variables and functions
+let googleStatus = false;
+let googleTotal = 0;
+let googleProcessed = 0;
+let googleErrorArray = [];
+
 </script>
 
 <div class="flex flex-row gap-16 h-full">
@@ -307,7 +322,7 @@
     <p
       class="text-2xl font-bold border-b flex justify-between flex-row items-center border-berry-600 pb-2 mb-4"
     >
-      Amazon <button
+      Amazon <span class="text-xs ">∞ / ∞ API calls</span><button
         use:melt={$trigger}
         on:click={() => {mode.set("amazon");}}
         class="inline-flex items-center justify-center rounded-full px-4 py-3
@@ -400,7 +415,7 @@
     <p
       class="text-2xl font-bold border-b flex justify-between flex-row items-center border-berry-600 pb-2 mb-4"
     >
-      Google <button
+      Google <span class="text-xs ">∞ / ∞ API calls</span><button
         use:melt={$trigger}
         on:click={() => {mode.set("google");}}
         class="inline-flex items-center justify-center rounded-full px-4 py-3
@@ -409,9 +424,86 @@
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#009845"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"></path></svg>
       </button>
     </p>
-    <p class="font-bold">Coming soon..</p>
+    <div
+      class="bg-berry-600/10 rounded-xl h-30 w-full flex p-4 flex-row justify-between items-center"
+    >
+      <div class="flex flex-col">
+        <p class="font-bold">
+          {googleStatus ? "Currently running!" : "Not running."}
+        </p>
+        <p>{googleProcessed} / {googleTotal} Items</p>
+      </div>
+      <div>
+        <button
+          class="bg-berry-600 text-white rounded-lg px-4 py-2 font-bold"
+          on:click={googleStatus === false
+            ? () => {
+                startBatchProcessing("google");
+              }
+            : () => {
+                stopBatchProcessing("google");
+            }}
+        >
+          {googleStatus === false ? "LAUNCH" : "STOP"}
+        </button>
+      </div>
+    </div>
+    <div class="bg-blue-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-6">
+      <div class="flex flex-col gap-2">
+        <label for="google-items-per-search" class="font-bold">Items per search:</label>
+        <input
+          type="number"
+          id="google-items-per-search"
+          class="w-full rounded-xl bg-white caret-berry-700 px-3 focus:outline-none shadow h-10"
+          value="10"
+        />
+      </div>
+      <div class="grid grid-cols-2">
+        <div class="flex flex-col">
+          <label class="font-bold">Shopping results only:</label>
+          <div class="flex flex-row gap-4">
+            <input
+              type="checkbox"
+              id="google-shopping-only"
+              class="rounded"
+              checked
+            />
+            <label for="google-shopping-only">Yes</label>
+          </div>
+        </div>
+        <div class="flex flex-col">
+        </div>
+      </div>
+      <div class="w-full flex flex-col gap-4">
+        <h3 class="font-bold">Query Priority:</h3>
+        <ul class="w-full">
+          {#each productFields as field, index (field)}
+            <li
+              animate:flip={{ duration: 300 }}
+              draggable={true}
+              on:dragstart={(event) => dragStart(event, index)}
+              on:dragover={(event) => dragOver(event, index)}
+              class="bg-white shadow rounded-lg p-2 mb-2 cursor-move"
+            >
+              {field}
+            </li>
+          {/each}
+        </ul>
+      </div>
+    </div>
+    <div
+      class="bg-red-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-4 h-40 overflow-y-auto"
+      role="alert"
+    >
+      <strong class="font-bold">Errors:</strong>
+      <ul>
+        {#each googleErrorArray as error}
+          <li><strong>{error.error}:</strong> {error.info}</li>
+        {/each}
+      </ul>
+    </div>
   </div>
-</div>
+  </div>
 {#if $open}
   <div class="" use:melt={$portalled}>
     <div

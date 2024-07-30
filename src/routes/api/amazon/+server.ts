@@ -26,6 +26,7 @@ async function initBrowser() {
         browser = await puppeteer.launch({
             headless: false,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            executablePath: '/usr/bin/chromium-browser',
             timeout: 1000000
         });
     } catch (err) {
@@ -37,9 +38,8 @@ async function initBrowser() {
 async function amazon(query: string) {
     let page;
     try {
-        if (!browser || !browser.connected) {
+        if (!browser || !browser.connected)
             await initBrowser();
-        }
 
         page = await browser.newPage();
         await page.setRequestInterception(true);
@@ -120,7 +120,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
     try {
         if (batch === "true") {
                 try {
-                const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc`);
+                const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc&limit=100000`);
                 const products = await resp.json();
                 isBatchProcessing.status = true;
                 isBatchProcessing.total = products.length;

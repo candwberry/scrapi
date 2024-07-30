@@ -28,8 +28,18 @@ export const GET: RequestHandler = async ({ request, url, params }) => {
         */
 
         try {
-            const result = db.query(`SELECT * FROM (SELECT * FROM prices WHERE berry = ? AND shop = 'ebay' ORDER BY date DESC LIMIT 1) AS ebay_price UNION ALL SELECT * FROM (SELECT * FROM prices WHERE berry = ? AND shop = 'amazon' ORDER BY date DESC LIMIT 1) AS amazon_price;`).all(productPrices, productPrices);
-            return ok(result);
+            const result = db.query(`
+                SELECT p.*, pr.title FROM (
+                    SELECT * FROM (
+                        SELECT * FROM prices WHERE berry = ? AND shop = 'ebay' ORDER BY date DESC LIMIT 1
+                    ) AS ebay_price
+                    UNION ALL
+                    SELECT * FROM (
+                        SELECT * FROM prices WHERE berry = ? AND shop = 'amazon' ORDER BY date DESC LIMIT 1
+                    ) AS amazon_price
+                ) p
+                JOIN products pr ON p.berry = pr.berry
+            `).all(productPrices, productPrices);            return ok(result);
         } catch (e: any) {
             return err("Invalid SQL?", e.message); // now i think thats not a good or accurate error message.
         };

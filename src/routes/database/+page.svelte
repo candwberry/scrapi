@@ -22,7 +22,7 @@ let dbSearchQuery = '';
   let filteredRows = writable([]);
 
   async function searchDatabase(query: string) {
-    if (query.length < 3) return; // Only search if query is at least 3 characters long
+    if (query.length < 2) return; // Only search if query is at least 3 characters long
     try {
       const response = await fetch(`/api/db/products/${query}`);
       const data = await response.json();
@@ -59,6 +59,7 @@ let dbSearchQuery = '';
       .then((data) => {
         console.log(data);
         allRows.set(data);
+        rows.set(data);
         applyClientFilter(data);
       });
   }
@@ -71,12 +72,13 @@ async function fetchProductDetails(berry: string) {
     // [] of {shop: "", price:""}. Find ebay price:
     const ebayPrice = data.find((product: { shop: string }) => product.shop === "ebay");
     const amazonPrice = data.find((product: { shop: string }) => product.shop === "amazon");
-    let resp = "";
+    const title = data[0].title +"<br>";
+    let resp = title ;
     if (ebayPrice) {
-      resp += `Ebay: <strong>£${ebayPrice.price}</strong>`;
+      resp += `Ebay: <strong>£${ebayPrice.price}</strong><br>`;
     }
     if (amazonPrice) {
-      resp += `<br>Amazon: <strong>£${amazonPrice.price}</strong>`;
+      resp += `Amazon: <strong>£${amazonPrice.price}</strong><br>`;
     }
     return resp;
   } catch (error) {
@@ -307,13 +309,13 @@ async function fetchProductDetails(berry: string) {
   export let query = "";
   async function customQuery() {
     console.log(query);
-    await fetch(`/api/db?query=${query}`)
+    await fetch(`/api/db?query=${encodeURIComponent(query)}`)
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
         if (data.error) {
           // error = data.error;
-          alert(error);
+          alert(data.error);
           return;
         }
         rows.set(data);
@@ -342,7 +344,7 @@ async function fetchProductDetails(berry: string) {
 
   async function handleExport() {
     try {
-      const response = goto(`/api/db?export=${exportOption}`);
+      const response = goto(`/api/db?export=${encodeURIComponent(exportOption)}`);
     } catch (error) {
       console.error("Export error:", error);
     }
@@ -655,8 +657,7 @@ async function fetchProductDetails(berry: string) {
   <div use:melt={$viewport} class="h-full w-full max-w-full rounded-[inherit]">
     <div use:melt={$scrollContent}>
       <div class="p-4">
-        <h4 class="mb-4 font-semibold leading-none">Results</h4>
-
+        <h4 class="mb-4 font-semibold leading-none">Results ({$filteredRows.length} / {$rows.length})</h4>
         <table class="w-full max-w-full">
           <thead>
             <tr>

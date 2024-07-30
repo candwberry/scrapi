@@ -29,12 +29,6 @@ const isBatchProcessing = {
     total: 0,
     processed: 0,
     errorArray: [
-        { error: "ERR-404", info: "This is just a test :)" },
-        { error: "ERR-404", info: "This is just a test :)" },
-        { error: "ERR-404", info: "This is just a test :)" },
-        { error: "ERR-404", info: "This is just a test :)" },
-        { error: "ERR-404", info: "This is just a test :)" },
-        { error: "ERR-404", info: "This is just a test :)" },
     ],
     limit: 5000,
     remaining: 5000,
@@ -44,7 +38,6 @@ export const GET: RequestHandler = async ({ request, url }) => {
     const baseUrl = url.origin;
     const query = url.searchParams.get("query") ?? "";
     const batch = url.searchParams.get("batch") ?? "false";
-    const rateLimit = url.searchParams.get("rateLimit") ?? "false";
 
     if (batch === "stop") {
         checkRateLimits();
@@ -55,6 +48,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
             }
         });
     }
+    
     if (batch === "check") {
         //console.log(isBatchProcessing);
         return new Response(JSON.stringify({ isBatchProcessing }), {
@@ -64,16 +58,6 @@ export const GET: RequestHandler = async ({ request, url }) => {
         });
     }
     
-    if (rateLimit === "true") {
-        const devApi = await eBay.developer.analytics.getRateLimits("buy", "browse");
-        
-        return new Response(JSON.stringify(devApi.rateLimits[0].resources[1]), {
-            headers: {
-                "content-type": "application/json"
-            }
-        });
-    }
-
     if (batch === "true") {
         checkRateLimits()
         // call /api/db/products to get all products
