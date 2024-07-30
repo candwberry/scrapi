@@ -24,27 +24,27 @@ const isBatchProcessing = {
 async function initBrowser() {
     // /usr/bin/chromium --no-sandbox --headless --disable-gpu --disable-dev-shm-usage --remote-debugging-port=9222 --disable-software-rasterizer
     try {
-        log("LAUNCHING BROWSER");
+        clog("LAUNCHING BROWSER");
         browser = await puppeteer.launch({
             headless: true,
             args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222', '--disable-software-rasterizer', '--disable-features=NetworkServiceInProcess2'],
             executablePath: '/usr/bin/chromium',
             timeout: 1000000
         });
-        log("BROWSER LAUNCHED");
+        clog("BROWSER LAUNCHED");
     } catch (err) {
-        error("Failed to launch browser:", err);
+        cerror("Failed to launch browser:", err);
         throw err;
     }
 }
 
-function log(msg: string) {
+function clog(msg: string) {
     console.log(msg);
     isBatchProcessing.errorArray.push(msg);
 }
 
-function error(msg: string, error: any) {
-    log(msg);
+function cerror(msg: string, error: any) {
+    clog(msg);
     console.error(error);
 }
 
@@ -70,11 +70,11 @@ async function amazon(query: string) {
                 req.continue();
         });
 
-        log("GOING TO PAGE");
+        clog("GOING TO PAGE");
         await page.goto(`https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`, { waitUntil: "networkidle0" });
-        log("PAGE LOADED AS FAR AS WE CAN TELL");
+        clog("PAGE LOADED AS FAR AS WE CAN TELL");
         const results = await page.$$("[data-asin][data-component-type='s-search-result']");
-        log("TRIED");
+        clog("TRIED");
 
         const items = [];
         for (let i = 0; i < results.length; i++) {
@@ -86,28 +86,28 @@ async function amazon(query: string) {
                 try{
                     shipping = await results[i].$eval("[aria-label*='delivery' i]", node => node.textContent) ?? "-1";
                 }catch(err){
-                    console.error("Error getting shipping", err);
+                    cerror("Error getting shipping", err);
                 }
                 let thumbnail = await results[i].$eval('img.s-image', node => node.src) ?? "berry.png";
                 let href = await results[i].$eval('a.a-link-normal', node => node.href) ?? "about:blank";
-                console.log(price);
+                clog(price);
 
                 // Validation.
                 if (shipping.toLowerCase().includes("free delivery")) shipping = "0.00";
 
                 items.push({ title, price: `${price}`.replace("..", ".").replaceAll('£', '').slice(price.length / 2 - 1), shipping, thumbnail, href });
             } catch (err) {
-                error(`Error processing item ${i}:`, err);
+                cerror(`Error processing item ${i}:`, err);
             }
         }
 
         return items;
     } catch (err) {
-        error(`Error in amazon function for query "${query}":`, err);
+        cerror(`Error in amazon function for query "${query}":`, err);
         return [];
     } finally {
         if (page) {
-            await page.close().catch(err => error("Error closing page:", err));
+            await page.close().catch(err => cerror("Error closing page:", err));
         }
     }
 }
@@ -198,7 +198,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
                                 });
                             }
                         } catch (err) {
-                            console.error(`Error processing product ${product.berry}:`, err);
+                            cerror(`Error processing product ${product.berry}:`, err);
                         }
                     });
 
@@ -211,7 +211,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
                     }
                 });
             } catch (err) {
-                console.error("Error in batch processing:", err);
+                cerror("Error in batch processing:", err);
                 return new Response(JSON.stringify({ error: "An error occurred while processing your request" }), {
                     status: 500,
                     headers: {
@@ -238,7 +238,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
             }
         });
     } catch (err) {
-        console.error("Error in GET handler:", err);
+        cerror("Error in GET handler:", err);
         return new Response(JSON.stringify({ error: "An error occurred while processing your request" }), {
             status: 500,
             headers: {
@@ -247,7 +247,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
         });
     } finally {
         if (browser) {
-            await browser.close().catch(err => console.error("Error closing browser:", err));
+            await browser.close().catch(err => cerror("Error closing browser:", err));
         }
     }
 };
