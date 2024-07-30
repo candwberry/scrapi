@@ -40,12 +40,18 @@ async function initBrowser() {
 
 function clog(msg: string) {
     console.log(msg);
-    isBatchProcessing.errorArray.push(msg);
+    isBatchProcessing.errorArray.push({
+       error: "INFO",
+       info: msg 
+    });
 }
 
 function cerror(msg: string, error: any) {
-    clog(msg);
     console.error(error);
+    isBatchProcessing.errorArray.push({
+        error: msg,
+        info: error
+    });
 }
 
 async function amazon(query: string) {
