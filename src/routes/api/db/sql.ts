@@ -4,7 +4,9 @@ type Product = {
     supplierCode: string,
     supplier: string,
     title: string,
-    lastUpdated: string
+    amazonLast: number,
+    ebayLast: number,
+    googleLast: number
 }; 
 
 type Price = {
@@ -32,7 +34,9 @@ function isProduct(obj: any): obj is Product {
         typeof obj.supplierCode === 'string' &&
         typeof obj.supplier === 'string' &&
         typeof obj.title === 'string' &&
-        typeof obj.lastUpdated === 'number'
+        typeof obj.amazonLast === 'number' &&
+        typeof obj.ebayLast === 'number'&&
+        typeof obj.googleLast === 'number'
     );
 }
 
@@ -59,7 +63,7 @@ function isShop(obj: any): obj is Shop {
 }
 
 type Table = "products" | "prices" | "suppliers" | "shops" | "sqlite_master";
-type Parameter = "berry" | "barcode" | "supplierCode" | "supplier" | "title" | "price" | "shipping" | "date" | "shop" | "href" | "name" | "url" | "*";
+type Parameter = "berry" | "barcode" | "supplierCode" | "supplier" | "title" | "price" | "shipping" | "date" | "shop" | "href" | "amazonLast" | "ebayLast" | "googleLast" | "name" | "url" | "*";
 const TABLES: Table[] = ["products", "prices", "suppliers", "shops", "sqlite_master"];
 const PARAMETERS: Parameter[] = ["berry", "barcode", "supplierCode", "supplier", "title", "price", "shipping", "date", "shop", "href", "name", "url", "*"];
 
@@ -69,7 +73,9 @@ const createProductsTable = `CREATE TABLE IF NOT EXISTS products (
     supplierCode TEXT,
     supplier TEXT,
     title TEXT,
-    lastUpdated INTEGER
+    amazonLast INTEGER,
+    ebayLast INTEGER,
+    googleLast INTEGER
 );`;
 
 const createPricesTable = `CREATE TABLE IF NOT EXISTS prices (

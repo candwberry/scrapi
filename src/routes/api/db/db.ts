@@ -32,15 +32,17 @@ const ERR_INVALID_SELECT_PARAM = "Invalid select parameter";
 const ERR_INVALID_TABLE = "Invalid table";
 
 const PRODUCTS = db.query(`
-    INSERT INTO products (berry, barcode, supplierCode, supplier, title, lastUpdated)
-    VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+    INSERT INTO products (berry, barcode, supplierCode, supplier, title, amazonLast, ebayLast, googleLast)
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
     ON CONFLICT(berry) DO UPDATE SET
     berry = excluded.berry,
     barcode = excluded.barcode,
     supplierCode = excluded.supplierCode,
     supplier = excluded.supplier,
     title = excluded.title,
-    lastUpdated = excluded.lastUpdated;
+    amazonLast = excluded.amazonLast,
+    ebayLast = excluded.ebayLast,
+    googleLast = excluded.googleLast,
 `);
 
 const PRICES = db.query(`
