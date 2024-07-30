@@ -1,7 +1,9 @@
 import { Database } from "bun:sqlite";
 
+
 import { createProductsTable, createPricesTable, createSupplierTable, createShopTable } from "./sql";
 const db = new Database("mydb.sqlite");
+db.exec("PRAGMA journal_mode = WAL;");
 
 // DROP prices table 
 //db.run(`DROP TABLE IF EXISTS prices;`);
@@ -20,8 +22,6 @@ const err = (error: string, info: string) => {
 };
 
 const ok = (data: unknown) => {
-    console.log(JSON.stringify(data) + "\nEOD");
-
     return new Response(
         JSON.stringify(data),
         { headers: { "content-type": "application/json" } }

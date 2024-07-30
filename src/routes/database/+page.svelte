@@ -22,7 +22,7 @@ let dbSearchQuery = '';
   let filteredRows = writable([]);
 
   async function searchDatabase(query: string) {
-    if (query.length < 2) return; // Only search if query is at least 3 characters long
+    if (query.length < 2) return; // Only search if query is at least 2 characters long
     try {
       const response = await fetch(`/api/db/products/${query}`);
       const data = await response.json();
@@ -207,8 +207,8 @@ async function fetchProductDetails(berry: string) {
       return {
         berry: values[columnNames.indexOf(berrySKUColumn)],
         barcode: values[columnNames.indexOf(barcodeColumn)],
-        supplierCode: values[columnNames.indexOf(supplierCodeColumn)],
-        title: values[columnNames.indexOf(titleColumn)],
+        supplierCode: values[columnNames.indexOf(supplierCodeColumn)] ?? "",
+        title: values[columnNames.indexOf(titleColumn)] ?? "",
         supplier: "NA",
         amazonLast: 0,
         ebayLast: 0,
@@ -249,8 +249,9 @@ async function fetchProductDetails(berry: string) {
 
     open.set(false);
 
-    if (removeProductsNotInFile) {
+    if (false && removeProductsNotInFile) {
       // remove products that are not in the file
+      
       try {
         const resp = await fetch(`/api/db/products?lastUpdated=${now}`, {
           method: "DELETE",
@@ -303,6 +304,7 @@ async function fetchProductDetails(berry: string) {
     tableSelect.value = "products";
 
     selectAll("products");
+    // sorry wot.
   }
   onMount(async () => {
     getAll();

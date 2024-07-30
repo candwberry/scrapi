@@ -78,10 +78,13 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
     }
 
     for (const body of bodyArray) {
+        console.log(JSON.stringify(body));
         let result: any;
         try {
-            if (isProduct(body))
+            if (isProduct(body)) {
                 result = PRODUCTS.all(body.berry, body.barcode, body.supplierCode, body.supplier, body.title, body.amazonLast, body.ebayLast, body.googleLast);
+                console.log("IS A PRODUCT>.> ", result);   
+            }
             else if (isPrice(body))
                 result = PRICES.all(body.berry, body.price, body.shipping, body.date, body.shop, body.href);
             else if (isSupplier(body))
@@ -97,6 +100,9 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
             result =  err("Invalid SQL", e.message);
         };
         
+        console.log(result);
+        console.log("PUTTING:");
+        console.log(body.berry, body.barcode, body.supplierCode, body.supplier, body.title, body.amazonLast, body.ebayLast, body.googleLast)
         results.push(result);
     }
 
@@ -104,6 +110,7 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
 }
 
 export const DELETE: RequestHandler = async ({ request, url, params }) => {
+    return new Response("Not implemented", { status: 501 });
     const table: string = params.table ?? "sqlite_master";
     let lastUpdated = url.searchParams.get("lastUpdated") || "";
     console.log(request);

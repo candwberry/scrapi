@@ -35,7 +35,7 @@ function isProduct(obj: any): obj is Product {
         typeof obj.supplier === 'string' &&
         typeof obj.title === 'string' &&
         typeof obj.amazonLast === 'number' &&
-        typeof obj.ebayLast === 'number'&&
+        typeof obj.ebayLast === 'number' &&
         typeof obj.googleLast === 'number'
     );
 }
