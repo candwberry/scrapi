@@ -61,7 +61,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
     if (batch === "true") {
         checkRateLimits()
         // call /api/db/products to get all products
-        const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc&limit=${isBatchProcessing.remaining}`); // 5000 is eBay API call limit.
+        const resp = await fetch(`${baseUrl}/api/db/products?orderby=ebayLast&order=desc&limit=${isBatchProcessing.remaining}`); // 5000 is eBay API call limit.
         const products = await resp.json();
         isBatchProcessing.status = true;
         isBatchProcessing.total = products.length;
@@ -114,7 +114,9 @@ export const GET: RequestHandler = async ({ request, url }) => {
                             supplierCode: product.supplierCode,
                             supplier: product.supplier,
                             title: product.title,
-                            lastUpdated: Date.now()
+                            amazonLast: product.amazonLast,
+                            ebayLast: Date.now(),
+                            googleLast: product.googleLast
                         }]),
                         headers: {
                             "Content-Type": "application/json",

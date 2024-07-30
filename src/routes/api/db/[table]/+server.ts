@@ -81,7 +81,7 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
         let result: any;
         try {
             if (isProduct(body))
-                result = PRODUCTS.all(body.berry, body.barcode, body.supplierCode, body.supplier, body.title, body.lastUpdated);
+                result = PRODUCTS.all(body.berry, body.barcode, body.supplierCode, body.supplier, body.title, body.amazonLast, body.ebayLast, body.googleLast);
             else if (isPrice(body))
                 result = PRICES.all(body.berry, body.price, body.shipping, body.date, body.shop, body.href);
             else if (isSupplier(body))
@@ -110,7 +110,7 @@ export const DELETE: RequestHandler = async ({ request, url, params }) => {
 
     let query = `DELETE FROM ${table}`;
     if (lastUpdated.length > 0 && table === "products") {
-        query += ` WHERE lastUpdated < ${lastUpdated};`;
+        query += ` WHERE ebayLast < ${lastUpdated};`; // we will use EBAYLAST as the DELETE reference.
     }
 
     if (!(TABLES).includes(table as Table))

@@ -42,7 +42,7 @@ const PRODUCTS = db.query(`
     title = excluded.title,
     amazonLast = excluded.amazonLast,
     ebayLast = excluded.ebayLast,
-    googleLast = excluded.googleLast,
+    googleLast = excluded.googleLast;
 `);
 
 const PRICES = db.query(`

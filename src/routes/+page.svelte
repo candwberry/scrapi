@@ -54,7 +54,7 @@
     );
     let fields = await response.json();
     fields = fields.filter(
-      (field) => !["lastUpdated", "supplier", "berry"].includes(field.name),
+      (field) => !["ebayLast", "amazonLast", "googleLast", "supplier", "berry"].includes(field.name),
     );
     fields = fields.map((field) => field.name);
     return fields;

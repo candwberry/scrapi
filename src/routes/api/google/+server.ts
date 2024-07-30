@@ -235,7 +235,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
     try {
         if (batch === "true") {
                 try {
-                const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc`);
+                const resp = await fetch(`${baseUrl}/api/db/products?orderby=googleLast&order=desc`);
                 const products = await resp.json();
                 isBatchProcessing.status = true;
                 isBatchProcessing.total = products.length;
@@ -286,7 +286,9 @@ export const GET: RequestHandler = async ({ request, url }) => {
                                         supplierCode: product.supplierCode,
                                         supplier: product.supplier,
                                         title: product.title,
-                                        lastUpdated: Date.now()
+                                        amazonLast: product.amazonLast,
+                                        ebayLast: product.ebayLast,
+                                        googleLast: Date.now()
                                     }]),
                                     headers: {
                                         "Content-Type": "application/json",

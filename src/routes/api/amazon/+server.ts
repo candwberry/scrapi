@@ -153,7 +153,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
     try {
         if (batch === "true") {
                 try {
-                const resp = await fetch(`${baseUrl}/api/db/products?orderby=lastUpdated&order=desc&limit=100000`);
+                const resp = await fetch(`${baseUrl}/api/db/products?orderby=amazonLast&order=desc&limit=100000`);
                 const products = await resp.json();
                 isBatchProcessing.status = true;
                 isBatchProcessing.total = products.length;
@@ -179,7 +179,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
                     const batchProducts = products.slice(start, end);
                     isBatchProcessing.processed += batchProducts.length;
 
-                    const batchPromises = batchProducts.map(async (product: { berry: string; title: string; barcode: string; supplierCode: string; supplier: string; }) => {
+                    const batchPromises = batchProducts.map(async (product: { barcode: string; title: string; berry: any; supplierCode: any; supplier: any; ebayLast: any; googleLast: any; }) => {
                         try {
                             const items = await amazon(product.barcode === "" ? product.title : product.barcode);
                             console.log(items);
@@ -206,7 +206,9 @@ export const GET: RequestHandler = async ({ request, url }) => {
                                         supplierCode: product.supplierCode,
                                         supplier: product.supplier,
                                         title: product.title,
-                                        lastUpdated: Date.now()
+                                        amazonLast: Date.now(),
+                                        ebayLast: product.ebayLast,
+                                        googleLast: product.googleLast
                                     }]),
                                     headers: {
                                         "Content-Type": "application/json",
