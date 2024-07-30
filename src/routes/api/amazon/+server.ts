@@ -141,7 +141,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
         });
     }
     if (batch === "check") {
-        if (isBatchProcessing.errorArray.length > 10) {
+        if (isBatchProcessing.errorArray.length > 10) 
             isBatchProcessing.errorArray.splice(0, isBatchProcessing.errorArray.length - 10);
         return new Response(JSON.stringify({ isBatchProcessing }), {
             headers: {
