@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Chromium and its dependencies
 RUN apt-get update && apt-get install -y \
-    chromium \
+    chromium-browser \
     fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
