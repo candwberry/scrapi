@@ -25,7 +25,7 @@ jobs:
       - name: Run new container
         if: success()
         run: |
-          docker run -d --name scrapi -p 80:8080 -e EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} scrapi:latest /bin/sh -c "bun ."
+          docker run -d --name scrapi -p 80:8080 --cap-add=SYS_ADMIN -e EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} scrapi:latest /bin/sh -c "bun ."
       
       - name: Notify on failure
         if: failure()

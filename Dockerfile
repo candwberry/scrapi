@@ -24,7 +24,8 @@ RUN apt update -qq \
       dumb-init \
       fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst \
     && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /src/*.deb
+    && rm -rf /src/*.deb \
+    && echo 'export CHROME_DEVEL_SANDBOX=/usr/bin/chrome-devel-sandbox' >> /etc/environment
 
 # Copy project to /home/scrapi
 COPY . /home/scrapi

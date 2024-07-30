@@ -20,16 +20,26 @@ const isBatchProcessing = {
     ],
 };
 
-
 async function initBrowser() {
     // /usr/bin/chromium --no-sandbox --headless --disable-gpu --disable-dev-shm-usage --remote-debugging-port=9222 --disable-software-rasterizer
     try {
         clog("LAUNCHING BROWSER");
         browser = await puppeteer.launch({
+            executablePath: '/usr/bin/chromium',
             headless: true,
-            args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222', '--disable-software-rasterizer', '--disable-features=NetworkServiceInProcess2'],
-            timeout: 1000000
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu'
+            ],
+            timeout: 30000
         });
+        
+        
         clog("BROWSER LAUNCHED");
     } catch (err) {
         cerror("Failed to launch browser:", err);
