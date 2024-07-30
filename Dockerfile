@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM alekzonder/puppeteer:latest
 
 # Install curl and other dependencies
 RUN apt-get update && apt-get install -y curl unzip
