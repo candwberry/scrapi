@@ -22,10 +22,11 @@ const isBatchProcessing = {
 
 
 async function initBrowser() {
+    // /usr/bin/chromium --no-sandbox --headless --disable-gpu --disable-dev-shm-usage --remote-debugging-port=9222 --disable-software-rasterizer
     try {
         browser = await puppeteer.launch({
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+            args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222', '--disable-software-rasterizer'],
             executablePath: '/usr/bin/chromium',
             timeout: 1000000
         });
