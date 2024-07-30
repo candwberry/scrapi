@@ -4,8 +4,10 @@ FROM oven/bun:debian
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Chromium and its dependencies
+RUN apt-get update 
+RUN apt install software-properties-common
 RUN add-apt-repository universe
-RUN apt-get update && apt-get install -y \
+RUN apt-get install -y \
     chromium-browser \
     fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf \
     --no-install-recommends \
