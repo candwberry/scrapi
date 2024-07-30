@@ -50,7 +50,7 @@ function cerror(msg: string, error: any) {
     console.error(error);
     isBatchProcessing.errorArray.push({
         error: msg,
-        info: error
+        info: JSON.stringify(error)
     });
 }
 
