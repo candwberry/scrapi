@@ -1,10 +1,12 @@
-FROM ubuntu:22.04
+FROM oven/bun:debian
 
+# Set non-interactive frontend flag
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV CHROME_PATH=/usr/bin/chromium
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install Chromium and its dependencies
 RUN apt update -qq \
     && apt install -qq -y --no-install-recommends \
       curl \
@@ -23,12 +25,6 @@ RUN apt update -qq \
       fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /src/*.deb
-
-# Install Bun
-RUN curl -fsSL https://bun.sh/install | bash
-
-# Add Bun to PATH
-ENV PATH="/root/.bun/bin:${PATH}"
 
 # Copy project to /home/scrapi
 COPY . /home/scrapi
