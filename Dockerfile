@@ -1,9 +1,10 @@
-FROM --platform=linux/arm64 oven/bun:debian
+FROM oven/bun:debian
 
 # Set non-interactive frontend flag
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Chromium and its dependencies
+RUN add-apt-repository universe
 RUN apt-get update && apt-get install -y \
     chromium-browser \
     fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf \
