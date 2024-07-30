@@ -62,6 +62,7 @@ async function amazon(query: string) {
 
         console.log("NEWPAGE");
         page = await browser.newPage();
+        /*
         await page.setRequestInterception(true);
         page.on('request', (req: HTTPRequest) => {
             const resourceType = req.resourceType();
@@ -74,7 +75,7 @@ async function amazon(query: string) {
                 req.abort();
             else
                 req.continue();
-        });
+        });*/
 
         clog("GOING TO PAGE");
         await page.goto(`https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`, { waitUntil: "networkidle0" });
