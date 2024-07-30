@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Chromium and its dependencies
 RUN apt-get update 
-RUN apt install software-properties-common
+RUN apt install -y software-properties-common
 RUN add-apt-repository universe
 RUN apt-get install -y \
     chromium-browser \
