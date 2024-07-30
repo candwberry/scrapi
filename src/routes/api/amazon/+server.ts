@@ -24,8 +24,8 @@ const isBatchProcessing = {
 async function initBrowser() {
     try {
         browser = await puppeteer.launch({
-            headless: false,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
             executablePath: '/usr/bin/chromium',
             timeout: 1000000
         });

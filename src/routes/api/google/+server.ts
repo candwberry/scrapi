@@ -125,8 +125,8 @@ async function findPrice(page: Page): Promise<string> {
 async function initBrowser() {
     try {
         browser = await puppeteer.launch({
-            headless: false,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
             timeout: 1000000
         });
     } catch (err) {
