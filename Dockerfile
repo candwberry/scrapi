@@ -1,7 +1,13 @@
-FROM oven/bun:debian
+FROM ubuntu:22.04
 
-# Set non-interactive frontend flag
-ENV DEBIAN_FRONTEND=noninteractive
+# Install curl and other dependencies
+RUN apt-get update && apt-get install -y curl unzip
+
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash
+
+# Add Bun to PATH
+ENV PATH="/root/.bun/bin:${PATH}"
 
 # Install Chromium and its dependencies
 RUN apt-get update && \
@@ -9,9 +15,10 @@ RUN apt-get update && \
     add-apt-repository universe && \
     apt-get update && \
     apt-get install -y chromium-browser
-    
+
 # Set the Chrome executable path
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 # Copy project to /home/scrapi
 COPY . /home/scrapi
