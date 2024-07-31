@@ -13,11 +13,11 @@
   import { debounce } from "lodash";
   let tooltipContent = "";
 
-let tooltipX = 0;
-let tooltipY = 0;
+  let tooltipX = 0;
+  let tooltipY = 0;
 
-let dbSearchQuery = '';
-  let clientSearchQuery = '';
+  let dbSearchQuery = "";
+  let clientSearchQuery = "";
   let allRows = writable([]);
   let filteredRows = writable([]);
 
@@ -38,10 +38,10 @@ let dbSearchQuery = '';
       return;
     }
     const lowercaseQuery = clientSearchQuery.toLowerCase();
-    const filtered = rows.filter(row => 
-      Object.values(row).some(value => 
-        String(value).toLowerCase().includes(lowercaseQuery)
-      )
+    const filtered = rows.filter((row) =>
+      Object.values(row).some((value) =>
+        String(value).toLowerCase().includes(lowercaseQuery),
+      ),
     );
     filteredRows.set(filtered);
   }
@@ -64,30 +64,31 @@ let dbSearchQuery = '';
       });
   }
 
-
-async function fetchProductDetails(berry: string) {
-  try {
-    const response = await fetch(`/api/db/products?berry=${berry}`);
-    const data = await response.json();
-    // [] of {shop: "", price:""}. Find ebay price:
-    const ebayPrice = data.find((product: { shop: string }) => product.shop === "ebay");
-    const amazonPrice = data.find((product: { shop: string }) => product.shop === "amazon");
-    const title = data[0].title +"<br>";
-    let resp = title ;
-    if (ebayPrice) {
-      resp += `Ebay: <strong>£${ebayPrice.price}</strong><br>`;
+  async function fetchProductDetails(berry: string) {
+    try {
+      const response = await fetch(`/api/db/products?berry=${berry}`);
+      const data = await response.json();
+      // [] of {shop: "", price:""}. Find ebay price:
+      const ebayPrice = data.find(
+        (product: { shop: string }) => product.shop === "ebay",
+      );
+      const amazonPrice = data.find(
+        (product: { shop: string }) => product.shop === "amazon",
+      );
+      const title = data[0].title + "<br>";
+      let resp = title;
+      if (ebayPrice) {
+        resp += `Ebay: <strong>£${ebayPrice.price}</strong><br>`;
+      }
+      if (amazonPrice) {
+        resp += `Amazon: <strong>£${amazonPrice.price}</strong><br>`;
+      }
+      return resp;
+    } catch (error) {
+      console.error("Error fetching product details:", error);
+      return "Error fetching product details";
     }
-    if (amazonPrice) {
-      resp += `Amazon: <strong>£${amazonPrice.price}</strong><br>`;
-    }
-    return resp;
-  } catch (error) {
-    console.error("Error fetching product details:", error);
-    return "Error fetching product details";
   }
-}
-
-
 
   const {
     elements: {
@@ -197,8 +198,8 @@ async function fetchProductDetails(berry: string) {
     reader.readAsText(file);
   }
 
-  let removeProductsNotInFile = writable(false);
-  $: console.log($removeProductsNotInFile);
+  let removeProductsNotInFile = false;
+  $: console.log({removeProductsNotInFile});
   const handleAllProducts = async () => {
     fileContents.shift(); // remove the header row
     const now = Date.now();
@@ -210,9 +211,9 @@ async function fetchProductDetails(berry: string) {
         supplierCode: values[columnNames.indexOf(supplierCodeColumn)] ?? "",
         title: values[columnNames.indexOf(titleColumn)] ?? "",
         supplier: "NA",
-        amazonLast: 0,
-        ebayLast: 0,
-        googleLast: 0,
+        amazonLast: Math.round(now / 1000), // so we can delete old products.
+        ebayLast: Math.round(now / 1000), // so we can delete old products.
+        googleLast: Math.round(now / 1000), // so we can delete old products.
       };
     });
 
@@ -248,10 +249,11 @@ async function fetchProductDetails(berry: string) {
     }
 
     open.set(false);
+    console.log(removeProductsNotInFile);
 
-    if (false && removeProductsNotInFile) {
+    if (removeProductsNotInFile) {
       // remove products that are not in the file
-      
+
       try {
         const resp = await fetch(`/api/db/products?lastUpdated=${now}`, {
           method: "DELETE",
@@ -282,9 +284,8 @@ async function fetchProductDetails(berry: string) {
       });
   }
 
-    // Debounced version of searchDatabase
-    const debouncedSearchDatabase = debounce(searchDatabase, 300);
-
+  // Debounced version of searchDatabase
+  const debouncedSearchDatabase = debounce(searchDatabase, 300);
 
   async function getAll() {
     const resp = await fetch("/api/db");
@@ -348,7 +349,9 @@ async function fetchProductDetails(berry: string) {
 
   async function handleExport() {
     try {
-      const response = goto(`/api/db?export=${encodeURIComponent(exportOption)}`);
+      const response = goto(
+        `/api/db?export=${encodeURIComponent(exportOption)}`,
+      );
     } catch (error) {
       console.error("Export error:", error);
     }
@@ -431,7 +434,9 @@ async function fetchProductDetails(berry: string) {
               class="w-full p-2 border rounded"
               bind:value={exportOption}
             >
-              <option value="productsWithLatestPrices">Products with Prices</option>
+              <option value="productsWithLatestPrices"
+                >Products with Prices</option
+              >
               <option value="products">All Products</option>
               <option value="prices">All Prices</option>
             </select>
@@ -525,102 +530,106 @@ async function fetchProductDetails(berry: string) {
             {/if}
           </div>
 
-
           {#if fileName}
             <p class="font-bold">Selected file: {fileName}</p>
             {#if $progress == 0}
-
-            <p class="mb-4">
-              Select the column names that match up to each field.<br />I will
-              try match them for you.
-            </p>
+              <p class="mb-4">
+                Select the column names that match up to each field.<br />I will
+                try match them for you.
+              </p>
             {/if}
           {/if}
           {#if $progress == 0}
+            {#if columnNames.length > 0}
+              <div class="mb-4">
+                <label for="berrySKU" class="block mb-2 font-bold"
+                  >Berry SKU</label
+                >
+                <select
+                  id="berrySKU"
+                  class="w-full p-2 border rounded"
+                  bind:value={berrySKUColumn}
+                >
+                  {#each columnNames as column}
+                    <option value={column}>{column}</option>
+                  {/each}
+                </select>
+              </div>
 
-          {#if columnNames.length > 0}
-            <div class="mb-4">
-              <label for="berrySKU" class="block mb-2 font-bold">Berry SKU</label>
-              <select
-                id="berrySKU"
-                class="w-full p-2 border rounded"
-                bind:value={berrySKUColumn}
-              >
-                {#each columnNames as column}
-                  <option value={column}>{column}</option>
-                {/each}
-              </select>
-            </div>
+              <div class="mb-4">
+                <label for="supplierCode" class="block mb-2 font-bold"
+                  >Supplier Code</label
+                >
+                <select
+                  id="supplierCode"
+                  class="w-full p-2 border rounded"
+                  bind:value={supplierCodeColumn}
+                >
+                  {#each columnNames as column}
+                    <option value={column}>{column}</option>
+                  {/each}
+                </select>
+              </div>
 
-            <div class="mb-4">
-              <label for="supplierCode" class="block mb-2 font-bold">Supplier Code</label>
-              <select
-                id="supplierCode"
-                class="w-full p-2 border rounded"
-                bind:value={supplierCodeColumn}
-              >
-                {#each columnNames as column}
-                  <option value={column}>{column}</option>
-                {/each}
-              </select>
-            </div>
+              <div class="mb-4">
+                <label for="barcode" class="block mb-2 font-bold">Barcode</label
+                >
+                <select
+                  id="barcode"
+                  class="w-full p-2 border rounded"
+                  bind:value={barcodeColumn}
+                >
+                  {#each columnNames as column}
+                    <option value={column}>{column}</option>
+                  {/each}
+                </select>
+              </div>
 
-            <div class="mb-4">
-              <label for="barcode" class="block mb-2 font-bold">Barcode</label>
-              <select
-                id="barcode"
-                class="w-full p-2 border rounded"
-                bind:value={barcodeColumn}
-              >
-                {#each columnNames as column}
-                  <option value={column}>{column}</option>
-                {/each}
-              </select>
-            </div>
-
-            <div class="mb-4">
-              <label for="title" class="block mb-2 font-bold">Title</label>
-              <select
-                id="title"
-                class="w-full p-2 border rounded"
-                bind:value={titleColumn}
-              >
-                {#each columnNames as column}
-                  <option value={column}>{column}</option>
-                {/each}
-              </select>
-            </div>
-          {/if}
+              <div class="mb-4">
+                <label for="title" class="block mb-2 font-bold">Title</label>
+                <select
+                  id="title"
+                  class="w-full p-2 border rounded"
+                  bind:value={titleColumn}
+                >
+                  {#each columnNames as column}
+                    <option value={column}>{column}</option>
+                  {/each}
+                </select>
+              </div>
+            {/if}
           {/if}
 
           {#if fileName}
-          <div class="mt-6 flex justify-between gap-4 items-center">
-            <div class="flex flex-row">
+            <div class="mt-6 flex justify-between gap-4 items-center">
+              <div class="flex flex-row">
                 <p><strong>Delete old</strong></p>
-                <Switch bind:value={removeProductsNotInFile}/>
+                <Switch onChange={(value) => {
+                  removeProductsNotInFile = value;
+                }} />
               </div>
               <div class="flex flex-row gap-4">
                 <button
-              use:melt={$close}
-              class="inline-flex h-8 items-center justify-center rounded-sm
+                  use:melt={$close}
+                  class="inline-flex h-8 items-center justify-center rounded-sm
               bg-zinc-100 px-4 font-medium leading-none text-zinc-600"
-              >
-              Cancel
-            </button>
-            {#if $progress == 0}
-            <button
-            on:click={handleAllProducts}
-            class="inline-flex h-8 items-center justify-center rounded-sm
+                >
+                  Cancel
+                </button>
+                {#if $progress == 0}
+                  <button
+                    on:click={handleAllProducts}
+                    class="inline-flex h-8 items-center justify-center rounded-sm
             bg-berry-100 px-4 font-medium leading-none text-berry-900"
-            >
-            Add Products
-          </button>             
-            {/if} 
-        </div>    
-      </div>
-      {/if}
-      <button
-      use:melt={$close}
+                  >
+                    Add Products
+                  </button>
+                {/if}
+              </div>
+            </div>
+          {/if}
+          <button
+            use:melt={$close}
             aria-label="close"
             class="absolute right-4 top-4 inline-flex h-6 w-6 appearance-none
                   items-center justify-center rounded-full p-1 text-berry-800
@@ -634,34 +643,39 @@ async function fetchProductDetails(berry: string) {
   </div>
 
   <input
-  type="text"
-  placeholder="Search database (Berry SKU)"
-  bind:value={dbSearchQuery}
-  on:input={() => debouncedSearchDatabase(dbSearchQuery)}
-  class="p-2 rounded-lg w-full shadow"
-/>
+    type="text"
+    placeholder="Search database (Berry SKU)"
+    bind:value={dbSearchQuery}
+    on:input={() => debouncedSearchDatabase(dbSearchQuery)}
+    class="p-2 rounded-lg w-full shadow"
+  />
 
-<!-- Client-side search bar -->
-<input
-  type="text"
-  placeholder="Search current results"
-  bind:value={clientSearchQuery}
-  class="p-2 rounded-lg w-full shadow"
-/>
+  <!-- Client-side search bar -->
+  <input
+    type="text"
+    placeholder="Search current results"
+    bind:value={clientSearchQuery}
+    class="p-2 rounded-lg w-full shadow"
+  />
 
   <Input name="query" bind:value={query} callback={customQuery} />
 </div>
 
-<p class="text-red-500 font-xs "> <!--h-5-->
+<p class="text-red-500 font-xs">
+  <!--h-5-->
   {error}
 </p>
 
-
-<div use:melt={$root} class="relative h-full w-full max-w-full overflow-hidden rounded-md border bg-white text-magnum-900 shadow-lg">
+<div
+  use:melt={$root}
+  class="relative h-full w-full max-w-full overflow-hidden rounded-md border bg-white text-magnum-900 shadow-lg"
+>
   <div use:melt={$viewport} class="h-full w-full max-w-full rounded-[inherit]">
     <div use:melt={$scrollContent}>
       <div class="p-4">
-        <h4 class="mb-4 font-semibold leading-none">Results ({$filteredRows.length} / {$rows.length})</h4>
+        <h4 class="mb-4 font-semibold leading-none">
+          Results ({$filteredRows.length} / {$rows.length})
+        </h4>
         <table class="w-full max-w-full">
           <thead>
             <tr>
@@ -696,13 +710,19 @@ async function fetchProductDetails(berry: string) {
                   </td>
                 {/if}
                 {#each Object.entries(row) as [key, value]}
-                  {#if key !== 'berry' && key !== 'href'}
+                  {#if key !== "berry" && key !== "href"}
                     <td class="p-2 break-all">{value}</td>
                   {/if}
                 {/each}
                 {#if row.href}
-                  <td class="p-2 break-all w-[600px] min-w-[600px] text-blue-500">
-                    <a href={row.href} target="_blank" rel="noopener noreferrer">
+                  <td
+                    class="p-2 break-all w-[600px] min-w-[600px] text-blue-500"
+                  >
+                    <a
+                      href={row.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       {row.href}
                     </a>
                   </td>

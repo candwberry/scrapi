@@ -110,15 +110,16 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
 }
 
 export const DELETE: RequestHandler = async ({ request, url, params }) => {
-    return new Response("Not implemented", { status: 501 });
+    console.log("CALLING DELETE");
     const table: string = params.table ?? "sqlite_master";
     let lastUpdated = url.searchParams.get("lastUpdated") || "";
     console.log(request);
 
     let query = `DELETE FROM ${table}`;
     if (lastUpdated.length > 0 && table === "products") {
-        query += ` WHERE ebayLast < ${lastUpdated};`; // we will use EBAYLAST as the DELETE reference.
-    }
+        query += ` WHERE ebayLast != ${Math.round(parseInt(lastUpdated) / 1000)};`; // we will use EBAYLAST as the DELETE reference.
+    };
+    console.log(query);
 
     if (!(TABLES).includes(table as Table))
         return err(ERR_INVALID_TABLE, `Valid tables are: ${TABLES.join(", ")}`);

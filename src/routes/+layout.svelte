@@ -24,7 +24,6 @@
       title: 'Tools',
       icon: 'folder',
       children: [
-        { title: 'Schedule', icon: 'schedule' },
         { title: 'Excel', icon: 'excel' },
         { title: 'Shell', icon: 'terminal' },
       ],

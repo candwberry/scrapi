@@ -7,7 +7,6 @@ SELECT name FROM sqlite_master WHERE type='table';
 export const GET: RequestHandler = async ({ request, url }) => {
     const expo = url.searchParams.get("export") || "";
     const q = url.searchParams.get("query") || "";
-    console.log(expo, q);
 
     if (q !== "") {
         try {
@@ -21,7 +20,6 @@ export const GET: RequestHandler = async ({ request, url }) => {
     if (expo === "") {
         try {
             const result = query.all();
-            console.log(result);
 
             for (let i = 0; i < result.length; i++) {
                 //@ts-ignore
@@ -30,7 +28,6 @@ export const GET: RequestHandler = async ({ request, url }) => {
                 //@ts-ignore
                 result[i].count = count["COUNT(*)"];
             }
-            console.log(result);
 
             return ok(result);
         } catch (e: any) {

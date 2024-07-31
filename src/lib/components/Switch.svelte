@@ -1,8 +1,10 @@
 <script lang="ts">
     import { createSwitch, melt } from '@melt-ui/svelte';
-    import { writable } from 'svelte/store';
-  
-    export let value = writable(false);
+    
+    export let onChange;
+    let value = false;
+    $: console.log(value);
+    $: onChange(value)
     const {
       elements: { root, input },
     } = createSwitch();
@@ -21,10 +23,11 @@
         class="relative h-6 cursor-default rounded-full bg-black/20 transition-colors data-[state=checked]:bg-berry-600"
         id="airplane-mode"
         aria-labelledby="airplane-mode-label"
+        on:click={() => (value = !value)}
       >
         <span class="thumb block rounded-full bg-white transition" />
       </button>
-      <input use:melt={$input} bind:value={value}/>
+      <input use:melt={$input} bind:value/>
     </div>
   </form>
   
