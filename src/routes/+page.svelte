@@ -40,12 +40,24 @@
   }
 
 
+  /**
+     * @type {any[]}
+     */
   let productFields = [];
+  /**
+     * @type {number}
+     */
   let draggedItem;
   let status = false;
   let total = 0;
   let processed = 0;
+  /**
+     * @type {any[]}
+     */
   let errorArray = [];
+  /**
+     * @type {number | Timer | undefined}
+     */
   let intervalId;
 
   async function getProductFields() {
@@ -54,9 +66,9 @@
     );
     let fields = await response.json();
     fields = fields.filter(
-      (field) => !["ebayLast", "amazonLast", "googleLast", "supplier", "berry"].includes(field.name),
+      (/** @type {{ name: string; }} */ field) => !["ebayLast", "amazonLast", "googleLast", "supplier", "berry"].includes(field.name),
     );
-    fields = fields.map((field) => field.name);
+    fields = fields.map((/** @type {{ name: any; }} */ field) => field.name);
     return fields;
   }
 
@@ -131,7 +143,11 @@
     }
   }
 
+  /**
+     * @param {string} modemode
+     */
   function startBatchProcessing(modemode) {
+    console.log(modemode);
     const itemsPerSearch = document.getElementById("items-per-search").value;
     const businessesOnly = document.getElementById("businesses-only").checked;
     const priceType = document.querySelector(
@@ -140,13 +156,15 @@
     const queryPriority = productFields;
     fetch(`/api/${modemode}?batch=true`)
       .then(() => {
-        status = true;
       })
       .catch((error) => {
         console.error("Error starting batch processing:", error);
       });
   }
 
+  /**
+     * @param {string} modemode
+     */
   function stopBatchProcessing(modemode) {
     fetch(`/api/${modemode}?batch=stop`)
       .then(() => {
@@ -166,11 +184,19 @@
     clearInterval(intervalId);
   });
 
+  /**
+     * @param {DragEvent & { currentTarget: EventTarget & HTMLLIElement; }} event
+     * @param {number} index
+     */
   function dragStart(event, index) {
     draggedItem = index;
     event.dataTransfer.effectAllowed = "move";
   }
 
+  /**
+     * @param {DragEvent & { currentTarget: EventTarget & HTMLLIElement; }} event
+     * @param {number} index
+     */
   function dragOver(event, index) {
     event.preventDefault();
     if (index !== draggedItem) {
@@ -201,6 +227,9 @@
   let amazonStatus = false;
   let amazonTotal = 0;
   let amazonProcessed = 0;
+  /**
+     * @type {any[]}
+     */
   let amazonErrorArray = [];
 
 
@@ -208,6 +237,9 @@
 let googleStatus = false;
 let googleTotal = 0;
 let googleProcessed = 0;
+    /**
+     * @type {any[]}
+     */
 let googleErrorArray = [];
 
 </script>

@@ -153,13 +153,15 @@ export const GET: RequestHandler = async ({ request, url }) => {
     try {
         if (batch === "true") {
                 try {
+                console.log("HELLO");
                 const resp = await fetch(`${baseUrl}/api/db/products?orderby=amazonLast&order=desc&limit=100000`);
                 const products = await resp.json();
                 isBatchProcessing.status = true;
                 isBatchProcessing.total = products.length;
                 isBatchProcessing.processed = 0;
                 isBatchProcessing.errorArray = [];
-    
+                console.log("PRODUCTS", products);
+                
                 const batchSize = 1; // increasing this makes
                 // the browser available check fail for whatever number that is, so youll get N browsers opening at once
                 // we can prevent this by checking if a browser is loading, but its just easier to do this anyway i would think.
@@ -167,6 +169,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
                 const numBatches = Math.ceil(totalProducts / batchSize);
 
                 for (let i = 0; i < numBatches; i++) {
+                    console.log("BATCH", i);
                     if (!isBatchProcessing.status) {
                         return new Response(JSON.stringify({ isBatchProcessing }), {
                             headers: {
