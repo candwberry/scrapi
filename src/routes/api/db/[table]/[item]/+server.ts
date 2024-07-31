@@ -7,7 +7,7 @@ const primaryKeyQuery = db.query(`SELECT name FROM pragma_table_info(?1) WHERE p
 
 export const GET: RequestHandler = async ({ request, url, params }) => {
     const table: string = params.table ?? "sqlite_master";
-    const q: string = params.query ?? "";
+    const q: string = params.item ?? "";
 
     if (!(TABLES).includes(table as Table))
         return err(ERR_INVALID_TABLE, `Valid tables are: ${TABLES.join(", ")}`);

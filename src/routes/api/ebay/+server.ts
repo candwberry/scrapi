@@ -32,6 +32,7 @@ const isBatchProcessing = {
     ],
     limit: 5000,
     remaining: 5000,
+    estimatedTime: "0s"
 };
 
 export const GET: RequestHandler = async ({ request, url }) => {

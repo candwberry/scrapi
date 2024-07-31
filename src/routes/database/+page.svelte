@@ -49,7 +49,7 @@
   // Watch for changes in the client search query
   $: {
     applyClientFilter($allRows);
-    console.log("Client search query changed:", clientSearchQuery);
+    clientSearchQuery = clientSearchQuery + ""; // this is necessary, leave it
   }
 
   // Modified selectAll function
@@ -199,7 +199,7 @@
   }
 
   let removeProductsNotInFile = false;
-  $: console.log({removeProductsNotInFile});
+  $: console.log({ removeProductsNotInFile });
   const handleAllProducts = async () => {
     fileContents.shift(); // remove the header row
     const now = Date.now();
@@ -345,6 +345,20 @@
     forceVisible: true,
   });
 
+  const {
+    elements: {
+      trigger: queryTrigger,
+      overlay: queryOverlay,
+      content: queryContent,
+      title: queryTitle,
+      close: queryClose,
+      portalled: queryPortalled,
+    },
+    states: { open: queryOpen },
+  } = createDialog({
+    forceVisible: true,
+  });
+
   let exportOption = "productsWithLatestPrices";
 
   async function handleExport() {
@@ -359,6 +373,66 @@
   }
 
   let rows = writable([]);
+  let products = writable([]);
+  let suppliers = writable([]);
+  let newSupplierName = "";
+  let newSupplierUrl = "";
+
+  async function fetchSuppliers() {
+    try {
+      const response = await fetch('/api/db/suppliers');
+      const data = await response.json();
+      suppliers.set(data);
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+    }
+  }
+
+  async function addNewSupplier() {
+    try {
+      const response = await fetch('/api/db/suppliers', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([{ name: newSupplierName }]),
+      });
+      const data = await response.json();
+      console.log(data);
+      fetchSuppliers();
+      newSupplierName = "";
+      newSupplierUrl = "";
+    } catch (error) {
+      console.error('Error adding new supplier:', error);
+    }
+  }
+
+  async function updateProductSupplier(productId, supplierId) {
+    if (supplierId === "") return;
+    const product = $products.find(p => p.berry === productId);
+    try {
+      await fetch(`/api/db/products/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([{ 
+          berry: product.berry,
+          barcode: product.barcode,
+          title: product.title,
+          supplier: supplierId,
+          supplierCode: product.supplierCode,
+          amazonLast: product.amazonLast,
+          ebayLast: product.ebayLast,
+          googleLast: product.googleLast
+         }]), // the above could overwrite a just written amazon, ebay, googelLast but too much effort to change right now lol
+         // change this to a PUT later at /api/db/products/{berry}
+      });
+      products.update(p => p.filter(product => product.id !== productId));
+    } catch (error) {
+      console.error('Error updating product supplier:', error);
+    }
+  }
 </script>
 
 <div class="w-full flex flex-col bg-black/10 p-4 rounded-lg gap-4">
@@ -372,27 +446,11 @@
     >
     </select>
     <button
-      use:melt={$trigger}
-      class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3
-      font-medium leading-none text-berry-700 shadow hover:opacity-90 gap-3"
-    >
-      ADD&nbsp;PRODUCTS <svg
-        xmlns="http://www.w3.org/2000/svg"
-        height="24px"
-        viewBox="0 -960 960 960"
-        width="24px"
-        fill="#aaa"
-        ><path
-          d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v268q-19-9-39-15.5t-41-9.5v-243H200v560h242q3 22 9.5 42t15.5 38H200Zm0-120v40-560 243-3 280Zm80-40h163q3-21 9.5-41t14.5-39H280v80Zm0-160h244q32-30 71.5-50t84.5-27v-3H280v80Zm0-160h400v-80H280v80ZM720-40q-83 0-141.5-58.5T520-240q0-83 58.5-141.5T720-440q83 0 141.5 58.5T920-240q0 83-58.5 141.5T720-40Zm-20-80h40v-100h100v-40H740v-100h-40v100H600v40h100v100Z"
-        /></svg
-      >
-    </button>
-    <button
       use:melt={$exportTrigger}
       class="inline-flex items-center justify-center rounded-xl bg-berry-600 px-4 py-3
     font-medium leading-none text-white shadow hover:opacity-90 gap-3"
     >
-      EXPORT
+      
       <svg
         xmlns="http://www.w3.org/2000/svg"
         height="24px"
@@ -405,6 +463,31 @@
         />
       </svg>
     </button>
+    <button
+      use:melt={$trigger}
+      class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3
+      font-medium leading-none text-berry-700 shadow hover:opacity-90 gap-3"
+    >
+       <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="24px"
+        viewBox="0 -960 960 960"
+        width="24px"
+        fill="#009845"
+        ><path
+          d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v268q-19-9-39-15.5t-41-9.5v-243H200v560h242q3 22 9.5 42t15.5 38H200Zm0-120v40-560 243-3 280Zm80-40h163q3-21 9.5-41t14.5-39H280v80Zm0-160h244q32-30 71.5-50t84.5-27v-3H280v80Zm0-160h400v-80H280v80ZM720-40q-83 0-141.5-58.5T520-240q0-83 58.5-141.5T720-440q83 0 141.5 58.5T920-240q0 83-58.5 141.5T720-40Zm-20-80h40v-100h100v-40H740v-100h-40v100H600v40h100v100Z"
+        /></svg
+      >
+    </button>
+
+    <button
+    use:melt={$queryTrigger}
+    class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3
+  font-medium leading-none text- shadow hover:opacity-90 gap-3"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000"><path d="m720-430 80 80v190q0 33-23.5 56.5T720-80H160q-33 0-56.5-23.5T80-160v-560q0-33 23.5-56.5T160-800h220q-8 18-12 38.5t-6 41.5H160v560h560v-270Zm52-174 128 128-56 56-128-128q-21 12-45 20t-51 8q-75 0-127.5-52.5T440-700q0-75 52.5-127.5T620-880q75 0 127.5 52.5T800-700q0 27-8 51t-20 45Zm-152 4q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29ZM160-430v270-560 280-12 22Z"/></svg>
+  </button>
+
     {#if $exportOpen}
       <div class="" use:melt={$exportPortalled}>
         <div
@@ -459,6 +542,58 @@
           </div>
           <button
             use:melt={$exportClose}
+            aria-label="close"
+            class="absolute right-4 top-4 inline-flex h-6 w-6 appearance-none
+                items-center justify-center rounded-full p-1 text-berry-800
+                hover:bg-berry-100 focus:shadow-berry-400"
+          >
+            <X class="size-4" />
+          </button>
+        </div>
+      </div>
+    {/if}
+
+    {#if $queryOpen}
+      <div class="" use:melt={$queryPortalled}>
+        <div
+          use:melt={$queryOverlay}
+          class="fixed inset-0 z-50 bg-black/50"
+          transition:fade={{ duration: 150 }}
+        />
+        <div
+          class="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw]
+        max-w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white
+        p-6 shadow-lg"
+          use:melt={$queryContent}
+          transition:fade={{ duration: 150 }}
+        >
+          <h2
+            use:melt={$queryTitle}
+            class="m-0 text-lg font-medium text-black"
+          >
+            Structured QUERY Language
+          </h2>
+          <div class="my-4 h-full">
+            <Input name="query" bind:value={query} callback={customQuery} />
+
+          </div>
+          <div class="mt-6 flex justify-end gap-4">
+            <button
+              use:melt={$queryClose}
+              class="inline-flex h-8 items-center justify-center rounded-sm
+                    bg-zinc-100 px-4 font-medium leading-none text-zinc-600"
+            >
+              Cancel
+            </button>
+            <button
+              class="inline-flex h-8 items-center justify-center rounded-sm
+                    bg-berry-100 px-4 font-medium leading-none text-berry-900"
+            >
+              Execute
+            </button>
+          </div>
+          <button
+            use:melt={$queryClose}
             aria-label="close"
             class="absolute right-4 top-4 inline-flex h-6 w-6 appearance-none
                 items-center justify-center rounded-full p-1 text-berry-800
@@ -604,9 +739,11 @@
             <div class="mt-6 flex justify-between gap-4 items-center">
               <div class="flex flex-row">
                 <p><strong>Delete old</strong></p>
-                <Switch onChange={(value) => {
-                  removeProductsNotInFile = value;
-                }} />
+                <Switch
+                  onChange={(value) => {
+                    removeProductsNotInFile = value;
+                  }}
+                />
               </div>
               <div class="flex flex-row gap-4">
                 <button
@@ -640,7 +777,11 @@
         </div>
       </div>
     {/if}
+
+    
   </div>
+
+  <div class="flex flex-row gap-2">
 
   <input
     type="text"
@@ -658,13 +799,39 @@
     class="p-2 rounded-lg w-full shadow"
   />
 
-  <Input name="query" bind:value={query} callback={customQuery} />
+  </div>
+
+
+  
+</div>
+
+<div class="flex gap-2 mb-2 bg-[#e2e2e2] p-4 rounded-xl">
+  <input
+    type="text"
+    placeholder="Supplier Name"
+    bind:value={newSupplierName}
+    class="p-2 rounded-lg flex-grow"
+  />
+  <!--
+  <input
+    type="url"
+    placeholder="Supplier URL"
+    bind:value={newSupplierUrl}
+    class="p-2 rounded-lg flex-grow"
+  />-->
+  <button
+    on:click={addNewSupplier}
+    class="bg-berry-600 text-white px-4 py-2 rounded-lg hover:bg-berry-700"
+  >
+    Add Supplier
+  </button>
 </div>
 
 <p class="text-red-500 font-xs">
   <!--h-5-->
   {error}
 </p>
+
 
 <div
   use:melt={$root}
@@ -709,9 +876,24 @@
                     {row.berry}
                   </td>
                 {/if}
+                
+    
                 {#each Object.entries(row) as [key, value]}
-                  {#if key !== "berry" && key !== "href"}
+                  {#if key !== "berry" && key !== "href" && key !== "supplier"}
                     <td class="p-2 break-all">{value}</td>
+                  {:else if key === "supplier"}
+                  <select
+                  on:change={(e) => updateProductSupplier(product.berry, e.target.value)}
+                  class="p-2 rounded-lg"
+                >
+                  <option value="">{row.supplier}</option>
+                  {#if $suppliers.length === 0}
+                    <option value="" disabled>No suppliers found. Please add some above.</option>
+                  {/if}
+                  {#each $suppliers as supplier}
+                    <option value={supplier.name}>{supplier.name}</option>
+                  {/each}
+                </select>
                   {/if}
                 {/each}
                 {#if row.href}

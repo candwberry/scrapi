@@ -1,13 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { writable } from "svelte/store";
-  import Switch from "$lib/components/Switch.svelte";
-  import { createDialog, melt } from "@melt-ui/svelte";
-  import X from "lucide-svelte/icons/x";
-  import { fade } from "svelte/transition";
-  import Progress from "$lib/components/Progress.svelte";
-  import { createScrollArea } from "@melt-ui/svelte";
-  import Tooltip from "$lib/components/Tooltip.svelte";
 
   // Stores for task management
   let currentTask = writable('label-suppliers');
@@ -136,6 +129,7 @@
       <p class="mb-4">This isn't really important and is just admin for the sake of admin. It will allow you to easily select all products from a certain supplier later on.</p>
     <!-- Add New Supplier Form -->
     <div class="mb-10 p-4 bg-berry-100 rounded-lg">
+      {#if $suppliers.length === 0}
       <h3 class="text-lg font-semibold mb-2">Existing Suppliers</h3>
       <div class="grid gap-2 grid-cols-6">
       {#each $suppliers as supplier}
@@ -143,7 +137,8 @@
           <span class="flex-grow">{supplier.name}</span>
         </div>
       {/each}
-    </div>
+      </div>
+      {/if}
     
       <h3 class="text-lg font-semibold my-2">Add New Supplier</h3>
       <div class="flex gap-2 mb-2">
