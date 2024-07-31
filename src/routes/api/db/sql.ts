@@ -94,8 +94,9 @@ const createSupplierTable = `CREATE TABLE IF NOT EXISTS suppliers (
 const createShopTable = `CREATE TABLE IF NOT EXISTS shops (
     name TEXT PRIMARY KEY,
     url TEXT,
-    priceRegex TEXT
+    priceJSON TEXT
 );`;
+// Doing priceJSON so i can adjust structure without faffing with table.
 
 export type {
     Product,

@@ -10,7 +10,8 @@
   import FileSpreadsheet from 'lucide-svelte/icons/file-spreadsheet';
   import Hammer from 'lucide-svelte/icons/hammer';
   import Tag from 'lucide-svelte/icons/tag';
-  type Icon = 'folder' |'home' | 'schedule' | 'database' | 'settings' | 'terminal' | 'excel' | 'hammer' | 'tag';
+  import Pickaxe from 'lucide-svelte/icons/pickaxe';
+  type Icon = 'folder' |'home' | 'schedule' | 'database' | 'settings' | 'terminal' | 'excel' | 'hammer' | 'tag' | 'pickaxe';
 
   export type TreeItem = {
     title: string;
@@ -31,6 +32,7 @@
     excel: FileSpreadsheet,
     hammer: Hammer,
     tag: Tag,
+    pickaxe: Pickaxe
   };
 </script>
 
