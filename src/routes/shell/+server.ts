@@ -18,14 +18,7 @@ async function executeCommand(command: string): Promise<{ stdout: string; stderr
         return {
             stdout: result.stdout.toString(),
             stderr: ''
-        };
-        
-        try {
-            Bun.$`pwd`.cwd(newDir);
-            return { stdout: '', stderr: '' };
-        } catch (error) {
-            return { stdout: '', stderr: `cd: ${error.message}` };
-        }
+        };        
     } else {
         try {
             const result = await Bun.$`${command.split(" ")}`;
