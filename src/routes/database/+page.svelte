@@ -383,20 +383,20 @@
 
   async function fetchSuppliers() {
     try {
-      const response = await fetch('/api/db/suppliers');
+      const response = await fetch("/api/db/suppliers");
       const data = await response.json();
       suppliers.set(data);
     } catch (error) {
-      console.error('Error fetching suppliers:', error);
+      console.error("Error fetching suppliers:", error);
     }
   }
 
   async function addNewSupplier() {
     try {
-      const response = await fetch('/api/db/suppliers', {
-        method: 'PUT',
+      const response = await fetch("/api/db/suppliers", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify([{ name: newSupplierName }]),
       });
@@ -406,39 +406,41 @@
       newSupplierName = "";
       newSupplierUrl = "";
     } catch (error) {
-      console.error('Error adding new supplier:', error);
+      console.error("Error adding new supplier:", error);
     }
   }
 
   async function updateProductSupplier(productId, supplierId) {
     if (supplierId === "") return;
-    const product = $products.find(p => p.berry === productId);
+    const product = $products.find((p) => p.berry === productId);
     try {
       await fetch(`/api/db/products/`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify([{ 
-          berry: product.berry,
-          barcode: product.barcode,
-          title: product.title,
-          supplier: supplierId,
-          supplierCode: product.supplierCode,
-          amazonLast: product.amazonLast,
-          ebayLast: product.ebayLast,
-          googleLast: product.googleLast
-         }]), // the above could overwrite a just written amazon, ebay, googelLast but too much effort to change right now lol
-         // change this to a PUT later at /api/db/products/{berry}
+        body: JSON.stringify([
+          {
+            berry: product.berry,
+            barcode: product.barcode,
+            title: product.title,
+            supplier: supplierId,
+            supplierCode: product.supplierCode,
+            amazonLast: product.amazonLast,
+            ebayLast: product.ebayLast,
+            googleLast: product.googleLast,
+          },
+        ]), // the above could overwrite a just written amazon, ebay, googelLast but too much effort to change right now lol
+        // change this to a PUT later at /api/db/products/{berry}
       });
-      products.update(p => p.filter(product => product.id !== productId));
+      products.update((p) => p.filter((product) => product.id !== productId));
     } catch (error) {
-      console.error('Error updating product supplier:', error);
+      console.error("Error updating product supplier:", error);
     }
   }
 </script>
 
-<div class="w-full flex flex-col bg-black/10 p-4 rounded-lg gap-4" >
+<div class="w-full flex flex-col bg-black/10 p-4 rounded-lg gap-4">
   <div class="flex flex-row w-full gap-4">
     <select
       bind:this={tableSelect}
@@ -453,7 +455,6 @@
       class="inline-flex items-center justify-center rounded-xl bg-berry-600 px-4 py-3
     font-medium leading-none text-white shadow hover:opacity-90 gap-3"
     >
-      
       <svg
         xmlns="http://www.w3.org/2000/svg"
         height="24px"
@@ -471,7 +472,7 @@
       class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3
       font-medium leading-none text-berry-700 shadow hover:opacity-90 gap-3"
     >
-       <svg
+      <svg
         xmlns="http://www.w3.org/2000/svg"
         height="24px"
         viewBox="0 -960 960 960"
@@ -484,12 +485,21 @@
     </button>
 
     <button
-    use:melt={$queryTrigger}
-    class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3
+      use:melt={$queryTrigger}
+      class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3
   font-medium leading-none text- shadow hover:opacity-90 gap-3"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000"><path d="m720-430 80 80v190q0 33-23.5 56.5T720-80H160q-33 0-56.5-23.5T80-160v-560q0-33 23.5-56.5T160-800h220q-8 18-12 38.5t-6 41.5H160v560h560v-270Zm52-174 128 128-56 56-128-128q-21 12-45 20t-51 8q-75 0-127.5-52.5T440-700q0-75 52.5-127.5T620-880q75 0 127.5 52.5T800-700q0 27-8 51t-20 45Zm-152 4q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29ZM160-430v270-560 280-12 22Z"/></svg>
-  </button>
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="24px"
+        viewBox="0 -960 960 960"
+        width="24px"
+        fill="#000"
+        ><path
+          d="m720-430 80 80v190q0 33-23.5 56.5T720-80H160q-33 0-56.5-23.5T80-160v-560q0-33 23.5-56.5T160-800h220q-8 18-12 38.5t-6 41.5H160v560h560v-270Zm52-174 128 128-56 56-128-128q-21 12-45 20t-51 8q-75 0-127.5-52.5T440-700q0-75 52.5-127.5T620-880q75 0 127.5 52.5T800-700q0 27-8 51t-20 45Zm-152 4q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29ZM160-430v270-560 280-12 22Z"
+        /></svg
+      >
+    </button>
 
     {#if $exportOpen}
       <div class="" use:melt={$exportPortalled}>
@@ -570,15 +580,11 @@
           use:melt={$queryContent}
           transition:fade={{ duration: 150 }}
         >
-          <h2
-            use:melt={$queryTitle}
-            class="m-0 text-lg font-medium text-black"
-          >
+          <h2 use:melt={$queryTitle} class="m-0 text-lg font-medium text-black">
             Structured QUERY Language
           </h2>
           <div class="my-4 h-full">
             <Input name="query" bind:value={query} callback={customQuery} />
-
           </div>
           <div class="mt-6 flex justify-end gap-4">
             <button
@@ -588,8 +594,9 @@
             >
               Cancel
             </button>
-            <button on:click={customQuery}
-            use:melt={$queryClose}
+            <button
+              on:click={customQuery}
+              use:melt={$queryClose}
               class="inline-flex h-8 items-center justify-center rounded-sm
                     bg-berry-100 px-4 font-medium leading-none text-berry-900"
             >
@@ -781,32 +788,25 @@
         </div>
       </div>
     {/if}
-
-    
   </div>
 
   <div class="flex flex-row gap-2">
+    <input
+      type="text"
+      placeholder="Search database (Berry SKU)"
+      bind:value={dbSearchQuery}
+      on:input={() => debouncedSearchDatabase(dbSearchQuery)}
+      class="p-2 rounded-lg w-full shadow"
+    />
 
-  <input
-    type="text"
-    placeholder="Search database (Berry SKU)"
-    bind:value={dbSearchQuery}
-    on:input={() => debouncedSearchDatabase(dbSearchQuery)}
-    class="p-2 rounded-lg w-full shadow"
-  />
-
-  <!-- Client-side search bar -->
-  <input
-    type="text"
-    placeholder="Search current results"
-    bind:value={clientSearchQuery}
-    class="p-2 rounded-lg w-full shadow"
-  />
-
+    <!-- Client-side search bar -->
+    <input
+      type="text"
+      placeholder="Search current results"
+      bind:value={clientSearchQuery}
+      class="p-2 rounded-lg w-full shadow"
+    />
   </div>
-
-
-  
 </div>
 
 <div class="flex gap-2 mb-2 bg-[#e2e2e2] p-4 rounded-xl">
@@ -835,7 +835,6 @@
   <!--h-5-->
   {error}
 </p>
-
 
 <div
   use:melt={$root}
@@ -880,24 +879,26 @@
                     {row.berry}
                   </td>
                 {/if}
-                
-    
+
                 {#each Object.entries(row) as [key, value]}
                   {#if key !== "berry" && key !== "href" && key !== "supplier"}
                     <td class="p-2 break-all">{value}</td>
                   {:else if key === "supplier"}
-                  <select
-                  on:change={(e) => updateProductSupplier(product.berry, e.target.value)}
-                  class="p-2 rounded-lg"
-                >
-                  <option value="">{row.supplier}</option>
-                  {#if $suppliers.length === 0}
-                    <option value="" disabled>No suppliers found. Please add some above.</option>
-                  {/if}
-                  {#each $suppliers as supplier}
-                    <option value={supplier.name}>{supplier.name}</option>
-                  {/each}
-                </select>
+                    <select
+                      on:change={(e) =>
+                        updateProductSupplier(product.berry, e.target.value)}
+                      class="p-2 rounded-lg"
+                    >
+                      <option value="">{row.supplier}</option>
+                      {#if $suppliers.length === 0}
+                        <option value="" disabled
+                          >No suppliers found. Please add some above.</option
+                        >
+                      {/if}
+                      {#each $suppliers as supplier}
+                        <option value={supplier.name}>{supplier.name}</option>
+                      {/each}
+                    </select>
                   {/if}
                 {/each}
                 {#if row.href}
@@ -939,7 +940,7 @@
   <div use:melt={$corner} />
 </div>
 
-{#if querying} 
+{#if querying}
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
     <div class="bg-white p-4 rounded-lg shadow-lg">
       <p class="text-center">Pulling data...</p>

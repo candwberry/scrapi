@@ -18,6 +18,7 @@ const isBatchProcessing = {
     processed: 0,
     errorArray: [
     ],
+    estimatedTime: "0s"
 };
 
 async function initBrowser() {
@@ -127,6 +128,13 @@ async function amazon(query: string) {
     }
 }
 
+function getDecentTime(time: number) {
+    if (time < 1000) return `${time.toFixed(0)}ms`;
+    if (time < 60000) return `${(time / 1000).toFixed(0)}s`;
+    if (time < 3600000) return `${(time / 60000).toFixed(0)}m`;
+    return `${(time / 3600000).toFixed(0)}h`;
+}
+
 export const GET: RequestHandler = async ({ request, url }) => {
     const baseUrl = url.origin;
     const query = url.searchParams.get("query") ?? "";
@@ -153,6 +161,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
     try {
         if (batch === "true") {
                 try {
+                const startTime = Date.now();
                 console.log("HELLO");
                 const resp = await fetch(`${baseUrl}/api/db/products?orderby=amazonLast&order=desc&limit=100000`);
                 const products = await resp.json();
@@ -167,8 +176,12 @@ export const GET: RequestHandler = async ({ request, url }) => {
                 // we can prevent this by checking if a browser is loading, but its just easier to do this anyway i would think.
                 const totalProducts = products.length;
                 const numBatches = Math.ceil(totalProducts / batchSize);
-
                 for (let i = 0; i < numBatches; i++) {
+                    const currentTime = Date.now();
+                    const timeElapsed = currentTime - startTime;
+                    const timePerItem = timeElapsed / (isBatchProcessing.processed + 0.1);
+                    const timeRemaining = timePerItem * (totalProducts - isBatchProcessing.processed);
+                    isBatchProcessing.estimatedTime = getDecentTime(timeRemaining);
                     console.log("BATCH", i);
                     if (!isBatchProcessing.status) {
                         return new Response(JSON.stringify({ isBatchProcessing }), {

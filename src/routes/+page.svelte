@@ -5,17 +5,12 @@
   import { fade } from "svelte/transition";
   import { mode } from "$lib/stores";
   import { writable } from "svelte/store";
-  import { goto } from "$app/navigation";
   import Input from "$lib/components/Input.svelte";
   import Combobox from "$lib/components/Combobox.svelte";
 
   let query = "";
   let productFields: any[] = [];
   let draggedItem: number;
-  let status = false;
-  let total = 0;
-  let processed = 0;
-  let errorArray: any[] = [];
   let intervalId: number | Timer | undefined;
 
   const ebay = writable({
@@ -23,13 +18,15 @@
     total: 0,
     processed: 0,
     errorArray: [],
-    rateLimit: 5000,
-    rateRemaining: 5000,
-    estimatedTime: 0,
+    limit: 5000,
+    remaining: 5000,
+    estimatedTime: "0s",
   });
+
   let ebayProgress = 0;
   $: ebayProgress =
-    $ebay.total == 0 ? 0 : ($ebay.processed / $ebay.total) * 100;
+    $ebay.total == 0 ? 0 : ($ebay.processed / $ebay.total);
+  $: console.log(ebayProgress);
 
   let manualResponse = writable({
     first: {
@@ -96,9 +93,6 @@
     forceVisible: true,
   });
 
-  let rateLimit = 5000;
-  let rateRemaining = 5000;
-
   const {
     elements: {
       trigger: amazonTrigger,
@@ -125,6 +119,22 @@
     } catch (error) {
       console.error("Error checking batch status:", error);
     }
+    try {
+      const response = await fetch("/api/amazon?batch=check");
+      let data = await response.json();
+      data = data["isBatchProcessing"];
+      amazon.set(data);
+    } catch (error) {
+      console.error("Error checking batch status:", error);
+    }
+    try {
+      const response = await fetch("/api/google?batch=check");
+      let data = await response.json();
+      data = data["isBatchProcessing"];
+      google.set(data);
+    } catch (error) {
+      console.error("Error checking batch status:", error);
+    }
   }
 
   function startBatchProcessing(modemode: string) {
@@ -147,7 +157,7 @@
   onMount(async () => {
     productFields = await getProductFields();
     checkBatchStatus();
-    intervalId = setInterval(checkBatchStatus, 1000);
+    intervalId = setInterval(checkBatchStatus, 100);
   });
 
   onDestroy(() => {
@@ -179,35 +189,42 @@
   function setTab(newTab: string) {
     if (tab === newTab) tab = "";
     else tab = newTab;
+    console.log(tab);
   }
+
+  const amazon = writable({
+  status: false,
+  total: 0,
+  processed: 0,
+  errorArray: [],
+  limit: 5000,
+  remaining: 5000,
+  estimatedTime: "0s",
+});
+
+let amazonProgress = 0;
+$: amazonProgress =
+  $amazon.total == 0 ? 0 : ($amazon.processed / $amazon.total);
+
 </script>
 
-<div class="flex flex-col gap-16 h-full">
-  <div
-    class={`w-full flex flex-col relative w-full gap-4 text-nowrap p-4 pb-0 items-center rounded-xl transition-all bg-white shadow ${status ? "" : ""}`}
-  >
+<div class="flex flex-col gap-8 h-full w-full max-w-full">
+  <!-- eBay Block-->
+  <div class={`w-half flex flex-col relative gap-4 text-nowrap p-4 pb-0 items-center rounded-xl transition-all bg-[#f7f7f7] shadow ${$ebay.status ? "" : ""}`}>
     <div
-      class="w-full flex flex-row text-nowrap gap-8 items-center justify-between"
+      class="w-full flex flex-row text-nowrap gap-8 items-center "
     >
       <p
-        class="text-2xl z-50 font-bold border-b flex justify-between flex-row items-center border-berry-600 ml-2 pb-1"
+        class="text-2xl z-50 font-bold border-b flex justify-between flex-row items-center border-berry-600 ml-2 pb-1 w-[13rem]"
       >
         eBay
       </p>
-      <p class="font-bold text-nowrap">
-        {status ? "I'm running!" : "Not running."}
-      </p>
-      <p>{$ebay.processed} / {total} Items</p>
-      <span class="text-xs text-nowrap"
-        >{rateRemaining} / {rateLimit} API calls</span
-      >
-      <p>EST: {$ebay.estimatedTime}</p>
       <div
         class="border border-gray-300 border-2 rounded-full p-2 w-full shadow"
       >
-        {#if errorArray.length > 0}
-          {#each errorArray.slice(-1) as error}
-            <div>{error}</div>
+        {#if $ebay.errorArray.length > 0}
+          {#each $ebay.errorArray.slice(-1) as error}
+            <div>{error.error}: {error.info}</div>
           {/each}
         {:else}
           <div>No information to display.</div>
@@ -234,8 +251,8 @@
       </button>
       <div>
         <button
-          class="bg-berry-600 text-white rounded-full px-4 py-2 font-bold shadow"
-          on:click={status === false
+          class={`${$ebay.status === false ? "bg-berry-600" : "bg-red-300"} text-white rounded-full px-4 py-2 font-bold shadow w-[10rem]`}
+          on:click={$ebay.status === false
             ? () => {
                 startBatchProcessing("ebay");
               }
@@ -243,15 +260,17 @@
                 stopBatchProcessing("ebay");
               }}
         >
-          {status === false ? "LAUNCH BATCH" : "CEASE BATCH"}
+          {$ebay.status === false ? "LAUNCH BATCH" : "PAUSE BATCH"}
         </button>
       </div>
     </div>
+    <div class="w-full flex flex-row justify-between items-center">
+      <p >EST: {$ebay.estimatedTime}</p>
+
     <div class="w-1/2 cursor-pointer" on:click={() => setTab("ebay")}>
       <div
-        on:click={() => setTab("ebay")}
         use:melt={$root}
-        class="relative h-6 w-full overflow-hidden rounded-[99999px] bg-black/10"
+        class="relative h-6 w-full overflow-hidden rounded-[99999px] bg-black/10 pointer-events-none"
       >
         <div
           on:click={() => setTab("ebay")}
@@ -260,6 +279,15 @@
           style={`transform: translateX(-${100 - 100 * (ebayProgress ?? 0)}%)`}
         />
       </div>
+    </div>
+    <div class="flex flex-row gap-4 items-center">
+      <p>{$ebay.processed} / {$ebay.total} Items</p>
+      <span class="text-xs text-nowrap"
+      >{$ebay.remaining} / {$ebay.limit} API calls</span
+    >
+      </div>
+
+
     </div>
     {#if tab === "ebay"}
       <div
@@ -324,9 +352,9 @@
         class="bg-red-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-4 h-40 overflow-y-auto"
         role="alert"
       >
-        <strong class="font-bold">Errors:</strong>
+        <strong class="font-bold">LOGS:</strong>
         <ul>
-          {#each errorArray as error}
+          {#each $ebay.errorArray as error}
             <li><strong>{error.error}:</strong> {error.info}</li>
           {/each}
         </ul>
@@ -334,6 +362,92 @@
     {/if}
     <div></div>
   </div>
+  <div class={`w-half flex flex-col relative gap-4 text-nowrap p-4 pb-0 items-center rounded-xl transition-all bg-[#f7f7f7] shadow ${$amazon.status ? "" : ""}`}>
+    <div class="w-full flex flex-row text-nowrap gap-8 items-center">
+      <p class="text-2xl z-50 font-bold border-b flex justify-between flex-row items-center border-berry-600 ml-2 pb-1 w-[13rem]">
+        Amazon
+      </p>
+      <div class="border border-gray-300 border-2 rounded-full p-2 w-full shadow">
+        {#if $amazon.errorArray.length > 0}
+          {#each $amazon.errorArray.slice(-1) as error}
+            <div>{error.error}: {error.info}</div>
+          {/each}
+        {:else}
+          <div>No information to display.</div>
+        {/if}
+      </div>
+      <button
+        use:melt={$amazonTrigger}
+        on:click={() => {
+          mode.set("amazon");
+        }}
+        class="inline-flex items-center justify-center rounded-full px-4 py-3 font-medium leading-none bg-berry-100 text-berry-600 text-lg shadow hover:opacity-90 gap-3"
+      >
+        Manual
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="16px"
+          viewBox="0 -960 960 960"
+          width="16px"
+          fill="#009845"
+        >
+          <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"></path>
+        </svg>
+      </button>
+      <div>
+        <button
+          class={`${$amazon.status === false ? "bg-berry-600" : "bg-red-300"} text-white rounded-full px-4 py-2 font-bold shadow w-[10rem]`}
+          on:click={$amazon.status === false
+            ? () => {
+                startBatchProcessing("amazon");
+              }
+            : () => {
+                stopBatchProcessing("amazon");
+              }}
+        >
+          {$amazon.status === false ? "LAUNCH BATCH" : "PAUSE BATCH"}
+        </button>
+      </div>
+    </div>
+    <div class="w-full flex flex-row justify-between items-center">
+      <p>EST: {$amazon.estimatedTime}</p>
+
+      <div class="w-1/2 cursor-pointer" on:click={() => setTab("amazon")}>
+        <div
+          use:melt={$root}
+          class="relative h-6 w-full overflow-hidden rounded-[99999px] bg-black/10 pointer-events-none"
+        >
+          <div
+            on:click={() => setTab("amazon")}
+            class="h-full w-full bg-berry-600 transition-transform duration-[1100ms] ease-[cubic-bezier(0.65,0,0.35,1)]"
+            style={`transform: translateX(-${100 - 100 * (amazonProgress ?? 0)}%)`}
+          />
+        </div>
+      </div>
+      <div class="flex flex-row gap-4 items-center">
+        <p>{$amazon.processed} / {$amazon.total} Items</p>
+        <span class="text-xs text-nowrap">♾️ / ♾️ API calls</span>
+      </div>
+    </div>
+    {#if tab === "amazon"}
+      <div class="bg-blue-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-6">
+        <!-- Add Amazon-specific settings here, similar to the eBay block -->
+      </div>
+      <div
+        class="bg-red-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-4 h-40 overflow-y-auto"
+        role="alert"
+      >
+        <strong class="font-bold">LOGS:</strong>
+        <ul>
+          {#each $amazon.errorArray as error}
+            <li><strong>{error.error}:</strong> {error.info}</li>
+          {/each}
+        </ul>
+      </div>
+    {/if}
+    <div></div>
+  </div>
+
 </div>
 
 {#if $open}

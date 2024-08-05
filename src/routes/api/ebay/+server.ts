@@ -35,6 +35,21 @@ const isBatchProcessing = {
     estimatedTime: "0s"
 };
 
+function clog(msg: string) {
+    console.log(msg);
+    isBatchProcessing.errorArray.push({
+       error: "INFO",
+       info: msg 
+    });
+}
+
+function getDecentTime(time: number) {
+    if (time < 1000) return `${time.toFixed(0)}ms`;
+    if (time < 60000) return `${(time / 1000).toFixed(0)}s`;
+    if (time < 3600000) return `${(time / 60000).toFixed(0)}m`;
+    return `${(time / 3600000).toFixed(0)}h`;
+}
+
 export const GET: RequestHandler = async ({ request, url }) => {
     const baseUrl = url.origin;
     const query = url.searchParams.get("query") ?? "";
@@ -61,6 +76,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
     
     if (batch === "true") {
         checkRateLimits()
+        const startTime = Date.now();
         // call /api/db/products to get all products
         const resp = await fetch(`${baseUrl}/api/db/products?orderby=ebayLast&order=desc&limit=${isBatchProcessing.remaining}`); // 5000 is eBay API call limit.
         const products = await resp.json();
@@ -83,12 +99,19 @@ export const GET: RequestHandler = async ({ request, url }) => {
                     }
                 });
             }
+            const currentTime = Date.now();
+            const timeElapsed = currentTime - startTime;
+            const timePerItem = timeElapsed / (isBatchProcessing.processed + 1);
+            const timeRemaining = timePerItem * (totalProducts - isBatchProcessing.processed);
+            isBatchProcessing.estimatedTime = getDecentTime(timeRemaining);
             isBatchProcessing.processed = i * batchSize;
             const start = i * batchSize;
             const end = Math.min((i + 1) * batchSize, totalProducts);
             const batchProducts = products.slice(start, end);
 
-            const batchPromises = batchProducts.map(async (product: { barcode: string; title: string; berry: any; supplierCode: any; supplier: any; }) => {
+            const batchPromises = batchProducts.map(async (product: { barcode: string; title: string; berry: any; supplierCode: any; supplier: any; amazonLast: any; googleLast: any; }) => {
+                clog(`Processing ${product.berry}`);
+
                 const items = await ebay(product.barcode === "" ? product.title : product.barcode, "1", "price", "buyingOptions:{FIXED_PRICE},conditions:{NEW},sellerAccountTypes:{BUSINESS}");
                 const itemSummaries = items.itemSummaries ?? [];
                 if (itemSummaries.length > 0) {
@@ -98,8 +121,6 @@ export const GET: RequestHandler = async ({ request, url }) => {
                     const href = item.itemWebUrl;
                     const body = JSON.stringify([{ berry: product.berry, price, shipping, date: Date.now(), shop: "ebay", href }]);
 
-                    // console.log(body);
-                    // console.log(product);
                     await fetch(`${baseUrl}/api/db/prices`, {
                         method: "PUT",
                         body: body,
@@ -176,4 +197,3 @@ async function checkRateLimits() {
 }
 
 checkRateLimits();
-// setInterval

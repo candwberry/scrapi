@@ -86,6 +86,7 @@
         use:melt={$input}
         class="flex h-10 items-center justify-between rounded-lg bg-white
             px-3 pr-12 text-black w-full"
+        style="outline: 2px solid black;"
         placeholder="eBay, Amazon, Google..."
       />
       <div class="absolute right-2 top-1/2 z-[999] -translate-y-1/2 text-berry-900">
