@@ -156,7 +156,7 @@
   onMount(async () => {
     productFields = await getProductFields();
     checkBatchStatus();
-    intervalId = setInterval(checkBatchStatus, 100);
+    intervalId = setInterval(checkBatchStatus, 1000);
   });
 
   onDestroy(() => {
