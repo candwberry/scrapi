@@ -67,9 +67,9 @@ let whereConnector = 'AND';
     
     if (whereConditions.length > 0) {
     const conditions = whereConditions
-      .filter(cond => cond.column && cond.operator && cond.value)
+      .filter(cond => cond.column && cond.value)
       .map((cond, index, array) => {
-        const conditionStr = `${cond.column} ${cond.operator} '${cond.value}'`;
+        const conditionStr = `${cond.column} ${cond.operator == "" ? "=" : cond.operator} '${cond.value}'`;
         return index < array.length - 1 ? `${conditionStr} ${cond.connector}` : conditionStr;
       })
       .join(' ');
@@ -165,7 +165,7 @@ let whereConnector = 'AND';
   }
 
   select {
-    border: grey 2px solid;
+    border: grey 1px solid;
   }
 </style>
 
@@ -180,7 +180,7 @@ style="margin-top: -56px"
         id="table-select"
         bind:value={selectedTable}
         on:change={handleTableSelect}
-        class="mt-1 block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-berry-500 focus:border-berry-500 rounded-md"
+        class="mt-1 block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-berry-600 focus:border-berry-600 rounded-md"
       >
         {#each tables as table}
           <option value={table.name}>{table.name}</option>
@@ -201,14 +201,15 @@ style="margin-top: -56px"
         </div>
       </div>
 
-      <div>
+      <div class="flex flex-col">
         <label class="block text-sm font-medium text-gray-700 mb-1">Conditions:</label>
         {#each whereConditions as condition, index}
 
           <div class="flex items-center space-x-2 mb-2">
             <select
               bind:value={condition.column}
-              class="block w-1/4 pl-3 pr-10 py-1 text-sm border-gray-300 focus:outline-none focus:ring-berry-500 focus:border-berry-500 rounded-md"
+              style="width: 40%"
+              class="block w-1/4 pl-3 pr-10 py-1 text-sm border-gray-300 focus:outline-none focus:ring-berry-600 focus:border-berry-600 rounded-md"
             >
               <option value="">Column</option>
               {#each columns as column}
@@ -217,30 +218,32 @@ style="margin-top: -56px"
             </select>
             <select
               bind:value={condition.operator}
-              class="block w-1/5 pl-3 pr-10 py-1 text-sm border-gray-300 focus:outline-none focus:ring-berry-500 focus:border-berry-500 rounded-md"
+              style="width: 15%"
+              class="flex w-[20%] 9 pl-3 pr-10 py-1 text-sm border-gray-300 focus:outline-none focus:ring-berry-600 focus:border-berry-600 rounded-md"
             >
-              <option value="">Operator</option>
+              <option value="">=</option>
               <option value=">">&gt;</option>
               <option value="<">&lt;</option>
               <option value=">=">&ge;</option>
               <option value="<=">&le;</option>
-              <option value="==">==</option>
               <option value="!=">!=</option>
             </select>
             <input
               type="text"
               bind:value={condition.value}
               placeholder="Value"
-              class="block w-1/4 px-3 py-1 text-sm bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-berry-500 focus:border-berry-500"
+              style="width: 40%"
+              class="block w-1/4 px-3 py-1 text-sm bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-berry-600 focus:border-berry-600"
             >
-            <button on:click={() => removeWhereCondition(index)} class="text-sm bg-berry-500 rounded-full text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 w-6 h-6 flex items-center justify-center">
-              x
+            <button on:click={() => removeWhereCondition(index)} style="min-width: 30px; min-height: 30px" class="text-sm font-bold bg-berry-600 rounded-full text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 w-6 h-6 flex items-center justify-center">
+              X
             </button>
           </div>
           {#if index < whereConditions.length - 1}
           <select
             bind:value={condition.connector}
-            class="block w-1/6 pl-3 pr-10 py-1 text-sm border-gray-300 focus:outline-none focus:ring-berry-500 focus:border-berry-500 rounded-md"
+            style="width: 20%; align-self: center;"
+            class="block w-[20%] pl-3 pr-10 py-1 mb-2 text-sm border-gray-300 focus:outline-none focus:ring-berry-600 focus:border-berry-600 rounded-md"
           >
             <option value="AND">AND</option>
             <option value="OR">OR</option>
@@ -249,8 +252,8 @@ style="margin-top: -56px"
   
         {/each}
         <div class="flex items-center space-x-2 mt-2">
-          <button on:click={addWhereCondition} class="text-sm bg-berry-500 rounded-full text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 w-6 h-6 flex items-center justify-center">
-            +
+          <button on:click={addWhereCondition} class="text-sm bg-berry-600 rounded-full text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 p-2 flex items-center justify-center">
+            Add another condition
           </button>
         </div>
       </div>
@@ -261,7 +264,7 @@ style="margin-top: -56px"
             <select
               id="order-by"
               bind:value={orderByColumn}
-              class="block w-2/3 pl-3 pr-10 py-1 text-sm border-gray-300 focus:outline-none focus:ring-berry-500 focus:border-berry-500 rounded-md"
+              class="block w-2/3 pl-3 pr-10 py-1 text-sm border-gray-300 focus:outline-none focus:ring-berry-600 focus:border-berry-600 rounded-md"
             >
               <option value="">None</option>
               {#each columns as column}
@@ -270,7 +273,7 @@ style="margin-top: -56px"
             </select>
             <select
               bind:value={orderDirection}
-              class="block w-1/3 pl-3 pr-10 py-1 text-sm border-gray-300 focus:outline-none focus:ring-berry-500 focus:border-berry-500 rounded-md"
+              class="block w-1/3 pl-3 pr-10 py-1 text-sm border-gray-300 focus:outline-none focus:ring-berry-600 focus:border-berry-600 rounded-md"
             >
               <option value="ASC">Ascending</option>
               <option value="DESC">Descending</option>
@@ -279,13 +282,13 @@ style="margin-top: -56px"
         </div>
 
         <div class="w-1/2">
-          <label for="limit" class="block text-sm font-medium text-gray-700 mb-1">LIMIT:</label>
+          <label for="limit" class="block text-sm font-medium text-gray-700 mb-1">Limit:</label>
           <input
             id="limit"
             type="number"
             bind:value={limit}
             min="1"
-            class="block w-full px-3 py-1 text-sm bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-berry-500 focus:border-berry-500"
+            class="block w-full px-3 py-1 text-sm bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-berry-600 focus:border-berry-600"
           >
         </div>
       </div>

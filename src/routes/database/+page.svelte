@@ -312,7 +312,9 @@
   });
 
   export let query = "";
+  let querying = false;
   async function customQuery() {
+    querying = true;
     console.log(query);
     await fetch(`/api/db?query=${encodeURIComponent(query)}`)
       .then((res) => res.json())
@@ -330,6 +332,7 @@
       .catch((err) => {
         error = err;
       });
+    querying = false;
   }
   const {
     elements: {
@@ -435,7 +438,7 @@
   }
 </script>
 
-<div class="w-full flex flex-col bg-black/10 p-4 rounded-lg gap-4">
+<div class="w-full flex flex-col bg-black/10 p-4 rounded-lg gap-4" >
   <div class="flex flex-row w-full gap-4">
     <select
       bind:this={tableSelect}
@@ -585,7 +588,8 @@
             >
               Cancel
             </button>
-            <button
+            <button on:click={customQuery}
+            use:melt={$queryClose}
               class="inline-flex h-8 items-center justify-center rounded-sm
                     bg-berry-100 px-4 font-medium leading-none text-berry-900"
             >
@@ -934,4 +938,12 @@
   </div>
   <div use:melt={$corner} />
 </div>
+
+{#if querying} 
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white p-4 rounded-lg shadow-lg">
+      <p class="text-center">Pulling data...</p>
+    </div>
+  </div>
+{/if}
 <Tooltip content={tooltipContent} x={tooltipX} y={tooltipY} />
