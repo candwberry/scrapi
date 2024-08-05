@@ -145,6 +145,9 @@
     }
   }
 
+  let tables = writable(["suppliers"]);
+  let selectedTable = "suppliers";
+
   let fileContents: string[] = [];
   function processFile(file: File) {
     fileName = file.name;
@@ -211,9 +214,15 @@
         supplierCode: values[columnNames.indexOf(supplierCodeColumn)] ?? "",
         title: values[columnNames.indexOf(titleColumn)] ?? "",
         supplier: "NA",
-        amazonLast: Math.round(now / 1000), // so we can delete old products.
-        ebayLast: Math.round(now / 1000), // so we can delete old products.
-        googleLast: Math.round(now / 1000), // so we can delete old products.
+        amazonLast: Math.round(now / 1000), 
+        ebayLast: Math.round(now / 1000), 
+        googleLast: Math.round(now / 1000), 
+        amazonJSON: JSON.stringify({
+          asin: "",
+          validated: "false",
+          lastUpdated: Math.round(now / 1000),
+          others: []
+        }),
       };
     });
 
@@ -295,6 +304,7 @@
       return;
     }
 
+    tables.set(data.map((table) => table.name));
     tableSelect.innerHTML = "";
     data.forEach((table: { name: string; count: number }) => {
       const option = document.createElement("option");
@@ -413,6 +423,7 @@
   async function updateProductSupplier(productId, supplierId) {
     if (supplierId === "") return;
     const product = $products.find((p) => p.berry === productId);
+    if (!product) return;
     try {
       await fetch(`/api/db/products/`, {
         method: "PUT",
@@ -429,6 +440,7 @@
             amazonLast: product.amazonLast,
             ebayLast: product.ebayLast,
             googleLast: product.googleLast,
+            amazonJSON: product.amazonJSON,
           },
         ]), // the above could overwrite a just written amazon, ebay, googelLast but too much effort to change right now lol
         // change this to a PUT later at /api/db/products/{berry}
@@ -789,11 +801,19 @@
       </div>
     {/if}
   </div>
+</div>
 
-  <div class="flex flex-row gap-2">
+<div class="flex flex-col gap-2 mb-2 bg-[#e2e2e2] p-4 rounded-xl">
+  <p>
+    <strong
+      >Search the database by B-Reference, or search any part of the results
+      below</strong
+    >
+  </p>
+  <div class="flex flex-row gap-4 w-full">
     <input
       type="text"
-      placeholder="Search database (Berry SKU)"
+      placeholder="Search database by B-REFERENCE"
       bind:value={dbSearchQuery}
       on:input={() => debouncedSearchDatabase(dbSearchQuery)}
       class="p-2 rounded-lg w-full shadow"
@@ -802,33 +822,49 @@
     <!-- Client-side search bar -->
     <input
       type="text"
-      placeholder="Search current results"
+      placeholder="Search the current table below."
       bind:value={clientSearchQuery}
       class="p-2 rounded-lg w-full shadow"
     />
   </div>
 </div>
 
-<div class="flex gap-2 mb-2 bg-[#e2e2e2] p-4 rounded-xl">
-  <input
-    type="text"
-    placeholder="Supplier Name"
-    bind:value={newSupplierName}
-    class="p-2 rounded-lg flex-grow"
-  />
-  <!--
+<div class="flex flex-col gap-2 mb-2 bg-[#e2e2e2] p-4 rounded-xl w-full">
+  <p class="w-full flex-grow">
+    <strong>Add an item to the database</strong>
+  </p>
+  <div class="w-full flex-grow flex flex-row justify-between">
+    <div class="flex flex-row gap-4">
+      <select
+        id="tableSelect"
+        class="p-2 rounded-lg flex-grow"
+        bind:value={selectedTable}
+      >
+        {#each $tables as table}
+          <option value={table}>{table}</option>
+        {/each}
+      </select>
+      <input
+        type="text"
+        placeholder="Supplier Name"
+        bind:value={newSupplierName}
+        class="p-2 rounded-lg flex-grow w-full"
+      />
+    </div>
+    <!--
   <input
     type="url"
     placeholder="Supplier URL"
     bind:value={newSupplierUrl}
     class="p-2 rounded-lg flex-grow"
   />-->
-  <button
-    on:click={addNewSupplier}
-    class="bg-berry-600 text-white px-4 py-2 rounded-lg hover:bg-berry-700"
-  >
-    Add Supplier
-  </button>
+    <button
+      on:click={addNewSupplier}
+      class="bg-berry-600 text-white px-4 py-2 rounded-lg hover:bg-berry-700"
+    >
+      Add Supplier
+    </button>
+  </div>
 </div>
 
 <p class="text-red-500 font-xs">
@@ -862,8 +898,8 @@
             </tr>
           </thead>
           <tbody>
-            {#each $filteredRows as row}
-              <tr>
+            {#each $filteredRows as row, index}
+              <tr class:even={index % 2 === 0}>
                 {#if row.berry}
                   <td
                     class="p-2 bg-berry-200 cursor-pointer"
@@ -884,21 +920,23 @@
                   {#if key !== "berry" && key !== "href" && key !== "supplier"}
                     <td class="p-2 break-all">{value}</td>
                   {:else if key === "supplier"}
-                    <select
-                      on:change={(e) =>
-                        updateProductSupplier(product.berry, e.target.value)}
-                      class="p-2 rounded-lg"
-                    >
-                      <option value="">{row.supplier}</option>
-                      {#if $suppliers.length === 0}
-                        <option value="" disabled
-                          >No suppliers found. Please add some above.</option
-                        >
-                      {/if}
-                      {#each $suppliers as supplier}
-                        <option value={supplier.name}>{supplier.name}</option>
-                      {/each}
-                    </select>
+                    <div style="margin: auto 0;">
+                      <select
+                        on:change={(e) =>
+                          updateProductSupplier(product.berry, e.target.value)}
+                        class="p-2 rounded-lg w-full shadow"
+                      >
+                        <option value="">{row.supplier}</option>
+                        {#if $suppliers.length === 0}
+                          <option value="" disabled
+                            >No suppliers found. Please add some above.</option
+                          >
+                        {/if}
+                        {#each $suppliers as supplier}
+                          <option value={supplier.name}>{supplier.name}</option>
+                        {/each}
+                      </select>
+                    </div>
                   {/if}
                 {/each}
                 {#if row.href}
@@ -948,3 +986,9 @@
   </div>
 {/if}
 <Tooltip content={tooltipContent} x={tooltipX} y={tooltipY} />
+
+<style>
+  .even {
+    background-color: #f9f9f9;
+  }
+</style>

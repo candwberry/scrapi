@@ -133,9 +133,18 @@ async function findPrice(page: Page): Promise<string> {
 async function initBrowser() {
     try {
         browser = await puppeteer.launch({
+            executablePath: '/usr/bin/chromium',
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
-            timeout: 1000000
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu'
+            ],
+            timeout: 30000
         });
     } catch (err) {
         console.error("Failed to launch browser:", err);
@@ -272,7 +281,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
                     const batchProducts = products.slice(start, end);
                     isBatchProcessing.processed += batchProducts.length;
 
-                    const batchPromises = batchProducts.map(async (product: { berry: string; title: string; barcode: string; supplierCode: string; supplier: string; }) => {
+                    const batchPromises = batchProducts.map(async (product: { barcode: string; title: string; berry: any; supplierCode: any; supplier: any; amazonLast: any; ebayLast: any; amazonJSON: any; }) => {
                         try {
                             const items = await google(product.barcode === "" ? product.title : product.barcode);
                             console.log(items);
@@ -301,7 +310,8 @@ export const GET: RequestHandler = async ({ request, url }) => {
                                         title: product.title,
                                         amazonLast: product.amazonLast,
                                         ebayLast: product.ebayLast,
-                                        googleLast: Date.now()
+                                        googleLast: Date.now(),
+                                        amazonJSON: product.amazonJSON
                                     }]),
                                     headers: {
                                         "Content-Type": "application/json",

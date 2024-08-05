@@ -1,12 +1,10 @@
 import { Database } from "bun:sqlite";
-
-
 import { createProductsTable, createPricesTable, createSupplierTable, createShopTable } from "./sql";
 const db = new Database("mydb.sqlite");
 db.exec("PRAGMA journal_mode = WAL;");
 
 // DROP prices table 
-//db.run(`DROP TABLE IF EXISTS prices;`);
+//db.run(`DROP TABLE IF EXISTS products;`);
 db.run(createProductsTable);
 db.run(createPricesTable);
 db.run(createSupplierTable);
@@ -32,8 +30,8 @@ const ERR_INVALID_SELECT_PARAM = "Invalid select parameter";
 const ERR_INVALID_TABLE = "Invalid table";
 
 const PRODUCTS = db.query(`
-    INSERT INTO products (berry, barcode, supplierCode, supplier, title, amazonLast, ebayLast, googleLast)
-    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+    INSERT INTO products (berry, barcode, supplierCode, supplier, title, amazonLast, ebayLast, googleLast, amazonJSON)
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
     ON CONFLICT(berry) DO UPDATE SET
     berry = excluded.berry,
     barcode = excluded.barcode,
@@ -43,6 +41,7 @@ const PRODUCTS = db.query(`
     amazonLast = excluded.amazonLast,
     ebayLast = excluded.ebayLast,
     googleLast = excluded.googleLast;
+    amazonJSON = excluded.amazonJSON;
 `);
 
 const PRICES = db.query(`
@@ -56,11 +55,12 @@ const SUPPLIERS = db.query(`
 `);
 
 const SHOPS = db.query(`
-    INSERT INTO shops (name, url)
-    VALUES (?1, ?2)
+    INSERT INTO shops (name, url, priceJSON)
+    VALUES (?1, ?2, ?3)
     ON CONFLICT(name) DO UPDATE SET
     name = excluded.name,
     url = excluded.url;
+    priceJSON = excluded.priceJSON;
 `);
 
 export { db, err, ok, ERR_INVALID_SELECT_PARAM, ERR_INVALID_TABLE, PRODUCTS, PRICES, SUPPLIERS, SHOPS };

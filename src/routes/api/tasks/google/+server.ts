@@ -12,8 +12,18 @@ let browser;
 async function initBrowser() {
     if (!browser || !browser.isConnected()) {
         browser = await puppeteer.launch({
+            executablePath: '/usr/bin/chromium',
             headless: false,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu'
+            ],
+            timeout: 30000
         });
     }
 }

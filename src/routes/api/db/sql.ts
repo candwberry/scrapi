@@ -6,7 +6,8 @@ type Product = {
     title: string,
     amazonLast: number,
     ebayLast: number,
-    googleLast: number
+    googleLast: number,
+    amazonJSON: string
 }; 
 
 type Price = {
@@ -24,7 +25,8 @@ type Supplier = {
 
 type Shop = {
     name: string,
-    url: string
+    url: string,
+    priceJSON: string
 };
 
 function isProduct(obj: any): obj is Product {
@@ -36,7 +38,8 @@ function isProduct(obj: any): obj is Product {
         typeof obj.title === 'string' &&
         typeof obj.amazonLast === 'number' &&
         typeof obj.ebayLast === 'number' &&
-        typeof obj.googleLast === 'number'
+        typeof obj.googleLast === 'number' &&
+        typeof obj.amazonJSON === 'string'
     );
 }
 
@@ -58,7 +61,8 @@ function isSupplier(obj: any): obj is Supplier {
 function isShop(obj: any): obj is Shop {
     return (
         typeof obj.name === 'string' &&
-        typeof obj.url === 'string'
+        typeof obj.url === 'string' &&
+        typeof obj.priceJSON === 'string'
     );
 }
 
@@ -75,7 +79,8 @@ const createProductsTable = `CREATE TABLE IF NOT EXISTS products (
     title TEXT,
     amazonLast INTEGER,
     ebayLast INTEGER,
-    googleLast INTEGER
+    googleLast INTEGER,
+    amazonJSON TEXT
 );`;
 
 const createPricesTable = `CREATE TABLE IF NOT EXISTS prices (

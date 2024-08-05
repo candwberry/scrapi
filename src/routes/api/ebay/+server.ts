@@ -109,7 +109,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
             const end = Math.min((i + 1) * batchSize, totalProducts);
             const batchProducts = products.slice(start, end);
 
-            const batchPromises = batchProducts.map(async (product: { barcode: string; title: string; berry: any; supplierCode: any; supplier: any; amazonLast: any; googleLast: any; }) => {
+            const batchPromises = batchProducts.map(async (product: { berry: any; barcode: string; title: string; supplierCode: any; supplier: any; amazonLast: any; googleLast: any; amazonJSON: any; }) => {
                 clog(`Processing ${product.berry}`);
 
                 const items = await ebay(product.barcode === "" ? product.title : product.barcode, "1", "price", "buyingOptions:{FIXED_PRICE},conditions:{NEW},sellerAccountTypes:{BUSINESS}");
@@ -138,7 +138,8 @@ export const GET: RequestHandler = async ({ request, url }) => {
                             title: product.title,
                             amazonLast: product.amazonLast,
                             ebayLast: Date.now(),
-                            googleLast: product.googleLast
+                            googleLast: product.googleLast,
+                            amazonJSON: product.amazonJSON
                         }]),
                         headers: {
                             "Content-Type": "application/json",

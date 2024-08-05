@@ -74,7 +74,6 @@ LEFT JOIN
          WHERE shop = 'amazon'
          GROUP BY berry
      )) a ON p.berry = a.berry;`
-      console.log("HI");
         }
 
         const result: unknown[] = db.query(query).all();
