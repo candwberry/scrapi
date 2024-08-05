@@ -24,8 +24,7 @@
   });
 
   let ebayProgress = 0;
-  $: ebayProgress =
-    $ebay.total == 0 ? 0 : ($ebay.processed / $ebay.total);
+  $: ebayProgress = $ebay.total == 0 ? 0 : $ebay.processed / $ebay.total;
   $: console.log(ebayProgress);
 
   let manualResponse = writable({
@@ -193,27 +192,40 @@
   }
 
   const amazon = writable({
-  status: false,
-  total: 0,
-  processed: 0,
-  errorArray: [],
-  limit: 5000,
-  remaining: 5000,
-  estimatedTime: "0s",
-});
+    status: false,
+    total: 0,
+    processed: 0,
+    errorArray: [],
+    limit: 5000,
+    remaining: 5000,
+    estimatedTime: "0s",
+  });
 
-let amazonProgress = 0;
-$: amazonProgress =
-  $amazon.total == 0 ? 0 : ($amazon.processed / $amazon.total);
+  let amazonProgress = 0;
+  $: amazonProgress =
+    $amazon.total == 0 ? 0 : $amazon.processed / $amazon.total;
 
+  const google = writable({
+    status: false,
+    total: 0,
+    processed: 0,
+    errorArray: [],
+    limit: Infinity,
+    remaining: Infinity,
+    estimatedTime: "0s",
+  });
+
+  let googleProgress = 0;
+  $: googleProgress =
+    $google.total == 0 ? 0 : $google.processed / $google.total;
 </script>
 
 <div class="flex flex-col gap-8 h-full w-full max-w-full">
   <!-- eBay Block-->
-  <div class={`w-half flex flex-col relative gap-4 text-nowrap p-4 pb-0 items-center rounded-xl transition-all bg-[#f7f7f7] shadow ${$ebay.status ? "" : ""}`}>
-    <div
-      class="w-full flex flex-row text-nowrap gap-8 items-center "
-    >
+  <div
+    class={`w-half flex flex-col relative gap-4 text-nowrap p-4 pb-0 items-center rounded-xl transition-all bg-[#f7f7f7] shadow ${$ebay.status ? "" : ""}`}
+  >
+    <div class="w-full flex flex-row text-nowrap gap-8 items-center">
       <p
         class="text-2xl z-50 font-bold border-b flex justify-between flex-row items-center border-berry-600 ml-2 pb-1 w-[13rem]"
       >
@@ -265,29 +277,27 @@ $: amazonProgress =
       </div>
     </div>
     <div class="w-full flex flex-row justify-between items-center">
-      <p >EST: {$ebay.estimatedTime}</p>
+      <p>EST: {$ebay.estimatedTime}</p>
 
-    <div class="w-1/2 cursor-pointer" on:click={() => setTab("ebay")}>
-      <div
-        use:melt={$root}
-        class="relative h-6 w-full overflow-hidden rounded-[99999px] bg-black/10 pointer-events-none"
-      >
+      <div class="w-1/2 cursor-pointer" on:click={() => setTab("ebay")}>
         <div
-          on:click={() => setTab("ebay")}
-          class="h-full w-full bg-berry-600 transition-transform duration-[1100ms]
+          use:melt={$root}
+          class="relative h-6 w-full overflow-hidden rounded-[99999px] bg-black/10 pointer-events-none"
+        >
+          <div
+            on:click={() => setTab("ebay")}
+            class="h-full w-full bg-berry-600 transition-transform duration-[1100ms]
           ease-[cubic-bezier(0.65,0,0.35,1)]"
-          style={`transform: translateX(-${100 - 100 * (ebayProgress ?? 0)}%)`}
-        />
+            style={`transform: translateX(-${100 - 100 * (ebayProgress ?? 0)}%)`}
+          />
+        </div>
       </div>
-    </div>
-    <div class="flex flex-row gap-4 items-center">
-      <p>{$ebay.processed} / {$ebay.total} Items</p>
-      <span class="text-xs text-nowrap"
-      >{$ebay.remaining} / {$ebay.limit} API calls</span
-    >
+      <div class="flex flex-row gap-4 items-center">
+        <p>{$ebay.processed} / {$ebay.total} Items</p>
+        <span class="text-xs text-nowrap"
+          >{$ebay.remaining} / {$ebay.limit} API calls</span
+        >
       </div>
-
-
     </div>
     {#if tab === "ebay"}
       <div
@@ -362,12 +372,18 @@ $: amazonProgress =
     {/if}
     <div></div>
   </div>
-  <div class={`w-half flex flex-col relative gap-4 text-nowrap p-4 pb-0 items-center rounded-xl transition-all bg-[#f7f7f7] shadow ${$amazon.status ? "" : ""}`}>
+  <div
+    class={`w-half flex flex-col relative gap-4 text-nowrap p-4 pb-0 items-center rounded-xl transition-all bg-[#f7f7f7] shadow ${$amazon.status ? "" : ""}`}
+  >
     <div class="w-full flex flex-row text-nowrap gap-8 items-center">
-      <p class="text-2xl z-50 font-bold border-b flex justify-between flex-row items-center border-berry-600 ml-2 pb-1 w-[13rem]">
+      <p
+        class="text-2xl z-50 font-bold border-b flex justify-between flex-row items-center border-berry-600 ml-2 pb-1 w-[13rem]"
+      >
         Amazon
       </p>
-      <div class="border border-gray-300 border-2 rounded-full p-2 w-full shadow">
+      <div
+        class="border border-gray-300 border-2 rounded-full p-2 w-full shadow"
+      >
         {#if $amazon.errorArray.length > 0}
           {#each $amazon.errorArray.slice(-1) as error}
             <div>{error.error}: {error.info}</div>
@@ -391,7 +407,9 @@ $: amazonProgress =
           width="16px"
           fill="#009845"
         >
-          <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"></path>
+          <path
+            d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"
+          ></path>
         </svg>
       </button>
       <div>
@@ -430,7 +448,9 @@ $: amazonProgress =
       </div>
     </div>
     {#if tab === "amazon"}
-      <div class="bg-blue-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-6">
+      <div
+        class="bg-blue-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-6"
+      >
         <!-- Add Amazon-specific settings here, similar to the eBay block -->
       </div>
       <div
@@ -448,6 +468,100 @@ $: amazonProgress =
     <div></div>
   </div>
 
+  <div
+    class={`w-half flex flex-col relative gap-4 text-nowrap p-4 pb-0 items-center rounded-xl transition-all bg-[#f7f7f7] shadow ${$google.status ? "" : ""}`}
+  >
+    <div class="w-full flex flex-row text-nowrap gap-8 items-center">
+      <p
+        class="text-2xl z-50 font-bold border-b flex justify-between flex-row items-center border-berry-600 ml-2 pb-1 w-[13rem]"
+      >
+        Google
+      </p>
+      <div
+        class="border border-gray-300 border-2 rounded-full p-2 w-full shadow"
+      >
+        {#if $google.errorArray.length > 0}
+          {#each $google.errorArray.slice(-1) as error}
+            <div>{error.error}: {error.info}</div>
+          {/each}
+        {:else}
+          <div>No information to display.</div>
+        {/if}
+      </div>
+      <button
+        on:click={() => {
+          mode.set("google");
+        }}
+        class="inline-flex items-center justify-center rounded-full px-4 py-3 font-medium leading-none bg-berry-100 text-berry-600 text-lg shadow hover:opacity-90 gap-3"
+      >
+        Manual
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="16px"
+          viewBox="0 -960 960 960"
+          width="16px"
+          fill="#009845"
+        >
+          <path
+            d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"
+          ></path>
+        </svg>
+      </button>
+      <div>
+        <button
+          class={`${$google.status === false ? "bg-berry-600" : "bg-red-300"} text-white rounded-full px-4 py-2 font-bold shadow w-[10rem]`}
+          on:click={$google.status === false
+            ? () => {
+                startBatchProcessing("google");
+              }
+            : () => {
+                stopBatchProcessing("google");
+              }}
+        >
+          {$google.status === false ? "LAUNCH BATCH" : "PAUSE BATCH"}
+        </button>
+      </div>
+    </div>
+    <div class="w-full flex flex-row justify-between items-center">
+      <p>EST: {$google.estimatedTime}</p>
+
+      <div class="w-1/2 cursor-pointer" on:click={() => setTab("google")}>
+        <div
+          use:melt={$root}
+          class="relative h-6 w-full overflow-hidden rounded-[99999px] bg-black/10 pointer-events-none"
+        >
+          <div
+            on:click={() => setTab("google")}
+            class="h-full w-full bg-berry-600 transition-transform duration-[1100ms] ease-[cubic-bezier(0.65,0,0.35,1)]"
+            style={`transform: translateX(-${100 - 100 * (googleProgress ?? 0)}%)`}
+          />
+        </div>
+      </div>
+      <div class="flex flex-row gap-4 items-center">
+        <p>{$google.processed} / {$google.total} Items</p>
+        <span class="text-xs text-nowrap">♾️ / ♾️ API calls</span>
+      </div>
+    </div>
+    {#if tab === "google"}
+      <div
+        class="bg-blue-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-6"
+      >
+        <!-- Add Google-specific settings here if needed -->
+      </div>
+      <div
+        class="bg-red-600/10 rounded-xl w-full flex flex-col p-4 mt-4 gap-4 h-40 overflow-y-auto"
+        role="alert"
+      >
+        <strong class="font-bold">LOGS:</strong>
+        <ul>
+          {#each $google.errorArray as error}
+            <li><strong>{error.error}:</strong> {error.info}</li>
+          {/each}
+        </ul>
+      </div>
+    {/if}
+    <div></div>
+  </div>
 </div>
 
 {#if $open}

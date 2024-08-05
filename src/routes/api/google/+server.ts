@@ -17,8 +17,16 @@ const isBatchProcessing = {
     total: 0,
     processed: 0,
     errorArray: [
-    ]
+    ],
+    estimatedTime: "0s"
 };
+
+function getDecentTime(time: number) {
+    if (time < 1000) return `${time.toFixed(0)}ms`;
+    if (time < 60000) return `${(time / 1000).toFixed(0)}s`;
+    if (time < 3600000) return `${(time / 60000).toFixed(0)}m`;
+    return `${(time / 3600000).toFixed(0)}h`;
+}
 
 async function findPrice(page: Page): Promise<string> {
     let price: string = "99999";
@@ -196,9 +204,7 @@ async function google(query: string) {
         }
 
         items.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-        for (let i = 0; i < items.length; i++) {
-            
-        }
+        return items;
     } catch (err) {
         console.error(`Error in google function for query "${query}":`, err);
         return [];
@@ -235,6 +241,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
     try {
         if (batch === "true") {
                 try {
+                const startTime = Date.now();
                 const resp = await fetch(`${baseUrl}/api/db/products?orderby=googleLast&order=desc`);
                 const products = await resp.json();
                 isBatchProcessing.status = true;
@@ -247,6 +254,12 @@ export const GET: RequestHandler = async ({ request, url }) => {
                 const numBatches = Math.ceil(totalProducts / batchSize);
 
                 for (let i = 0; i < numBatches; i++) {
+                    const currentTime = Date.now();
+                    const timeElapsed = currentTime - startTime;
+                    const timePerItem = timeElapsed / (isBatchProcessing.processed + 0.1);
+                    const timeRemaining = timePerItem * (totalProducts - isBatchProcessing.processed);
+                    isBatchProcessing.estimatedTime = getDecentTime(timeRemaining);
+
                     if (!isBatchProcessing.status) {
                         return new Response(JSON.stringify({ isBatchProcessing }), {
                             headers: {
@@ -325,10 +338,10 @@ export const GET: RequestHandler = async ({ request, url }) => {
             error(400, "No query provided");
         }
 
-        const items = await google(query);
+        const itemsitems = await google(query);
         
-        const firstItem = items.length > 0 ? items[0] : null;
-        const otherItems = items.slice(1);
+        const firstItem = itemsitems.length > 0 ? itemsitems[0] : null;
+        const otherItems = itemsitems.slice(1);
 
         return new Response(JSON.stringify({ first: firstItem, others: otherItems }), {
             headers: {
