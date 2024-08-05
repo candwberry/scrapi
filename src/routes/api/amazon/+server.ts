@@ -115,7 +115,8 @@ async function amazon(query: string, asin?: string) {
         const items = [];
         for (let i = 0; i < results.length; i++) {
             try {
-                let asin = await results[i].$eval("[data-asin]", node => node.getAttribute("data-asin")) ?? "NOT FOUND";
+                // asin of THIS element (results[i])
+                let asin = await results[i].evaluate(el => el.getAttribute('data-asin')) || "NOT FOUND";
                 let title = await results[i].$eval('.a-text-normal', node => node.textContent) ?? "NOT FOUND";
                 let price = await results[i].$eval('.a-price', node => node.textContent) ?? "-1";
                 //let decimal = await results[i].$eval('.a-price-fraction', node => node.textContent) ?? "00";
