@@ -21,17 +21,43 @@ const isBatchProcessing = {
     estimatedTime: "0s"
 };
 
-function getDecentTime(time: number) {
+function getDecentTime(time: number, regex?: string) {
     if (time < 1000) return `${time.toFixed(0)}ms`;
     if (time < 60000) return `${(time / 1000).toFixed(0)}s`;
     if (time < 3600000) return `${(time / 60000).toFixed(0)}m`;
     return `${(time / 3600000).toFixed(0)}h`;
 }
 
-async function findPrice(page: Page): Promise<string> {
+async function findPrice(page: Page, validatedRegex?: string): Promise<string> {
     let price: string = "99999";
-    const scripts: ElementHandle<Element>[] = await page.$$("script[type='application/ld+json']");
+    // (regex || schema || meta || class || selector || none)
+    let priceFound = "none";
 
+    if (validatedRegex) {
+        if (validatedRegex.startsWith("regex:")) {
+            validatedRegex = validatedRegex.replace("regex:", "");
+            // Its ACTUALLY a regex.
+            const regex = new RegExp(validatedRegex);
+            const content = await page.content();
+            const match = content.match(regex);
+            if (match && match[1]) {
+                price = match[1];
+                priceFound = "regex";
+            }
+        } else {
+            // Its a selector.
+            const priceElement = await page.$(validatedRegex);
+            if (priceElement) {
+                const textContent = await priceElement.evaluate((el: Element) => el.textContent);
+                if (textContent) {
+                    price = textContent.replace(/[^0-9.,]/g, '');
+                    priceFound = "selector";
+                }
+            }
+        }
+    };
+
+    const scripts: ElementHandle<Element>[] = await page.$$("script[type='application/ld+json']");
     for (const script of scripts) {
         const content: string | null = await script.evaluate(el => el.textContent);
         if (!content) continue;
@@ -57,11 +83,13 @@ async function findPrice(page: Page): Promise<string> {
                     price = productEntity.price.toString(); // just being safe.
                     console.log("HELLO");
                     console.log(price);
+                    priceFound = "schema";
                 }
                 if (productEntity.offers?.price) {
                     price = productEntity.offers.price.toString(); // just being safe.
                     console.log("HELLO");
                     console.log(price);
+                    priceFound = "schema";
                 }
                 // else offers is an array
                 else if (Array.isArray(productEntity.offers)) {
@@ -69,6 +97,7 @@ async function findPrice(page: Page): Promise<string> {
                     price = cheapest.toString();
                     console.log("HELLO");
                     console.log(price);
+                    priceFound = "schema";
                 }
             }
         } catch (error) {
@@ -81,16 +110,20 @@ async function findPrice(page: Page): Promise<string> {
             const priceMatch = content?.match(priceRegex);
             if (priceMatch && priceMatch[1]) {
                 price = priceMatch[1].replace(/"/g, '');
+                priceFound = "schema";
             } else {
                 // Second fallback: "raw":{"withTax":NUMBER}
                 const rawWithTaxRegex = /"raw"\s*:\s*{\s*"withTax"\s*:\s*(\d+(?:\.\d+)?)/;
                 const rawWithTaxMatch = content?.match(rawWithTaxRegex);
                 if (rawWithTaxMatch && rawWithTaxMatch[1]) {
                     price = rawWithTaxMatch[1];
+                    priceFound = "schema";
                 }
             }
+        } 
         }
-        }
+
+        //
 
     // if it is 99999 then look for <meta property="product:price:amount" content=PRICE>
     if (price === undefined || price == null) price = "99999";
@@ -100,6 +133,7 @@ async function findPrice(page: Page): Promise<string> {
             const metaPrice = await meta.evaluate((el: Element) => (el as HTMLMetaElement).content);
             if (metaPrice) {
                 price = metaPrice;
+                priceFound = "meta";
                 break;
             }
         }
@@ -119,6 +153,8 @@ async function findPrice(page: Page): Promise<string> {
                 if (parseFloat(num) > expensivest) {
                     expensivest = parseFloat(num);
                     price = num;
+                    priceFound = "class";
+                    break; // let's actually just do the first element instead of the expensivest.
                 }
             } catch (error) {
                 console.error(error);
@@ -133,7 +169,7 @@ async function findPrice(page: Page): Promise<string> {
 async function initBrowser() {
     try {
         browser = await puppeteer.launch({
-            executablePath: '/usr/bin/chromium',
+            //executablePath: '/usr/bin/chromium',
             headless: true,
             args: [
                 '--no-sandbox',
@@ -152,7 +188,7 @@ async function initBrowser() {
     };
 };
 
-async function google(query: string) {
+async function google(query: string, baseUrl: string) {
     let page;
     try {
         if (!browser || !browser.connected ) 
@@ -186,7 +222,6 @@ async function google(query: string) {
             let price;
 
             try {
-                // @ts-expect-error - Stupid types don't know what they're talking about
                 href = await page.evaluate((el) => el.children[0].children[0].children[0].children[0].children[0].children[0].href, searchResults[i]);
                 title = await page.evaluate((el) => el.querySelector('h3')?.textContent, searchResults[i]);
                 domain = await page.evaluate((el) => el.children[0].children[0].children[0].children[0].children[0].children[0].children[2].children[0].children[1].children[1].children[0].textContent, searchResults[i]);
@@ -213,6 +248,44 @@ async function google(query: string) {
         }
 
         items.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+        for (let item of items) {
+            // First let us see if there is a validatedRegex in the database.
+            const resp = await fetch(`${baseUrl}/api/db/getGoogleRegex?domain=${item.domain}`);
+            const body = await resp.json();
+            if (body.error && body.error === "No results") {
+                // then let us call PUT to getGoogleRegex with the domain, and let us get the shop name by stripping domain from punctuation
+                const shop = item.domain.replace(/[^a-zA-Z]/g, "");
+                const domain = item.domain;
+                
+            }
+            /* this is {
+            regex: 'regex',
+            lastUsed: 'regex' (regex || schema || meta || class || selector)
+            
+            }*/
+            const page2 = await browser.newPage();
+            await page2.goto(item.href);
+            
+            let ourPrice = "99999";
+            if (body.regex) {
+                ourPrice = await findPrice(page2, body.regex);
+            } else {
+              ourPrice = await findPrice(page2);
+            } 
+
+            // if one of them is 1.2 * the other, then we give the vat EXC one theek hai.
+            if (ourPrice === "99999") {
+                ourPrice = item.price;
+            } else if (
+                parseFloat(ourPrice).toFixed(2) === (1.2 * parseFloat(item.price)).toFixed(2)
+            ) {
+                item.price = parseFloat(ourPrice).toFixed(2);
+            } else if (
+                parseFloat(item.price).toFixed(2) === (1.2 * parseFloat(ourPrice)).toFixed(2)
+            ) {
+                item.price = (parseFloat(ourPrice) / 1.2).toFixed(2);
+            }
+        }
         return items;
     } catch (err) {
         console.error(`Error in google function for query "${query}":`, err);
@@ -283,7 +356,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
 
                     const batchPromises = batchProducts.map(async (product: { barcode: string; title: string; berry: any; supplierCode: any; supplier: any; amazonLast: any; ebayLast: any; amazonJSON: any; }) => {
                         try {
-                            const items = await google(product.barcode === "" ? product.title : product.barcode);
+                            const items = await google(product.barcode === "" ? product.title : product.barcode, baseUrl);
                             console.log(items);
 
                             if (items.length > 0) {
@@ -348,7 +421,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
             error(400, "No query provided");
         }
 
-        const itemsitems = await google(query);
+        const itemsitems = await google(query, baseUrl);
         
         const firstItem = itemsitems.length > 0 ? itemsitems[0] : null;
         const otherItems = itemsitems.slice(1);

@@ -3,24 +3,17 @@
   import { writable } from "svelte/store";
 
   // Stores for task management
-  let currentTask = writable("label-suppliers");
+  let currentTask = writable("verify-asin");
   let taskList = writable([
     {
-      id: "label-suppliers",
-      name: "Label Suppliers",
-      description:
-        "Assign suppliers to products and add new suppliers to the database.",
-    },
-    {
       id: "verify-asin",
-      name: "Verify ASIN and Amazon URL",
-      description: "Confirm the accuracy of ASIN and Amazon URLs for products.",
-    },
-    {
+      name: "Verify Amazon ASINs",
+      description: "Confirm the accuracy of the ASINs we found",
+    }, {
       id: "price-location",
-      name: "Google Website Prices.",
+      name: "Website Price Locations",
       description:
-        "Help the scraper find the price element on websites it's unsure about.",
+        "Help the scraper find the price element on websites it's unsure about",
     },
   ]);
 
@@ -92,6 +85,7 @@
             amazonLast: product.amazonLast,
             ebayLast: product.ebayLast,
             googleLast: product.googleLast,
+            amazonJSON: product.amazonJSON,
           },
         ]), // the above could overwrite a just written amazon, ebay, googelLast but too much effort to change right now lol
         // change this to a PUT later at /api/db/products/{berry}
@@ -124,19 +118,38 @@
     }
   }
 
-  async function validateAsin(asin, berry) {
+  let validationResult = null;
+
+  async function validateAsin(product) {
+    if (product === undefined) {
+      console.error("Product is undefined");
+      return false;
+    }
+    console.log(product);
+    let asin = JSON.parse(product.amazonJSON).asin;
+    const berry = product.berry;
+    const title = product.title;
+    const supplier = product.supplier;
+    const supplierCode = product.supplierCode;
+
     if (asin === undefined || asin === "") {
       asin = "B00Y0QTUHE"; // default to a random ASIN for testing
     }
     console.log(asin, berry);
     try {
-      const response = await fetch((`/api/tasks/amazon?asin=${encodeURIComponent(asin)}&berry=${encodeURIComponent(berry)}`), {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
+      console.log("Validating ASIN:", asin);
+      const response = await fetch(
+        `/api/tasks/amazon?asin=${encodeURIComponent(asin)}&berry=${encodeURIComponent(berry)}&title=${encodeURIComponent(title)}&supplier=${encodeURIComponent(supplier)}&supplierCode=${encodeURIComponent(supplierCode)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
       if (response.ok) {
+        const data = await response.json();
+        validationResult = data; // Set the validation result
         unvalidatedProducts.update((asins) => asins.filter((a) => a !== asin));
       } else {
         console.error("Error validating ASIN:", response.statusText);
@@ -153,7 +166,9 @@
     isAutoplayRunning.set(true);
     for (let asin of $unvalidatedProducts) {
       if (!$isAutoplayRunning) break;
-      const success = await validateAsin(JSON.parse(asin.amazonJSON).asin,  asin.berry);
+      const success = await validateAsin(
+        asin
+      );
       console.log("Hello");
       if (!success) {
         isAutoplayRunning.set(false);
@@ -191,126 +206,82 @@
 
   <!-- Main Task Area -->
   <div class="w-3/4 bg-white rounded-lg shadow p-4">
-    {#if $currentTask === "label-suppliers"}
-      <h2 class="text-2xl font-bold mb-4">Label Suppliers</h2>
-      <p class="mb-4">
-        This isn't really important and is just admin for the sake of admin. It
-        will allow you to easily select all products from a certain supplier
-        later on.
-      </p>
-      <!-- Add New Supplier Form -->
-      <div class="mb-10 p-4 bg-berry-100 rounded-lg">
-        {#if $suppliers.length === 0}
-          <h3 class="text-lg font-semibold mb-2">Existing Suppliers</h3>
-          <div class="grid gap-2 grid-cols-6">
-            {#each $suppliers as supplier}
-              <div class="flex items-center gap-2 mb-2 p-2 bg-white rounded-lg">
-                <span class="flex-grow">{supplier.name}</span>
-              </div>
-            {/each}
-          </div>
-        {/if}
-
-        <h3 class="text-lg font-semibold my-2">Add New Supplier</h3>
-        <div class="flex gap-2 mb-2">
-          <input
-            type="text"
-            placeholder="Supplier Name"
-            bind:value={newSupplierName}
-            class="p-2 rounded-lg flex-grow"
-          />
-          <!--
-        <input
-          type="url"
-          placeholder="Supplier URL"
-          bind:value={newSupplierUrl}
-          class="p-2 rounded-lg flex-grow"
-        />-->
-          <button
-            on:click={addNewSupplier}
-            class="bg-berry-600 text-white px-4 py-2 rounded-lg hover:bg-berry-700"
-          >
-            Add Supplier
-          </button>
-        </div>
-      </div>
-
-      <!-- Product List -->
-      <div class="mt-6" style="overflow-y: auto; max-height: 500px;">
-        <h3 class="text-lg font-semibold mb-2">Unlabelled Products</h3>
-        {#each $products as product}
-          <div class="flex items-center gap-2 mb-2 p-2 bg-gray-100 rounded-lg">
-            <span class="flex-grow">{product.berry} - {product.title}</span>
-            <select
-              on:change={(e) =>
-                updateProductSupplier(product.berry, e.target.value)}
-              class="p-2 rounded-lg"
-            >
-              <option value="">Select Supplier</option>
-              {#if $suppliers.length === 0}
-                <option value="" disabled
-                  >No suppliers found. Please add some above.</option
-                >
-              {/if}
-              {#each $suppliers as supplier}
-                <option value={supplier.name}>{supplier.name}</option>
-              {/each}
-            </select>
-          </div>
-        {/each}
-      </div>
-
-      {#if $products.length === 0}
-        <p class="mt-4 text-center text-gray-600">
-          All products are labelled! Good job. (Or none are found?)
-        </p>
-      {/if}
-    {:else if $currentTask === "verify-asin"}
+    {#if $currentTask === "verify-asin"}
       <h2 class="text-2xl font-bold mb-4">Verify ASIN and Amazon URL</h2>
-      <p class="mb-4">This job will make scraping Amazon products easier and quicker, if we know their exact ASIN and product url.</p>
-      
-      <div class="mb-4">
+      <p class="mb-4">
+        This job will make scraping Amazon products easier and quicker, if we
+        know their exact ASIN! We will be able to just jump to the product and
+        leave, rather than relying on Amazon search.
+      </p>
+
+      <div class="flex flex-row w-full gap-4 mb-4">
         <button
           on:click={startAutoplay}
-          class="bg-berry-600 text-white px-4 py-2 rounded-lg hover:bg-berry-700 mr-2"
+          class="inline-flex items-center justify-center rounded-xl bg-berry-600 px-4 py-3 font-medium leading-none text-white shadow hover:opacity-90 gap-3"
           disabled={$isAutoplayRunning}
         >
-          Start Autoplay
-        </button>
-        <button
-          on:click={stopAutoplay}
-          class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-          disabled={!$isAutoplayRunning}
-        >
-          Stop Autoplay
+          Autoplay Verification
         </button>
       </div>
 
-      <div class="mt-6" style="overflow-y: auto; max-height: 500px;">
-        <h3 class="text-lg font-semibold mb-2">Unvalidated ASINs</h3>
-        {#each $unvalidatedProducts as asin}
-          <div class="flex items-center gap-2 mb-2 p-2 bg-gray-100 rounded-lg">
-            <span class="flex-grow">{JSON.stringify(asin)}</span>
-            <button
-              on:click={() => validateAsin(JSON.parse(asin.amazonJSON).asin, asin.berry)}
-              class="bg-berry-600 text-white px-4 py-2 rounded-lg hover:bg-berry-700"
-              disabled={$isAutoplayRunning}
-            >
-              Validate
-            </button>
-          </div>
-        {/each}
+      <div
+        class="bg-white rounded-lg shadow p-4 mt-6"
+        style="overflow-y: auto; max-height: 500px;"
+      >
+        <table class="w-full text-md">
+          <thead>
+            <tr class="bg-[#e5e7eb]">
+              <th class="p-2 text-left">ASIN</th>
+              <th class="p-2 text-left">Title</th>
+              <th class="p-2 text-left">Supplier + Code</th>
+              <th class="p-2 text-left">Validated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each $unvalidatedProducts as asin, i}
+              <tr class="{i % 2 === 0 ? 'bg-[#f9f9f9]' : ''} border-b">
+              <td class="p-2">{JSON.parse(asin.amazonJSON).asin}</td>
+              <td class="p-2">{asin.title}</td>
+              <td class="p-2 font-bold">{asin.supplier} {asin.supplierCode}</td>
+              <td class="p-2">
+                {#if JSON.parse(asin.amazonJSON).validated === "true"}
+                ✅                  {:else}
+                ❌
+                {/if}
+
+                <button
+                on:click={() =>
+                  validateAsin(asin
+                  )}
+                class="bg-berry-600 text-white px-3 py-1 rounded-lg hover:bg-berry-700 text-sm"
+                disabled={$isAutoplayRunning}
+                >
+                Validate
+                </button>
+              </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       </div>
 
-
+      {#if validationResult && 1 + 1 == 3}
+        <div class="mt-6 bg-white rounded-lg shadow p-4">
+          <h3 class="text-lg font-semibold mb-2">Validation Result</h3>
+          <pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+        {JSON.stringify(validationResult, null, 2)}
+      </pre>
+        </div>
+      {/if}
     {:else if $currentTask === "price-location"}
       <h2 class="text-2xl font-bold mb-4">Find Price Location on Websites</h2>
       <p class="mb-4">
-        This is an important job. Some websites are awkward or stupid and don't
-        make it easy for us to find the price. You will please need to manually
-        click on the price element for 3 products for each of the websites
-        below. This will teach the Scraper and give it enough information to
-        find the price next time.
+        <strong
+          >Some websites are awkward or stupid and don't make it easy for us to
+          find the price.</strong
+        > You will please need to manually click on the price element for 3 products
+        for each of the websites below. This will teach the Scraper and give it enough
+        information to find the price next time.
       </p>
       <!-- Implement price location finder UI here -->
     {:else}

@@ -220,7 +220,8 @@
     $google.total == 0 ? 0 : $google.processed / $google.total;
 </script>
 
-<div class="flex flex-col gap-8 h-full w-full max-w-full">
+<div class="flex flex-col gap-8 h-full w-full max-w-full"
+style="overflow-y: auto;">
   <!-- eBay Block-->
   <div
     class={`w-half flex flex-col relative gap-4 text-nowrap p-4 pb-0 items-center rounded-xl transition-all bg-[#f7f7f7] shadow ${$ebay.status ? "" : ""}`}

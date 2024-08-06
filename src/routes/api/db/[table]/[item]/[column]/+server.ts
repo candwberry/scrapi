@@ -20,10 +20,10 @@ export const GET: RequestHandler = async ({ request, url, params }) => {
         return err(ERR_INVALID_TABLE, `Valid tables are: ${TABLES.join(", ")}`);
 
     value = decodeURIComponent(value);
+    if (column === "amazonJSON")
     value = JSON.stringify({
-        "asin": value,
-        "lastUpdated": Date.now(),
-        "validated": true,
+        "asin": value.slice(-10),
+        "validated": "true",
         "others": []
     });
 

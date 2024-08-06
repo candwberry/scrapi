@@ -5,6 +5,7 @@ import { DEFAULT_INTERCEPT_RESOLUTION_PRIORITY } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
+import { last } from 'lodash';
 
 puppeteer.use(StealthPlugin());
 puppeteer.use(AdBlockerPlugin({
@@ -21,14 +22,14 @@ const isBatchProcessing = {
     estimatedTime: "0s"
 };
 
-async function initBrowser() {
+async function initBrowser() { 
     // /usr/bin/chromium --no-sandbox --headless --disable-gpu --disable-dev-shm-usage --remote-debugging-port=9222 --disable-software-rasterizer
     try {
         clog("LAUNCHING BROWSER");
         browser = await puppeteer.launch({
-            executablePath: '/usr/bin/chromium',
-            headless: true,
-            args: [
+            //executablePath: '/usr/bin/chromium',
+            headless: false,
+            /*args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
@@ -36,7 +37,7 @@ async function initBrowser() {
                 '--no-first-run',
                 '--no-zygote',
                 '--disable-gpu'
-            ],
+            ],*/
             timeout: 30000
         });
         
@@ -89,23 +90,54 @@ async function amazon(query: string, asin?: string) {
         if (asin) {
             clog("GOING TO PAGE /w ASIN");
             await page.goto(`https://www.amazon.co.uk/dp/${asin}`, { waitUntil: "domcontentloaded" });
-            // price = (a-price).textContent.replaceAll('£', '').slice(price.length / 2 - 1);
-            // shipping = deliveryBlockMessage.textContent;
-            // thumbnail = imgTagWrapperId.firstChild.src
-            // href = window.location.href
-            // title = productTitle.textContent
+        
+            let title = '';
+            let price = '0';
+            let shipping = '0';
+            let thumbnail = '';
+            let href = '';
+        
+            try {
+                title = await page.$eval('#productTitle', node => node.textContent.trim());
+            } catch (error) {
+                clog("Error fetching title:", error.message);
+            }
+        
+            try {
+                price = await page.$eval('.a-price', node => {
+                    let priceText = node.textContent;
+                    return priceText.replace("..", ".").replaceAll('£', '').slice(priceText.length / 2 - 1);
+                });
+            } catch (error) {
+                clog("Error fetching price:", error.message);
+            }
+        
+            try {
+                shipping = await page.$eval("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE", node => node.textContent.trim());
+            } catch (error) {
+                clog("Error fetching shipping:", error.message);
+            }
+        
+            try {
+                thumbnail = await page.$eval('img.s-image', node => node.src);
+            } catch (error) {
+                clog("Error fetching thumbnail:", error.message);
+            }
+        
+            href = page.url();
+        
             return [
                 {
                     asin,
-                    title: await page.$eval('#productTitle', node => node.textContent),
-                    price: await page.$eval('.a-price', node => node.textContent).then(price => `${price}`.replace("..", ".").replaceAll('£', '').slice(price.length / 2 - 1)),
-                    shipping: await page.$eval("[aria-label*='delivery' i]", node => node.textContent),
-                    thumbnail: await page.$eval('img.s-image', node => node.src),
-                    href: page.url()
+                    title,
+                    price,
+                    shipping,
+                    thumbnail,
+                    href
                 }
-            ]
+            ];
         }
-
+        
         clog("GOING TO PAGE");
         await page.goto(`https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`, { waitUntil: "domcontentloaded" });
         clog("PAGE LOADED AS FAR AS WE CAN TELL");
@@ -117,6 +149,7 @@ async function amazon(query: string, asin?: string) {
             try {
                 // asin of THIS element (results[i])
                 let asin = await results[i].evaluate(el => el.getAttribute('data-asin')) || "NOT FOUND";
+                console.log("INSIDE ITEMS ASIN: ", asin);
                 let title = await results[i].$eval('.a-text-normal', node => node.textContent) ?? "NOT FOUND";
                 let price = await results[i].$eval('.a-price', node => node.textContent) ?? "-1";
                 //let decimal = await results[i].$eval('.a-price-fraction', node => node.textContent) ?? "00";
@@ -133,7 +166,7 @@ async function amazon(query: string, asin?: string) {
                 // Validation.
                 if (shipping.toLowerCase().includes("free delivery")) shipping = "0.00";
 
-                items.push({ asin, title, price: `${price}`.replace("..", ".").replaceAll('£', '').slice(price.length / 2 - 1), shipping, thumbnail, href });
+                items.push({ asin: asin.slice(-10), title, price: `${price}`.replace("..", ".").replaceAll('£', '').slice(price.length / 2 - 1), shipping, thumbnail, href });
             } catch (err) {
                 cerror(`Error processing item ${i}:`, err);
             }
@@ -172,7 +205,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
     }
     if (batch === "check") {
         if (isBatchProcessing.errorArray.length > 10) 
-            isBatchProcessing.errorArray.splice(0, isBatchProcessing.errorArray.length - 10);
+            isBatchProcessing.errorArray.slice(0, isBatchProcessing.errorArray.length - 10);
         return new Response(JSON.stringify({ isBatchProcessing }), {
             headers: {
                 "content-type": "application/json"
@@ -228,10 +261,15 @@ export const GET: RequestHandler = async ({ request, url }) => {
                             };
 
                             let items = [];
-                            if (asin.validated && asin.validated === "true")
+                            if (asin.validated && asin.validated === "true") {
                                 items = await amazon(product.barcode === "" ? product.title : product.barcode, asin.asin);
+                                console.log("ASIN FOUND", asin.asin);
+                            }
                             else 
+                            {
                                 items = await amazon(product.barcode === "" ? product.title : product.barcode);
+                                console.log("NO ASIN FOUND");
+                            }
 
                             console.log(items);
 
@@ -250,7 +288,9 @@ export const GET: RequestHandler = async ({ request, url }) => {
                                     },
                                 });
                                 asin.others = asin.others.concat([asin.asin]);
+                                const lastAsin = asin.asin;
                                 asin.asin = item.asin;
+                                console.log("FOUND ASIN", item.asin);
                                 await fetch(`${baseUrl}/api/db/products`, {
                                     method: "PUT",
                                     body: JSON.stringify([{
@@ -262,11 +302,10 @@ export const GET: RequestHandler = async ({ request, url }) => {
                                         amazonLast: Date.now(),
                                         ebayLast: product.ebayLast,
                                         googleLast: product.googleLast,
-                                        amazonJSON: JSON.stringify({ // COME BACK TO THIS
-                                            // it needs to be asin: item.asin,
-                                            // validated: true or false based on whether ASIN has been manually validated.
-                                            // validationDate: date of validation   
-                                            // others: [] array of other asins that might make easier checking.
+                                        amazonJSON: JSON.stringify({ 
+                                            asin: asin.asin.slice(-10),
+                                            others: asin.others, 
+                                            validated: asin.validated
                                         })
                                     }]),
                                     headers: {

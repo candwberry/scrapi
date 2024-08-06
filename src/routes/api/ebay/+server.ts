@@ -150,7 +150,12 @@ export const GET: RequestHandler = async ({ request, url }) => {
             });
 
             await Promise.all(batchPromises);
-        }
+            if (i === numBatches - 1) {
+                isBatchProcessing.processed = isBatchProcessing.total;
+            }
+        } 
+        
+
 
         isBatchProcessing.status = false;
         return new Response(JSON.stringify({ isBatchProcessing }), {

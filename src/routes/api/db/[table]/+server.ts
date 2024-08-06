@@ -6,12 +6,39 @@ import { db, ok, err, ERR_INVALID_SELECT_PARAM, ERR_INVALID_TABLE, PRODUCTS, PRI
 export const GET: RequestHandler = async ({ request, url, params }) => {
     const table: string = params.table ?? "sqlite_master";
     const productPrices: string = url.searchParams.get("berry") || "";
+    const mainTable: string = url.searchParams.get("maintable") || "";
+
+    if (mainTable === "true") {
+        try {
+            const query = `
+                SELECT p.berry, p.barcode, p.supplierCode, p.supplier, p.title, 
+                       ep.price AS ebay_price, ep.shipping AS ebay_shipping,
+                       ap.price AS amazon_price, ap.shipping AS amazon_shipping
+                FROM products p
+                LEFT JOIN (
+                    SELECT * FROM (
+                        SELECT * FROM prices WHERE shop = 'ebay' ORDER BY date DESC
+                    ) GROUP BY berry
+                ) ep ON p.berry = ep.berry
+                LEFT JOIN (
+                    SELECT * FROM (
+                        SELECT * FROM prices WHERE shop = 'amazon' ORDER BY date DESC
+                    ) GROUP BY berry
+                ) ap ON p.berry = ap.berry
+            `;
+
+            const result = db.query(query).all();
+            return ok(result);
+        } catch (e: any) {
+            return err("Invalid SQL", e.message);
+        }
+    }
+
 
     if (table == "unvalidatedasins") {
         try {
             const query = `
-                    SELECT * FROM products 
-                    WHERE amazonJSON NOT LIKE '%true%';
+                    SELECT * FROM products;
                 `;
 
             const result = db.query(query).all();

@@ -54,7 +54,7 @@
 
   // Modified selectAll function
   async function selectAll(table: string) {
-    await fetch(`/api/db/${table}`)
+    await fetch(`/api/db/${table === "products" ? table + "?maintable=true" : table}`)
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
@@ -421,35 +421,21 @@
   }
 
   async function updateProductSupplier(productId, supplierId) {
+    console.log("HELLO");
+    console.log(productId, supplierId);
+    console.log("INSIDE UPDATEPRODUCTSUPPLIERS");
     if (supplierId === "") return;
-    const product = $products.find((p) => p.berry === productId);
-    if (!product) return;
     try {
-      await fetch(`/api/db/products/`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify([
-          {
-            berry: product.berry,
-            barcode: product.barcode,
-            title: product.title,
-            supplier: supplierId,
-            supplierCode: product.supplierCode,
-            amazonLast: product.amazonLast,
-            ebayLast: product.ebayLast,
-            googleLast: product.googleLast,
-            amazonJSON: product.amazonJSON,
-          },
-        ]), // the above could overwrite a just written amazon, ebay, googelLast but too much effort to change right now lol
-        // change this to a PUT later at /api/db/products/{berry}
-      });
-      products.update((p) => p.filter((product) => product.id !== productId));
+      await fetch(`/api/db/products/${productId}/supplier?value=${supplierId}`);
+      rows.update((p) => p.filter((product) => product.id !== productId));
     } catch (error) {
       console.error("Error updating product supplier:", error);
     }
   }
+
+  onMount(() => {
+    fetchSuppliers();
+  });
 </script>
 
 <div class="w-full flex flex-col bg-black/10 p-4 rounded-lg gap-4">
@@ -891,7 +877,15 @@
                   {#if column === "berry"}
                     <th class="bg-berry-200 p-2 break-all">{column}</th>
                   {:else}
-                    <th class="bg-gray-200 p-2 break-all">{column}</th>
+                    <th class="bg-gray-200 p-2 break-all">
+                      {#if column.includes("_")}
+                        {column.split("_")[0]}
+                        <br>
+                        {column.split("_")[1]}
+                      {:else}
+                        {column}
+                      {/if}
+                    </th>
                   {/if}
                 {/each}
               {/if}
@@ -923,7 +917,7 @@
                     <div style="margin: auto 0;">
                       <select
                         on:change={(e) =>
-                          updateProductSupplier(product.berry, e.target.value)}
+                          updateProductSupplier(row.berry, e.target.value)}
                         class="p-2 rounded-lg w-full shadow"
                       >
                         <option value="">{row.supplier}</option>

@@ -19,7 +19,7 @@ async function initBrowser() {
     }
 }
 
-async function loadAsin(asin: string) {
+async function loadAsin(asin: string, title: string, supplier: string, supplierCode: string) {
     let page;
     try {
         await initBrowser();
@@ -36,18 +36,22 @@ async function loadAsin(asin: string) {
         });
 
         // Inject script as soon as possible
-        await page.evaluateOnNewDocument(() => {
+        await page.evaluateOnNewDocument((passedTitle, passedSupplier, passedSupplierCode) => {
             function updateTitleAndAsin() {
                 const titleElement = document.querySelector('#productTitle');
-                const title = titleElement ? titleElement.textContent.trim() : 'Title not found';
+                const amazonTitle = titleElement ? titleElement.textContent.trim() : 'Title not found';
                 let asin = window.location.pathname.split('/')[2];
                 if (asin === 'dp') asin = window.location.pathname.split('/')[3];
 
                 const titleDiv = document.getElementById('title-scrapi');
                 const asinDiv = document.getElementById('asin-scrapi');
+                const supplierDiv = document.getElementById('supplier-scrapi');
+                const passedTitleDiv = document.getElementById('passed-title-scrapi');
 
-                if (titleDiv) titleDiv.textContent = title;
+                if (titleDiv) titleDiv.textContent = amazonTitle;
                 if (asinDiv) asinDiv.textContent = asin;
+                if (supplierDiv) supplierDiv.textContent = passedSupplier + ' (' + passedSupplierCode + ')';
+                if (passedTitleDiv) passedTitleDiv.textContent = passedTitle;
             }
 
             function injectFloatingBox() {
@@ -71,8 +75,14 @@ async function loadAsin(asin: string) {
                 floatingBox.innerHTML = `
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <div>
+                            <div>Amazon Title:</div>
                             <div id="title-scrapi" style="font-size: 0.9em; margin-bottom: 5px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
+                            <div>Passed Title:</div>
+                            <div id="passed-title-scrapi" style="font-size: 0.9em; margin-bottom: 5px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
+                            <div>ASIN:</div>
                             <div id="asin-scrapi" style="font-size: 1.2em; font-weight: bold;"></div>
+                            <br>
+                            <div id="supplier-scrapi" style="font-size: 1.2em; margin-bottom: 5px; font-weight: bold"></div>
                         </div>
                         <div style="display: flex; gap: 10px;">
                             <button id="confirm-scrapi" style="padding: 8px 15px; font-size: 1em; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 5px;">Confirm</button>
@@ -83,10 +93,10 @@ async function loadAsin(asin: string) {
                 document.body.appendChild(floatingBox);
 
                 document.getElementById('confirm-scrapi').addEventListener('click', () => {
-                    const title = document.getElementById('title-scrapi').textContent;
+                    const amazonTitle = document.getElementById('title-scrapi').textContent;
                     const asin = document.getElementById('asin-scrapi').textContent;
                     console.log(JSON.stringify({
-                        asinFoundForScrapi: { title, asin }
+                        asinFoundForScrapi: { amazonTitle, asin }
                     }));
                 });
                 document.getElementById('stop-scrapi').addEventListener('click', () => {
@@ -108,7 +118,7 @@ async function loadAsin(asin: string) {
                 updateTitleAndAsin();
                 injectFloatingBox();
             });
-        });
+        }, title, supplier, supplierCode);
 
         await page.goto(url, { waitUntil: 'domcontentloaded' });
 
@@ -126,6 +136,9 @@ async function loadAsin(asin: string) {
 
 export const GET: RequestHandler = async ({ url, request }) => {
     let asin = url.searchParams.get('asin') || '';
+    let title = url.searchParams.get('title') || '';
+    let supplier = url.searchParams.get('supplier') || '';
+    let supplierCode = url.searchParams.get('supplierCode') || '';
     console.log(url);
     if (asin === '') {
         return new Response('ASIN is required', { status: 400 });
@@ -147,13 +160,15 @@ export const GET: RequestHandler = async ({ url, request }) => {
     console.log("Hello");
 
     try {
-        const result = await loadAsin(asin);
+        const result = await loadAsin(asin, title, supplier, supplierCode);
         console.log(result);
-
+        
         if ((result as { asin: string }).asin) {
             // Call /api/db/products/{berry}/amazonJSON/{JSON.stringify(result)}
             console.log("CALLING");
-            const newUrl = `/api/db/products/${encodeURIComponent(berry)}/amazonJSON?value=${encodeURIComponent(result.asin)}`;
+            let asin = result as { asin: string };
+            console.log("ASIN: " + asin.asin);
+            const newUrl = `/api/db/products/${encodeURIComponent(berry)}/amazonJSON?value=${encodeURIComponent(asin)}`;
             const resp = await fetch(request.url.replace(url.pathname, newUrl));
             console.log("????");
             console.log(resp);
