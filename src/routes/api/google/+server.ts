@@ -28,6 +28,22 @@ function getDecentTime(time: number, regex?: string) {
     return `${(time / 3600000).toFixed(0)}h`;
 }
 
+function clog(msg: string) {
+    console.log(msg);
+    isBatchProcessing.errorArray.push({
+       error: "INFO",
+       info: msg 
+    });
+}
+
+function cerr(msg: string, error: any) {
+    console.error(msg, error);
+    isBatchProcessing.errorArray.push({
+        error: "ERROR",
+        info: msg + " " + error,
+    });
+}
+
 async function findPrice(page: Page, validatedRegex?: string): Promise<{ price: string; priceFound: string; }> {
     let price: string = "99999";
     // (regex || schema || meta || class || selector || none)
@@ -81,27 +97,27 @@ async function findPrice(page: Page, validatedRegex?: string): Promise<{ price: 
             if (productEntity) {
                 if (productEntity.price) {
                     price = productEntity.price.toString(); // just being safe.
-                    console.log("HELLO");
-                    console.log(price);
+                    clog("HELLO");
+                    clog(price);
                     priceFound = "schema";
                 }
                 if (productEntity.offers?.price) {
                     price = productEntity.offers.price.toString(); // just being safe.
-                    console.log("HELLO");
-                    console.log(price);
+                    clog("HELLO");
+                    clog(price);
                     priceFound = "schema";
                 }
                 // else offers is an array
                 else if (Array.isArray(productEntity.offers)) {
                     const cheapest = Math.min(...productEntity.offers.map((offer: any) => parseFloat(offer.price) || 99999));
                     price = cheapest.toString();
-                    console.log("HELLO");
-                    console.log(price);
+                    clog("HELLO");
+                    clog(price);
                     priceFound = "schema";
                 }
             }
         } catch (error) {
-            console.error('Error parsing JSON:', error);
+            cerr('Error parsing JSON:', error);
         }
 
         if (price === "99999") {
@@ -157,7 +173,7 @@ async function findPrice(page: Page, validatedRegex?: string): Promise<{ price: 
                     break; // let's actually just do the first element instead of the expensivest.
                 }
             } catch (error) {
-                console.error(error);
+                cerr(error);
             }
         }
     }
@@ -188,7 +204,7 @@ async function initBrowser() {
             timeout: 30000
         });
     } catch (err) {
-        console.error("Failed to launch browser:", err);
+        cerr("Failed to launch browser:", err);
         throw err;
     };
 };
@@ -244,7 +260,7 @@ async function google(query: string, baseUrl: string) {
         await page.goto(`https://www.google.com/search?q=${query}`, { waitUntil: "domcontentloaded" });
         await page.evaluate(() => document.body.style.zoom = "25%");
         const searchResults: ElementHandle[] = await page.$$("div[jscontroller='SC7lYd']"); // NOTE: This selector may change.
-        console.log(searchResults.length);
+        clog(searchResults.length);
         const items: { title: any, price: any, href: any; domain: any}[] = [];
 
         for (let i = 0; i < searchResults.length; i++) {
@@ -283,14 +299,14 @@ async function google(query: string, baseUrl: string) {
         items.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
         for (let item of items) {
             // First let us see if there is a validatedRegex in the database.
-            console.log(Date.now());
+            clog(Date.now());
             const resp = await fetch(`${baseUrl}/api/db/getGoogleRegex?domain=${item.domain}`);
             const body = await resp.json();
             if (body.error && body.error === "No results") {
                 // then let us call PUT to getGoogleRegex with the domain, and let us get the shop name by stripping domain from punctuation
                 const shop = extractDomain(item.domain);
                 const domain = item.domain;
-                console.log("So lets put this in the database: " + domain + " " + shop);
+                clog("So lets put this in the database: " + domain + " " + shop);
 
                 await fetch(`${baseUrl}/api/db/getGoogleRegex`, {
                     method: "PUT",
@@ -346,11 +362,11 @@ async function google(query: string, baseUrl: string) {
         }
         return items;
     } catch (err) {
-        console.error(`Error in google function for query "${query}":`, err);
+        cerr(`Error in google function for query "${query}":`, err);
         return [];
     } finally {
         if (page) {
-            await page.close().catch(err => console.error("Error closing page:", err));
+            await page.close().catch(err => cerr("Error closing page:", err));
         }
     };
 
@@ -370,7 +386,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
         });
     }
     if (batch === "check") {
-        //console.log(isBatchProcessing);
+        //clog(isBatchProcessing);
         return new Response(JSON.stringify({ isBatchProcessing }), {
             headers: {
                 "content-type": "application/json"
@@ -415,7 +431,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
                     const batchPromises = batchProducts.map(async (product: { barcode: string; title: string; berry: any; supplierCode: any; supplier: any; amazonLast: any; ebayLast: any; amazonJSON: any; }) => {
                         try {
                             const items = await google(product.barcode === "" ? product.title : product.barcode, baseUrl);
-                            console.log(items);
+                            clog(items);
 
                             if (items.length > 0) {
                                 const item = items[0];
@@ -450,7 +466,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
                                 });
                             }
                         } catch (err) {
-                            console.error(`Error processing product ${product.berry}:`, err);
+                            cerr(`Error processing product ${product.berry}:`, err);
                         }
                     });
 
@@ -463,7 +479,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
                     }
                 });
             } catch (err) {
-                console.error("Error in batch processing:", err);
+                cerr("Error in batch processing:", err);
                 return new Response(JSON.stringify({ error: "An error occurred while processing your request" }), {
                     status: 500,
                     headers: {
@@ -490,7 +506,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
             }
         });
     } catch (err) {
-        console.error("Error in GET handler:", err);
+        cerr("Error in GET handler:", err);
         return new Response(JSON.stringify({ error: "An error occurred while processing your request" }), {
             status: 500,
             headers: {
@@ -499,7 +515,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
         });
     } finally {
         if (browser) {
-            await browser.close().catch(err => console.error("Error closing browser:", err));
+            await browser.close().catch(err => cerr("Error closing browser:", err));
         }
     }
 };
