@@ -9,7 +9,8 @@
       id: "verify-asin",
       name: "Verify Amazon ASINs",
       description: "Confirm the accuracy of the ASINs we found",
-    }, {
+    },
+    {
       id: "price-location",
       name: "Website Price Locations",
       description:
@@ -166,9 +167,7 @@
     isAutoplayRunning.set(true);
     for (let asin of $unvalidatedProducts) {
       if (!$isAutoplayRunning) break;
-      const success = await validateAsin(
-        asin
-      );
+      const success = await validateAsin(asin);
       console.log("Hello");
       if (!success) {
         isAutoplayRunning.set(false);
@@ -182,8 +181,97 @@
     isAutoplayRunning.set(false);
   }
 
+  let unvalidatedGoogleItems = writable([]);
+
+  async function fetchUnvalidatedGoogleItems() {
+    try {
+      const response = await fetch("/api/db/getunvalidatedgoogles");
+      if (response.ok) {
+        const data = await response.json();
+        unvalidatedGoogleItems.set(data);
+      } else {
+        console.error(
+          "Error fetching unvalidated Google items:",
+          response.statusText,
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching unvalidated Google items:", error);
+    }
+  }
+
+  async function validateGoogleItem(item) {
+    if (item === undefined) {
+      console.error("Item is undefined");
+      return false;
+    }
+    console.log(item);
+    const { domain, url } = item;
+
+    try {
+      console.log("Validating Google item:", domain);
+      const response = await fetch(
+        `/api/tasks/google?domain=${encodeURIComponent(domain)}&url=${encodeURIComponent(url)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      if (response.ok) {
+        const data = await response.json();
+        // Update the regex using the /api/db/getGoogleRegex endpoint
+        await updateGoogleRegex(domain, data.regex);
+        unvalidatedGoogleItems.update((items) =>
+          items.filter((i) => i.domain !== domain),
+        );
+      } else {
+        console.error("Error validating Google item:", response.statusText);
+        return false;
+      }
+    } catch (error) {
+      console.error("Error validating Google item:", error);
+      return false;
+    }
+    return true;
+  }
+
+  async function updateGoogleRegex(domain, regex) {
+    try {
+      const response = await fetch("/api/db/getGoogleRegex", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ domain, regex }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update Google regex");
+      }
+    } catch (error) {
+      console.error("Error updating Google regex:", error);
+    }
+  }
+
+  async function startGoogleAutoplay() {
+    isAutoplayRunning.set(true);
+    for (let item of $unvalidatedGoogleItems) {
+      if (!$isAutoplayRunning) break;
+      const success = await validateGoogleItem(item);
+      if (!success) {
+        isAutoplayRunning.set(false);
+        break;
+      }
+    }
+    isAutoplayRunning.set(false);
+  }
+
   onMount(() => {
+    fetchUnlabelledProducts();
+    fetchSuppliers();
     fetchunvalidatedProducts();
+    fetchUnvalidatedGoogleItems();
   });
 </script>
 
@@ -209,8 +297,8 @@
     {#if $currentTask === "verify-asin"}
       <h2 class="text-2xl font-bold mb-4">Verify ASIN and Amazon URL</h2>
       <p class="mb-4">
-        This job will make scraping Amazon products easier and quicker, if we
-        know their exact ASIN! We will be able to just jump to the product and
+        <strong>This job will make scraping Amazon products easier and quicker.</strong> If we
+        know a product's exact ASIN, we will be able to just jump straight to that product and
         leave, rather than relying on Amazon search.
       </p>
 
@@ -240,25 +328,26 @@
           <tbody>
             {#each $unvalidatedProducts as asin, i}
               <tr class="{i % 2 === 0 ? 'bg-[#f9f9f9]' : ''} border-b">
-              <td class="p-2">{JSON.parse(asin.amazonJSON).asin}</td>
-              <td class="p-2">{asin.title}</td>
-              <td class="p-2 font-bold">{asin.supplier} {asin.supplierCode}</td>
-              <td class="p-2">
-                {#if JSON.parse(asin.amazonJSON).validated === "true"}
-                ✅                  {:else}
-                ❌
-                {/if}
-
-                <button
-                on:click={() =>
-                  validateAsin(asin
-                  )}
-                class="bg-berry-600 text-white px-3 py-1 rounded-lg hover:bg-berry-700 text-sm"
-                disabled={$isAutoplayRunning}
+                <td class="p-2">{JSON.parse(asin.amazonJSON).asin}</td>
+                <td class="p-2">{asin.title}</td>
+                <td class="p-2 font-bold"
+                  >{asin.supplier} {asin.supplierCode}</td
                 >
-                Validate
-                </button>
-              </td>
+                <td class="p-2">
+                  {#if JSON.parse(asin.amazonJSON).validated === "true"}
+                    ✅
+                  {:else}
+                    ❌
+                  {/if}
+
+                  <button
+                    on:click={() => validateAsin(asin)}
+                    class="bg-berry-600 text-white px-3 py-1 rounded-lg hover:bg-berry-700 text-sm"
+                    disabled={$isAutoplayRunning}
+                  >
+                    Validate
+                  </button>
+                </td>
               </tr>
             {/each}
           </tbody>
@@ -279,11 +368,53 @@
         <strong
           >Some websites are awkward or stupid and don't make it easy for us to
           find the price.</strong
-        > You will please need to manually click on the price element for 3 products
+        >
+        You will please need to manually click on the price element for 3 products
         for each of the websites below. This will teach the Scraper and give it enough
         information to find the price next time.
       </p>
-      <!-- Implement price location finder UI here -->
+
+      <div class="flex flex-row w-full gap-4 mb-4">
+        <button
+          on:click={startGoogleAutoplay}
+          class="inline-flex items-center justify-center rounded-xl bg-berry-600 px-4 py-3 font-medium leading-none text-white shadow hover:opacity-90 gap-3"
+          disabled={$isAutoplayRunning}
+        >
+          Autoplay Google Verification
+        </button>
+      </div>
+
+      <div
+        class="bg-white rounded-lg shadow p-4 mt-6"
+        style="overflow-y: auto; max-height: 500px;"
+      >
+        <table class="w-full text-md">
+          <thead>
+            <tr class="bg-[#e5e7eb]">
+              <th class="p-2 text-left">Domain</th>
+              <th class="p-2 text-left">URL</th>
+              <th class="p-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each $unvalidatedGoogleItems as item, i}
+              <tr class="{i % 2 === 0 ? 'bg-[#f9f9f9]' : ''} border-b">
+                <td class="p-2">{item.domain}</td>
+                <td class="p-2">{item.url}</td>
+                <td class="p-2">
+                  <button
+                    on:click={() => validateGoogleItem(item)}
+                    class="bg-berry-600 text-white px-3 py-1 rounded-lg hover:bg-berry-700 text-sm"
+                    disabled={$isAutoplayRunning}
+                  >
+                    Validate
+                  </button>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
     {:else}
       <p><strong>Select a task from the sidebar to begin.</strong></p>
     {/if}

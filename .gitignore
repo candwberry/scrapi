@@ -26,5 +26,12 @@ bun.lockb
 # Bash scripts
 server-fresh-start.sh
 
-# Test folder
+# Testing
 /test
+mydb.sqlite
+mydb.sqlite-shm
+mydb.sqlite-wal
+map.png
+remove.ts
+test.html
+testdomains.ts

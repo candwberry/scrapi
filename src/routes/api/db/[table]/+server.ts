@@ -34,6 +34,17 @@ export const GET: RequestHandler = async ({ request, url, params }) => {
         }
     }
 
+    if (table == "getunvalidatedgoogles") {
+        try {
+            const query = `
+                SELECT * FROM shops;
+            `;
+            const result = db.query(query).all();
+            return ok(result);
+        } catch (e: any) {
+            return err("Invalid SQL", e.message);
+        };
+    }
 
     if (table == "unvalidatedasins") {
         try {
@@ -76,7 +87,7 @@ export const GET: RequestHandler = async ({ request, url, params }) => {
         return err(ERR_INVALID_SELECT_PARAM, `Valid select parameters are: ${PARAMETERS.join(", ")}`);
 
     if (!(TABLES).includes(table as Table))
-        return err(ERR_INVALID_TABLE, `Valid tables are: ${TABLES.join(", ")}`);
+        return err(ERR_INVALID_TABLE, `Valid tables are: ${TABLES.join(", ")}, not: ${table}`);
 
     try {
         const result = db.query(`SELECT ${select} FROM ${table};` + (orderby ? ` ORDER BY ${orderby} ${order};` : "")).all().slice(0, limit);

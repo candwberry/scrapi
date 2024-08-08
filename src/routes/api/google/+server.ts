@@ -28,7 +28,7 @@ function getDecentTime(time: number, regex?: string) {
     return `${(time / 3600000).toFixed(0)}h`;
 }
 
-async function findPrice(page: Page, validatedRegex?: string): Promise<string> {
+async function findPrice(page: Page, validatedRegex?: string): Promise<{ price: string; priceFound: string; }> {
     let price: string = "99999";
     // (regex || schema || meta || class || selector || none)
     let priceFound = "none";
@@ -163,7 +163,12 @@ async function findPrice(page: Page, validatedRegex?: string): Promise<string> {
     }
 
     price = price.replace(/[^0-9.,]/g, '');
-    return isNaN(parseFloat(price)) ? "99999" : parseFloat(price).toFixed(2);
+    price = isNaN(parseFloat(price)) ? "99999" : parseFloat(price).toFixed(2);
+
+    return {
+        price,
+        priceFound
+    };
 }
 
 async function initBrowser() {
@@ -187,6 +192,39 @@ async function initBrowser() {
         throw err;
     };
 };
+
+function extractDomain(url) {
+    // Remove protocol if present
+    url = url.replace(/^(https?:\/\/)?/, '');
+    
+    // Check for IPv4
+    const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    // Check for IPv6
+    const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+    
+    if (ipv4Regex.test(url) || ipv6Regex.test(url)) {
+        return url; // Return IP address as-is
+    }
+    
+    // Remove www if present
+    url = url.replace(/^www\./, '');
+    
+    // Split the remaining string by dots
+    const parts = url.split('.');
+    
+    // If we have at least 3 parts, return the second-to-last
+    if (parts.length >= 3) {
+        return parts[parts.length - 2];
+    }
+    // If we have 2 parts, return the first
+    else if (parts.length === 2) {
+        return parts[0];
+    }
+    // If we have only 1 part, return it
+    else {
+        return parts[0];
+    }
+}
 
 async function google(query: string, baseUrl: string) {
     let page;
@@ -254,8 +292,16 @@ async function google(query: string, baseUrl: string) {
             const body = await resp.json();
             if (body.error && body.error === "No results") {
                 // then let us call PUT to getGoogleRegex with the domain, and let us get the shop name by stripping domain from punctuation
-                const shop = item.domain.replace(/[^a-zA-Z]/g, "");
+                const shop = extractDomain(item.domain);
                 const domain = item.domain;
+
+                await fetch(`${baseUrl}/api/db/getGoogleRegex`, {
+                    method: "PUT",
+                    body: JSON.stringify({ domain, shop, lastUsed: 'none' }),
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
                 
             }
             /* this is {
@@ -266,12 +312,24 @@ async function google(query: string, baseUrl: string) {
             const page2 = await browser.newPage();
             await page2.goto(item.href);
             
-            let ourPrice = "99999";
+            let result = {}
             if (body.regex) {
-                ourPrice = await findPrice(page2, body.regex);
+                result = await findPrice(page2, body.regex);
             } else {
-              ourPrice = await findPrice(page2);
+              result = await findPrice(page2);
             } 
+            let ourPrice = result.price;
+            let priceFound = result.priceFound;
+            // okay so with this, we should compare with resp.lastUsed and update DB if different
+            if (body.lastUsed !== priceFound) {
+                await fetch(`${baseUrl}/api/db/getGoogleRegex`, {
+                    method: "PUT",
+                    body: JSON.stringify([{ domain: item.domain, regex: priceFound }]),
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+            }
 
             // if one of them is 1.2 * the other, then we give the vat EXC one theek hai.
             if (ourPrice === "99999") {

@@ -5,7 +5,6 @@ import { DEFAULT_INTERCEPT_RESOLUTION_PRIORITY } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
-import { last } from 'lodash';
 
 puppeteer.use(StealthPlugin());
 puppeteer.use(AdBlockerPlugin({
@@ -117,6 +116,8 @@ async function amazon(query: string, asin?: string) {
             } catch (error) {
                 clog("Error fetching shipping:", error.message);
             }
+            if (shipping.toLowerCase().includes("free delivery")) shipping = "0";
+
         
             try {
                 thumbnail = await page.$eval('img.s-image', node => node.src);
