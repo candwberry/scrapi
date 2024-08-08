@@ -174,8 +174,8 @@ async function findPrice(page: Page, validatedRegex?: string): Promise<{ price: 
 async function initBrowser() {
     try {
         browser = await puppeteer.launch({
-            //executablePath: '/usr/bin/chromium',
-            headless: false,
+            executablePath: '/usr/bin/chromium',
+            headless: true,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',

@@ -13,7 +13,7 @@ async function initBrowser() {
     if (!browser || !browser.isConnected()) {
         browser = await puppeteer.launch({
             executablePath: '/usr/bin/chromium',
-            headless: false,
+            headless: true,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',

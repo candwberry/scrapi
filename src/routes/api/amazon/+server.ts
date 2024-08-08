@@ -26,9 +26,9 @@ async function initBrowser() {
     try {
         clog("LAUNCHING BROWSER");
         browser = await puppeteer.launch({
-            //executablePath: '/usr/bin/chromium',
-            headless: false,
-            /*args: [
+        executablePath: '/usr/bin/chromium',
+            headless: true,
+            args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
@@ -36,7 +36,7 @@ async function initBrowser() {
                 '--no-first-run',
                 '--no-zygote',
                 '--disable-gpu'
-            ],*/
+            ],
             timeout: 30000
         });
         

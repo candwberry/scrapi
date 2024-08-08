@@ -13,7 +13,7 @@ async function initBrowser() {
     if (!browser || !browser.isConnected()) {
         console.log('Launching browser...');
         browser = await puppeteer.launch({
-            headless: false,
+            headless: true,
             timeout: 30000
         });
     }
