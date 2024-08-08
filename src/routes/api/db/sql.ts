@@ -26,7 +26,10 @@ type Supplier = {
 type Shop = {
     name: string,
     url: string,
-    priceJSON: string
+    regex: string,
+    lastUsed: string,
+    date: string,
+    json: string
 };
 
 function isProduct(obj: any): obj is Product {
@@ -62,7 +65,10 @@ function isShop(obj: any): obj is Shop {
     return (
         typeof obj.name === 'string' &&
         typeof obj.url === 'string' &&
-        typeof obj.priceJSON === 'string'
+        typeof obj.regex === 'string' &&
+        typeof obj.lastUsed === 'string' &&
+        typeof obj.date === 'string' &&
+        typeof obj.json === 'string'
     );
 }
 
@@ -97,11 +103,13 @@ const createSupplierTable = `CREATE TABLE IF NOT EXISTS suppliers (
 );`;
 
 const createShopTable = `CREATE TABLE IF NOT EXISTS shops (
-    name TEXT PRIMARY KEY,
-    url TEXT,
-    priceJSON TEXT
+    url TEXT PRIMARY KEY,
+    name TEXT,
+    regex TEXT,
+    lastUsed TEXT,
+    date TEXT,
+    json TEXT
 );`;
-// Doing priceJSON so i can adjust structure without faffing with table.
 
 export type {
     Product,

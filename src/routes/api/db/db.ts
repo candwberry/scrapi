@@ -4,7 +4,7 @@ const db = new Database("mydb.sqlite");
 db.exec("PRAGMA journal_mode = WAL;");
 
 // DROP prices table 
-//db.run(`DROP TABLE IF EXISTS products;`);
+db.run(`DROP TABLE IF EXISTS shops;`);
 db.run(createProductsTable);
 db.run(createPricesTable);
 db.run(createSupplierTable);
@@ -55,12 +55,15 @@ const SUPPLIERS = db.query(`
 `);
 
 const SHOPS = db.query(`
-    INSERT INTO shops (name, url, priceJSON)
-    VALUES (?1, ?2, ?3)
-    ON CONFLICT(name) DO UPDATE SET
+    INSERT INTO shops (name, url, regex, lastUsed, date, json)
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+    ON CONFLICT(url) DO UPDATE SET
     name = excluded.name,
     url = excluded.url;
-    priceJSON = excluded.priceJSON;
+    regex = excluded.regex;
+    lastUsed = excluded.lastUsed;
+    date = excluded.date;
+    json = excluded.json; 
 `);
 
 export { db, err, ok, ERR_INVALID_SELECT_PARAM, ERR_INVALID_TABLE, PRODUCTS, PRICES, SUPPLIERS, SHOPS };

@@ -175,7 +175,7 @@ async function initBrowser() {
     try {
         browser = await puppeteer.launch({
             //executablePath: '/usr/bin/chromium',
-            headless: true,
+            headless: false,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -194,38 +194,32 @@ async function initBrowser() {
 };
 
 function extractDomain(url) {
-    // Remove protocol if present
-    url = url.replace(/^(https?:\/\/)?/, '');
-    
-    // Check for IPv4
+    url = url.replace(/^(https?:\/\/)?/, '').replace(".co.uk", ".couk");
+
     const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
-    // Check for IPv6
     const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
-    
+
     if (ipv4Regex.test(url) || ipv6Regex.test(url)) {
-        return url; // Return IP address as-is
+        return url; 
     }
-    
-    // Remove www if present
+
     url = url.replace(/^www\./, '');
-    
-    // Split the remaining string by dots
+
     const parts = url.split('.');
-    
-    // If we have at least 3 parts, return the second-to-last
-    if (parts.length >= 3) {
+
+    if (parts.length > 2 && /^(com|org|net|edu|gov|co)$/.test(parts[parts.length - 1])) {
+        return parts[parts.length - 3];
+    }
+    else if (parts.length >= 3) {
         return parts[parts.length - 2];
     }
-    // If we have 2 parts, return the first
     else if (parts.length === 2) {
         return parts[0];
     }
-    // If we have only 1 part, return it
     else {
         return parts[0];
     }
 }
-
 async function google(query: string, baseUrl: string) {
     let page;
     try {
@@ -247,7 +241,7 @@ async function google(query: string, baseUrl: string) {
                 req.continue();
         });
 
-        await page.goto(`https://www.google.com/search?q=" + search`, { waitUntil: "domcontentloaded" });
+        await page.goto(`https://www.google.com/search?q=${query}`, { waitUntil: "domcontentloaded" });
         await page.evaluate(() => document.body.style.zoom = "25%");
         const searchResults: ElementHandle[] = await page.$$("div[jscontroller='SC7lYd']"); // NOTE: This selector may change.
         console.log(searchResults.length);
@@ -276,8 +270,9 @@ async function google(query: string, baseUrl: string) {
             const titleIgnores = ["ebay", "amazon", "cwberry"]; // we don't want our results either.
             for (let ignore of titleIgnores) {
                 if (domain.toLowerCase().includes(ignore)) {
+                    continue;
                     domain = "\x1b[31m" + domain + " / PRICE: " + price + "\x1b[0m";
-                    price = "99999";
+                    price = "__IGNORE__";
                 }
             }
 
@@ -288,12 +283,14 @@ async function google(query: string, baseUrl: string) {
         items.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
         for (let item of items) {
             // First let us see if there is a validatedRegex in the database.
+            console.log(Date.now());
             const resp = await fetch(`${baseUrl}/api/db/getGoogleRegex?domain=${item.domain}`);
             const body = await resp.json();
             if (body.error && body.error === "No results") {
                 // then let us call PUT to getGoogleRegex with the domain, and let us get the shop name by stripping domain from punctuation
                 const shop = extractDomain(item.domain);
                 const domain = item.domain;
+                console.log("So lets put this in the database: " + domain + " " + shop);
 
                 await fetch(`${baseUrl}/api/db/getGoogleRegex`, {
                     method: "PUT",
@@ -310,7 +307,7 @@ async function google(query: string, baseUrl: string) {
             
             }*/
             const page2 = await browser.newPage();
-            await page2.goto(item.href);
+            await page2.goto(item.href, { waitUntil: "domcontentloaded" });
             
             let result = {}
             if (body.regex) {
@@ -318,13 +315,16 @@ async function google(query: string, baseUrl: string) {
             } else {
               result = await findPrice(page2);
             } 
+            page2.close();
+
             let ourPrice = result.price;
             let priceFound = result.priceFound;
+
             // okay so with this, we should compare with resp.lastUsed and update DB if different
             if (body.lastUsed !== priceFound) {
                 await fetch(`${baseUrl}/api/db/getGoogleRegex`, {
                     method: "PUT",
-                    body: JSON.stringify([{ domain: item.domain, regex: priceFound }]),
+                    body: JSON.stringify({ domain: item.domain, shop: extractDomain(item.domain), lastUsed: priceFound }),
                     headers: {
                         "Content-Type": "application/json",
                     },
