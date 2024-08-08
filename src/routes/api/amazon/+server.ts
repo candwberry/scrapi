@@ -1,77 +1,47 @@
-import { error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
+import { getDecentTime, initBrowser, consolelog, consoleerror, ok, err } from '$lib/utils';
 import type { Browser, HTTPRequest } from 'puppeteer';
-import { DEFAULT_INTERCEPT_RESOLUTION_PRIORITY } from 'puppeteer';
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
 
-puppeteer.use(StealthPlugin());
-puppeteer.use(AdBlockerPlugin({
-    interceptResolutionPriority: DEFAULT_INTERCEPT_RESOLUTION_PRIORITY
-}));
-
-let browser: Browser;
-const isBatchProcessing = {
+// Amazon Batch API Status.
+const isBatchProcessing: {
+    status: boolean;
+    total: number;
+    processed: number;
+    errorArray: { error: string; info: string; }[];
+    estimatedTime: string;
+} = {
     status: false,
     total: 0,
     processed: 0,
-    errorArray: [
-    ],
+    errorArray: [],
     estimatedTime: "0s"
 };
 
-async function initBrowser() { 
-    // /usr/bin/chromium --no-sandbox --headless --disable-gpu --disable-dev-shm-usage --remote-debugging-port=9222 --disable-software-rasterizer
-    try {
-        clog("LAUNCHING BROWSER");
-        browser = await puppeteer.launch({
-        executablePath: '/usr/bin/chromium',
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--disable-gpu'
-            ],
-            timeout: 30000
-        });
-        
-        
-        clog("BROWSER LAUNCHED");
-    } catch (err) {
-        cerror("Failed to launch browser:", err);
-        throw err;
-    }
-}
+// Shortcuts for logging to server AND client.
+function clog(msg: string) { consolelog(msg, isBatchProcessing); }
+function cerr(msg: string, error: any) { consoleerror(msg, error, isBatchProcessing); }
 
-function clog(msg: string) {
-    console.log(msg);
-    isBatchProcessing.errorArray.push({
-       error: "INFO",
-       info: msg 
-    });
-}
-
-function cerror(msg: string, error: any) {
-    console.error(error);
-    isBatchProcessing.errorArray.push({
-        error: msg,
-        info: JSON.stringify(error)
-    });
-}
+let browser: Browser | undefined;
 
 async function amazon(query: string, asin?: string) {
     let page;
     try {
-        if (!browser || !browser.connected)
-            await initBrowser();
+        if (!browser || !browser.connected) {
+            browser = await initBrowser(isBatchProcessing);
 
-        console.log("NEWPAGE");
+            // Just giving the browser a bit of extra time.
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        if (browser === undefined) {
+            cerr("Browser is undefined", "Cannot launch.");
+            return [];
+        }
+
+        clog("Opening new page...");
         page = await browser.newPage();
+
+        // This blocks requests to unnecessary resources, e.g. images, stylesheets, to speed up loading of the page.
+        clog("Setting request interception...");
         await page.setRequestInterception(true);
         page.on('request', (req: HTTPRequest) => {
             const resourceType = req.resourceType();
@@ -86,47 +56,39 @@ async function amazon(query: string, asin?: string) {
                 req.continue();
         });
 
+        // If the product has a validated ASIN, we can skip the Amazon search, and jump straight to the product page.
         if (asin) {
-            clog("GOING TO PAGE /w ASIN");
+            clog(`Using ASIN: ${asin}.`);
             await page.goto(`https://www.amazon.co.uk/dp/${asin}`, { waitUntil: "domcontentloaded" });
-        
+
             let title = '';
             let price = '0';
             let shipping = '0';
             let thumbnail = '';
             let href = '';
-        
-            try {
-                title = await page.$eval('#productTitle', node => node.textContent.trim());
-            } catch (error) {
-                clog("Error fetching title:", error.message);
-            }
-        
+
+            try { title = await page.$eval('#productTitle', node => node?.textContent?.trim() || ''); }
+            catch (error) { clog("Error fetching title."); }
+
             try {
                 price = await page.$eval('.a-price', node => {
-                    let priceText = node.textContent;
+                    let priceText = node.textContent || '0';
                     return priceText.replace("..", ".").replaceAll('£', '').slice(priceText.length / 2 - 1);
                 });
-            } catch (error) {
-                clog("Error fetching price:", error.message);
-            }
-        
-            try {
-                shipping = await page.$eval("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE", node => node.textContent.trim());
-            } catch (error) {
-                clog("Error fetching shipping:", error.message);
-            }
-            if (shipping.toLowerCase().includes("free delivery")) shipping = "0";
+            } catch (error) { clog("Error fetching price."); }
 
-        
+            try { shipping = await page.$eval("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE", node => node?.textContent?.trim() ?? ''); }
+            catch (error) { clog("Error fetching shipping."); }
+
             try {
                 thumbnail = await page.$eval('img.s-image', node => node.src);
-            } catch (error) {
-                clog("Error fetching thumbnail:", error.message);
-            }
-        
+            } catch (error) { clog("Error fetching thumbnail."); }
+
+            if (shipping.toLowerCase().includes("free delivery")) shipping = "0";
+
+
             href = page.url();
-        
+
             return [
                 {
                     asin,
@@ -138,57 +100,50 @@ async function amazon(query: string, asin?: string) {
                 }
             ];
         }
-        
-        clog("GOING TO PAGE");
+
+        clog(`Searching for: ${query}`);
         await page.goto(`https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`, { waitUntil: "domcontentloaded" });
-        clog("PAGE LOADED AS FAR AS WE CAN TELL");
         const results = await page.$$("[data-asin][data-component-type='s-search-result']");
-        clog("TRIED");
 
         const items = [];
         for (let i = 0; i < results.length; i++) {
             try {
-                // asin of THIS element (results[i])
-                let asin = await results[i].evaluate(el => el.getAttribute('data-asin')) || "NOT FOUND";
-                console.log("INSIDE ITEMS ASIN: ", asin);
-                let title = await results[i].$eval('.a-text-normal', node => node.textContent) ?? "NOT FOUND";
-                let price = await results[i].$eval('.a-price', node => node.textContent) ?? "-1";
-                //let decimal = await results[i].$eval('.a-price-fraction', node => node.textContent) ?? "00";
+                let asin = await results[i].evaluate(el => el.getAttribute('data-asin')) || "";
+                let title = await results[i].$eval('.a-text-normal', node => node.textContent) ?? "";
+                let price = await results[i].$eval('.a-price', node => node.textContent) ?? "";
                 let shipping = "-1";
-                try{
-                    shipping = await results[i].$eval("[aria-label*='delivery' i]", node => node.textContent) ?? "-1";
-                }catch(err){
-                    cerror("Error getting shipping", err);
-                }
-                let thumbnail = await results[i].$eval('img.s-image', node => node.src) ?? "berry.png";
-                let href = await results[i].$eval('a.a-link-normal', node => node.href) ?? "about:blank";
+
+                try {
+                    shipping = await results[i].$eval("[aria-label*='delivery' i]", node => node.textContent) ?? "";
+                } catch (err) {
+                    cerr("Error getting shipping.", err);
+                };
+
+                let thumbnail = await results[i].$eval('img.s-image', node => node.src) ?? "";
+                let href = await results[i].$eval('a.a-link-normal', node => node.href) ?? "";
                 clog(price);
 
-                // Validation.
                 if (shipping.toLowerCase().includes("free delivery")) shipping = "0.00";
 
-                items.push({ asin: asin.slice(-10), title, price: `${price}`.replace("..", ".").replaceAll('£', '').slice(price.length / 2 - 1), shipping, thumbnail, href });
+                items.push({ 
+                    asin: asin.slice(-10), 
+                    title, 
+                    price: `${price}`.replace("..", ".").replaceAll('£', '').slice(price.length / 2 - 1), 
+                    shipping, 
+                    thumbnail, 
+                    href 
+                });
             } catch (err) {
-                cerror(`Error processing item ${i}:`, err);
+                cerr(`Error processing item ${i}.`, err);
             }
         }
 
+        clog(`Found ${items.length} items.`);
         return items;
     } catch (err) {
-        cerror(`Error in amazon function for query "${query}":`, err);
+        cerr(`Error in amazon function for query "${query}".`, err);
         return [];
-    } finally {
-        if (page) {
-            await page.close().catch(err => cerror("Error closing page:", err));
-        }
-    }
-}
-
-function getDecentTime(time: number) {
-    if (time < 1000) return `${time.toFixed(0)}ms`;
-    if (time < 60000) return `${(time / 1000).toFixed(0)}s`;
-    if (time < 3600000) return `${(time / 60000).toFixed(0)}m`;
-    return `${(time / 3600000).toFixed(0)}h`;
+    } finally { if (page) await page.close().catch(err => cerr("Error closing page.", err)); }
 }
 
 export const GET: RequestHandler = async ({ request, url }) => {
@@ -196,40 +151,29 @@ export const GET: RequestHandler = async ({ request, url }) => {
     const query = url.searchParams.get("query") ?? "";
     const batch = url.searchParams.get("batch") ?? "false";
 
-    if (batch === "stop") {
-        isBatchProcessing.status = false;
-        return new Response(JSON.stringify({ isBatchProcessing }), {
-            headers: {
-                "content-type": "application/json"
-            }
-        });
-    }
+    if (batch === "stop") { isBatchProcessing.status = false; return ok(isBatchProcessing);}
+
     if (batch === "check") {
-        if (isBatchProcessing.errorArray.length > 10) 
-            isBatchProcessing.errorArray.slice(0, isBatchProcessing.errorArray.length - 10);
-        return new Response(JSON.stringify({ isBatchProcessing }), {
-            headers: {
-                "content-type": "application/json"
-            }
-        });
+        if (isBatchProcessing.errorArray.length > 100)
+            isBatchProcessing.errorArray.slice(isBatchProcessing.errorArray.length - 100);
+
+        return ok(isBatchProcessing);
     }
-    
+
     try {
         if (batch === "true") {
-                try {
+            try {
                 const startTime = Date.now();
-                console.log("HELLO");
-                const resp = await fetch(`${baseUrl}/api/db/products?orderby=amazonLast&order=desc&limit=100000`);
+                const resp = await fetch(`${baseUrl}/api/db/products?orderby=amazonLast&order=desc`);
                 const products = await resp.json();
+
                 isBatchProcessing.status = true;
                 isBatchProcessing.total = products.length;
                 isBatchProcessing.processed = 0;
                 isBatchProcessing.errorArray = [];
-                console.log("PRODUCTS", products);
-                
-                const batchSize = 1; // increasing this makes
-                // the browser available check fail for whatever number that is, so youll get N browsers opening at once
-                // we can prevent this by checking if a browser is loading, but its just easier to do this anyway i would think.
+
+                // Don't increase this. It makes the browser open 90 pages at once, I need to fix this before increasing. TODO.
+                const batchSize = 1;
                 const totalProducts = products.length;
                 const numBatches = Math.ceil(totalProducts / batchSize);
                 for (let i = 0; i < numBatches; i++) {
@@ -238,48 +182,38 @@ export const GET: RequestHandler = async ({ request, url }) => {
                     const timePerItem = timeElapsed / (isBatchProcessing.processed + 0.1);
                     const timeRemaining = timePerItem * (totalProducts - isBatchProcessing.processed);
                     isBatchProcessing.estimatedTime = getDecentTime(timeRemaining);
-                    console.log("BATCH", i);
-                    if (!isBatchProcessing.status) {
-                        return new Response(JSON.stringify({ isBatchProcessing }), {
-                            headers: {
-                                "content-type": "application/json"
-                            }
-                        });
-                    }
+
+                    if (!isBatchProcessing.status) return ok(isBatchProcessing);
+
                     const start = i * batchSize;
                     const end = Math.min((i + 1) * batchSize, totalProducts);
                     const batchProducts = products.slice(start, end);
                     isBatchProcessing.processed += batchProducts.length;
 
-                    const batchPromises = batchProducts.map(async (product: { barcode: string; title: string; berry: any; supplierCode: any; supplier: any; ebayLast: any; googleLast: any; }) => {
+                    const batchPromises = batchProducts.map(async (product: { amazonJSON: string; barcode: string; title: string; berry: any; supplierCode: any; supplier: any; ebayLast: any; googleLast: any; } ) => {
                         try {
-                            let asin = {};
+                            let asin: { validated?: string, asin?: string, others?: string[] } = {};
                             
-                            try {
-                                asin = JSON.parse(product.amazonJSON);
-                            } catch (err) {
-                                cerror("Error parsing JSON:", err);
-                            };
+                            try { asin = JSON.parse(product.amazonJSON); } 
+                            catch (err) { cerr("Error parsing JSON.", err); };
 
                             let items = [];
-                            if (asin.validated && asin.validated === "true") {
-                                items = await amazon(product.barcode === "" ? product.title : product.barcode, asin.asin);
-                                console.log("ASIN FOUND", asin.asin);
-                            }
-                            else 
-                            {
-                                items = await amazon(product.barcode === "" ? product.title : product.barcode);
-                                console.log("NO ASIN FOUND");
-                            }
-
-                            console.log(items);
+                            if (asin.validated && asin.validated === "true") items = await amazon(product.barcode === "" ? product.title : product.barcode, asin.asin);
+                            else items = await amazon(product.barcode === "" ? product.title : product.barcode);
 
                             if (items.length > 0) {
                                 const item = items[0];
                                 const price = item.price;
                                 const shipping = item.shipping;
                                 const href = item.href;
-                                const body = JSON.stringify([{ berry: product.berry, price, shipping, date: Date.now(), shop: "amazon", href }]);
+
+                                const body = JSON.stringify([{ 
+                                    berry: product.berry, 
+                                    price, 
+                                    shipping, 
+                                    date: Date.now(), 
+                                    shop: "amazon", href }
+                                ]);
 
                                 await fetch(`${baseUrl}/api/db/prices`, {
                                     method: "PUT",
@@ -288,10 +222,10 @@ export const GET: RequestHandler = async ({ request, url }) => {
                                         "Content-Type": "application/json",
                                     },
                                 });
-                                asin.others = asin.others.concat([asin.asin]);
-                                const lastAsin = asin.asin;
+
+                                asin.others = (asin.asin && asin.asin !== "") ? (asin.others ? asin.others.concat([asin.asin]) : [asin.asin ?? '']) : [];
                                 asin.asin = item.asin;
-                                console.log("FOUND ASIN", item.asin);
+
                                 await fetch(`${baseUrl}/api/db/products`, {
                                     method: "PUT",
                                     body: JSON.stringify([{
@@ -303,9 +237,9 @@ export const GET: RequestHandler = async ({ request, url }) => {
                                         amazonLast: Date.now(),
                                         ebayLast: product.ebayLast,
                                         googleLast: product.googleLast,
-                                        amazonJSON: JSON.stringify({ 
+                                        amazonJSON: JSON.stringify({
                                             asin: asin.asin.slice(-10),
-                                            others: asin.others, 
+                                            others: asin.others,
                                             validated: asin.validated
                                         })
                                     }]),
@@ -315,56 +249,31 @@ export const GET: RequestHandler = async ({ request, url }) => {
                                 });
                             }
                         } catch (err) {
-                            cerror(`Error processing product ${product.berry}:`, err);
+                            cerr(`Error processing product ${product.berry}.`, err);
                         }
                     });
 
                     await Promise.all(batchPromises);
                 }
 
-                return new Response(JSON.stringify({ message: "Batch processing completed" }), {
-                    headers: {
-                        "content-type": "application/json"
-                    }
-                });
-            } catch (err) {
-                cerror("Error in batch processing:", err);
-                return new Response(JSON.stringify({ error: "An error occurred while processing your request" }), {
-                    status: 500,
-                    headers: {
-                        "content-type": "application/json"
-                    }
-                });
-            } finally {
-                isBatchProcessing.status = false;
-            }
+                return ok({ message: "Batch processing completed" });
+            } catch (error) {
+                cerr("Error in batch processing:", error);
+                return err("An error occurred while processing your request.", { error });
+            } finally { isBatchProcessing.status = false; }
         }
 
         if (query.trim().length === 0) {
-            error(400, "No query provided");
+            return err("No query provided", { error: "No query provided" });
         }
 
         const items = await amazon(query);
-        
         const firstItem = items.length > 0 ? items[0] : null;
         const otherItems = items.slice(1);
 
-        return new Response(JSON.stringify({ first: firstItem, others: otherItems }), {
-            headers: {
-                'content-type': 'application/json'
-            }
-        });
-    } catch (err) {
-        cerror("Error in GET handler:", err);
-        return new Response(JSON.stringify({ error: "An error occurred while processing your request" }), {
-            status: 500,
-            headers: {
-                'content-type': 'application/json'
-            }
-        });
-    } finally {
-        if (browser) {
-            await browser.close().catch(err => cerror("Error closing browser:", err));
-        }
-    }
+        return ok({ first: firstItem, others: otherItems });
+    } catch (error) {
+        cerr("Error in GET handler.", error);
+        return err("An error occurred while processing your request.", { error });
+    } finally { if (browser) await browser.close().catch(error => cerr("Error closing browser.", error)); }
 };

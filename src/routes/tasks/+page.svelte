@@ -277,7 +277,7 @@
 
 <div class="w-full h-full flex flex-row bg-black/10 p-4 rounded-lg gap-4">
   <!-- Task List Sidebar -->
-  <div class="w-1/4 bg-white rounded-lg shadow p-4">
+  <div class="w-1/4 bg-white rounded-lg shadow p-4 flex flex-col">
     <h2 class="text-xl font-bold mb-4">Tasks</h2>
     <ul>
       {#each $taskList as task}
@@ -293,7 +293,7 @@
   </div>
 
   <!-- Main Task Area -->
-  <div class="w-3/4 bg-white rounded-lg shadow p-4">
+  <div class="w-3/4 bg-white rounded-lg shadow p-4 flex flex-col" >
     {#if $currentTask === "verify-asin"}
       <h2 class="text-2xl font-bold mb-4">Verify ASIN and Amazon URL</h2>
       <p class="mb-4">

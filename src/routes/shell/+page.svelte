@@ -8,6 +8,7 @@
   async function sendCommand() {
     if (commandInput.trim() !== "") {
       commandHistory.push("$ " + commandInput);
+      
       const response = await fetch("/shell", {
         method: "POST",
         headers: {
@@ -15,6 +16,7 @@
         },
         body: JSON.stringify({ command: commandInput }),
       });
+      
       const data = await response.json();
       commandHistory.push(data.response);
       commandInput = "";
@@ -26,7 +28,7 @@
   function scrollToBottom() {
     setTimeout(() => {
       const messagesDiv = document.getElementById("messages");
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      if (messagesDiv) messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }, 0);
   }
 </script>
@@ -37,16 +39,18 @@
       <div id="circlerow">
         <div class="circle red" role="button" tabindex="0"></div>
         <div class="circle yellow"></div>
-        <div class="circle green"></div>    
+        <div class="circle green"></div>
       </div>
     </div>
     <div id="messages">
       {#each commandHistory as item}
-      <pre class="text-white font-mono mb-2 whitespace-pre-wrap">{item}</pre>
+        <pre class="text-white font-mono mb-2 whitespace-pre-wrap">{item}</pre>
       {/each}
-      <div id="input" 
+      <div
+        id="input"
         class="text-white font-mono"
-        on:keydown={(e) => e.key === "Enter" && e.shiftKey === false && sendCommand()}
+        on:keydown={(e) =>
+          e.key === "Enter" && e.shiftKey === false && sendCommand()}
         role="textbox"
         aria-multiline="true"
         tabindex="0"
@@ -60,7 +64,7 @@
             rows="1"
           ></textarea>
         </div>
-      </div>    
+      </div>
     </div>
   </div>
 </div>

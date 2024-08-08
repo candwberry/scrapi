@@ -1,28 +1,18 @@
-import { error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
+import type { Browser, Page } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import AdBlockerPlugin from "puppeteer-extra-plugin-adblocker";
-
+import { initBrowser } from '$lib/utils';
 puppeteer.use(StealthPlugin());
 puppeteer.use(AdBlockerPlugin());
 
-let browser;
-
-async function initBrowser() {
-    if (!browser || !browser.isConnected()) {
-        console.log('Launching browser...');
-        browser = await puppeteer.launch({
-            headless: true,
-            timeout: 30000
-        });
-    }
-}
+let browser: Browser | undefined;
 
 async function loadAsin(asin: string, title: string, supplier: string, supplierCode: string) {
-    let page;
+    let page: Page | undefined;
     try {
-        await initBrowser();
+        browser = await initBrowser(undefined, true);
         page = await browser.newPage();
         let url = `https://www.amazon.co.uk/dp/${asin}`;
 

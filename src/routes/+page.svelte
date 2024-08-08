@@ -8,6 +8,7 @@
   import Input from "$lib/components/Input.svelte";
   import Combobox from "$lib/components/Combobox.svelte";
 
+  
   let query = "";
   let productFields: any[] = [];
   let draggedItem: number;
@@ -294,10 +295,10 @@ style="overflow-y: auto;">
         </div>
       </div>
       <div class="flex flex-row gap-4 items-center">
-        <p>{$ebay.processed} / {$ebay.total} Items</p>
         <span class="text-xs text-nowrap"
-          >{$ebay.remaining} / {$ebay.limit} API calls</span
+        >{$ebay.remaining} / {$ebay.limit} API calls</span
         >
+        <p>{$ebay.processed} / {$ebay.total} Items</p>
       </div>
     </div>
     {#if tab === "ebay"}
@@ -445,7 +446,6 @@ style="overflow-y: auto;">
       </div>
       <div class="flex flex-row gap-4 items-center">
         <p>{$amazon.processed} / {$amazon.total} Items</p>
-        <span class="text-xs text-nowrap">♾️ / ♾️ API calls</span>
       </div>
     </div>
     {#if tab === "amazon"}
@@ -540,7 +540,6 @@ style="overflow-y: auto;">
       </div>
       <div class="flex flex-row gap-4 items-center">
         <p>{$google.processed} / {$google.total} Items</p>
-        <span class="text-xs text-nowrap">♾️ / ♾️ API calls</span>
       </div>
     </div>
     {#if tab === "google"}
