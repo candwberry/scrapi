@@ -1,31 +1,33 @@
-import { error } from '@sveltejs/kit';
+import type { Load } from "@sveltejs/kit";
 
-export async function load({ fetch }) {
-  // Fetch the product fields from the database
-  const productFieldsResponse = await fetch(`/api/db?query=${encodeURIComponent('SELECT name FROM PRAGMA_TABLE_INFO("products")')}`);
-  let productFields = await productFieldsResponse.json();
+interface Details {
+  status: boolean;
+  total: number;
+  processed: number;
+  logs: string[];
+  limit: number;
+  remaining: number;
+  estimatedTimes: string;
+}
 
-  // Filter and map fields
-  productFields = productFields
-    .filter((field: { name: string }) => !["ebayLast", "amazonLast", "googleLast", "supplier", "berry"].includes(field.name))
-    .map((field: { name: any }) => field.name);
+export const load: Load = async ({ fetch }) => {
+  const names: string[] = ["ebay", "amazon"];
+  const response: Record<string, Details> = {};
 
-  // Check the batch status for eBay, Amazon, Google
-  let ebay, amazon, google;
-  try {
-    const ebayResponse = await fetch("/api/ebay?batch=check");
-    ebay = (await ebayResponse.json())["isBatchProcessing"];
-
-    const amazonResponse = await fetch("/api/amazon?batch=check");
-    amazon = (await amazonResponse.json())["isBatchProcessing"];
-
-    const googleResponse = await fetch("/api/google?batch=check");
-    google = (await googleResponse.json())["isBatchProcessing"];
-  } catch (err) {
-    throw error(500, 'Failed to check batch status');
+  for (let i = 0; i < names.length; i++) {
+    try {
+      const resp: Response = await fetch(`/api/${names[i]}?batch=check`);
+      console.log("Response:", resp, names[i]);
+      const details: Details = (await resp.json())["isBatchProcessing"];
+      response[names[i]] = details;
+    } catch (error: any) {
+      console.error("Error fetching batch status:", error);
+    }
   }
 
   return {
-    productFields,
+    props: {
+      response,
+    },
   };
-}
+};

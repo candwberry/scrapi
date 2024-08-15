@@ -1,0 +1,122 @@
+<script lang="ts">
+    import { onMount, onDestroy } from "svelte";
+	import { writable } from "svelte/store";
+    import { rows } from "$lib/stores";
+
+    export let name = "ebay";
+    export let details = writable({
+        status: false,
+        total: 0,
+        processed: 0,
+        logs: [],
+        limit: 0,
+        remaining: 0,
+        estimatedTime: "0s"
+    });
+
+    let waiting = false;
+    let progress = 0;
+    let intervalId: Timer | undefined;
+
+    $: progress = $details.total > 0 ? ($details.processed / $details.total) * 100 : 0;
+
+    async function checkBatch() {
+        try {
+            const resp = await fetch(`/api/${name}?batch=check`);
+            if (resp.ok) {
+                const data = await resp.json();
+                details.set(data.isBatchProcessing);
+    
+                if ($details.status) {
+                    waiting = false;
+                }
+            }
+        } catch (error) {
+            console.error("Error checking batch:", error);
+        }
+
+        setTimeout(checkBatch, 500);
+    }
+
+    function startBatch() {
+        try {
+            waiting = true;
+            fetch(`/api/${name}`, {
+    method: "POST",
+    body: JSON.stringify({}),
+    headers: {
+        "Content-Type": "application/json"
+    }
+})
+.then(resp => {
+    if (resp.ok) {
+        return resp.json();
+    }
+    throw new Error('Network response was not ok.');
+})
+.then(body => {
+    rows.set(body);
+})
+.catch(error => {
+    console.error('There was a problem with the fetch operation:', error);
+});
+        } catch (error) {
+            console.error("Error starting batch:", error);
+        } finally {
+            waiting = false;
+        }
+    }
+
+    async function stopBatch() {
+        try {
+            waiting = true;
+            const resp = await fetch(`/api/${name}?batch=stop`);
+            if (resp.ok) {
+                const data = await resp.json();
+            }
+        } catch (error) {
+            console.error("Error stopping batch:", error);
+        } finally {
+            waiting = false;
+        }
+    }
+
+    onMount(async () => {
+        await checkBatch();
+    });
+
+    onDestroy(() => {
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
+    });
+</script>
+
+<div class="bg-white rounded-xl h-full w-full p-2">
+    <div class="flex flex-col">
+        <div class="flex items-center justify-between">
+            <div class="flex flex-row items-center gap-2">
+                <div class={`w-3 h-3 rounded-full text-xs ${waiting ? 'bg-[#febb2e]' : (!$details.status ? 'bg-[#fe5c54]' : 'bg-[#27c840]')}`}></div>
+                <h2 class="font-bold text-lg capitalize">{name}</h2>
+            </div>
+            <div class="flex items-center gap-2">
+                {#if waiting}
+                <button class="bg-[#f9f3ed] text-[#febb2e] font-bold px-2 py-1 rounded-lg text-sm" disabled>Waiting</button>
+                {:else if !$details.status}
+                <button class="bg-[#f9f3ed] text-[#27c840] font-bold px-2 py-1 rounded-lg text-sm" on:click={startBatch}>Run All</button>
+                {:else}
+                <button class="bg-[#f9f3ed] text-[#fe5c54] font-bold px-2 py-1 rounded-lg text-sm" on:click={stopBatch}>Stop</button>
+                {/if}
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="flex flex-col gap-1">
+                <div class="text-xs">This Batch: {$details.processed} / {$details.total},  ({progress}%)</div>
+                {#if $details.remaining !== undefined && $details.limit !== undefined}
+                <div class="text-xs">API Limits: {$details.remaining} / {$details.limit}</div>
+                {/if}
+                <div class="text-xs">EST: {$details.estimatedTime}</div>
+            </div>
+        </div>
+    </div>
+</div>

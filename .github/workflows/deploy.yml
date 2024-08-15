@@ -9,11 +9,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Build Docker image
         id: build
         run: docker build -t scrapi:latest .
-      
+
       - name: Stop and remove existing container
         if: success()
         run: |
@@ -21,12 +21,12 @@ jobs:
             docker stop scrapi
             docker rm scrapi
           fi
-      
+
       - name: Run new container
         if: success()
         run: |
           docker run -d -v /home/berry/mydb.sqlite:/home/scrapi/mydb.sqlite --name scrapi -p 80:8080 --cap-add=SYS_ADMIN -e EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} -e OPEN_AI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} scrapi:latest /bin/sh -c "bun ."
-      
+
       - name: Notify on failure
         if: failure()
         run: echo "Build failed. Old container may not have been stopped or replaced."

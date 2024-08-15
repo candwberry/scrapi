@@ -1,4 +1,5 @@
-<script>
+<script lang='ts'>
+  import Window from '$lib/components/Window.svelte';
   let commandInput = "";
   let commandHistory = [
     "Welcome! This terminal runs commands on the Raspberry Pi.",
@@ -33,100 +34,40 @@
   }
 </script>
 
-<div class="w-full h-full flex justify-center">
-  <div id="terminal">
-    <div id="header">
-      <div id="circlerow">
-        <div class="circle red" role="button" tabindex="0"></div>
-        <div class="circle yellow"></div>
-        <div class="circle green"></div>
-      </div>
-    </div>
-    <div id="messages">
-      {#each commandHistory as item}
-        <pre class="text-white font-mono mb-2 whitespace-pre-wrap">{item}</pre>
-      {/each}
-      <div
-        id="input"
-        class="text-white font-mono"
-        on:keydown={(e) =>
-          e.key === "Enter" && e.shiftKey === false && sendCommand()}
-        role="textbox"
-        aria-multiline="true"
-        tabindex="0"
-      >
-        <div class="textarea-wrapper w-full h-[250px] flex flex-col">
-          <textarea
-            id="command"
-            class="text-white font-mono w-full h-[250px]"
-            bind:value={commandInput}
-            placeholder=""
-            rows="1"
-          ></textarea>
-        </div>
+<Window head="#3b3b39" border="#000">
+  <h1 slot="title" class="font-bold text-white">Shell</h1>
+  <div id="messages">
+    {#each commandHistory as item}
+      <pre class="text-white font-mono mb-2 whitespace-pre-wrap">{item}</pre>
+    {/each}
+    <div
+      id="input"
+      class="text-white font-mono"
+      on:keydown={(e) =>
+        e.key === "Enter" && e.shiftKey === false && sendCommand()}
+      role="textbox"
+      aria-multiline="true"
+      tabindex="0"
+    >
+      <div class="textarea-wrapper w-full h-[250px] flex flex-col">
+        <textarea
+          id="command"
+          class="text-white font-mono w-full h-[250px]"
+          bind:value={commandInput}
+          placeholder=""
+          rows="1"
+        ></textarea>
       </div>
     </div>
   </div>
-</div>
+</Window>
 
 <style>
-  #circlerow {
-    display: flex;
-    align-items: center;
-  }
-
-  .circle {
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    display: inline-block;
-    margin: 0 0.1rem;
-  }
-
-  #header {
-    padding: 0.5rem;
-    background-color: #faf5f4;
-    border-top-left-radius: 1em;
-    border-top-right-radius: 1em;
-    border-bottom: 2px solid white;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .red {
-    background-color: #ff5f56;
-    font-size: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    align-items: center;
-    display: flex;
-    justify-content: center;
-  }
-
-  .yellow {
-    background-color: #ffbd2e;
-  }
-
-  .green {
-    background-color: #27c93f;
-  }
-
-  #terminal {
-    display: flex;
-    flex-direction: column;
-    width: calc(100%);
-    height: calc(100%);
-    align-self: center;
-    border-radius: 1rem;
-    box-shadow: 0 0 1rem rgba(0, 0, 0, 0.3);
-  }
-
   #messages {
     flex: 1;
     overflow-y: auto;
     padding: 0.5rem;
-    background-color: #242424;
+    background-color: #222;
     border-bottom-left-radius: 1rem;
     border-bottom-right-radius: 1rem;
   }

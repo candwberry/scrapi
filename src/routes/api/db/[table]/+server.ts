@@ -1,166 +1,231 @@
 import type { RequestHandler } from "@sveltejs/kit";
-import type { Table, Parameter } from "../sql";
-import { PARAMETERS, TABLES, isProduct, isPrice, isSupplier, isShop } from "../sql";
-import { db, ok, err, ERR_INVALID_SELECT_PARAM, ERR_INVALID_TABLE, PRODUCTS, PRICES, SUPPLIERS, SHOPS } from "../db";
+import { db, ok } from "$lib/database";
+import { writable } from "svelte/store";
 
 export const GET: RequestHandler = async ({ request, url, params }) => {
-    const table: string = params.table ?? "sqlite_master";
-    const productPrices: string = url.searchParams.get("berry") || "";
-    const mainTable: string = url.searchParams.get("maintable") || "";
+  const table: string = params.table ?? "sqlite_master";
+  const orderby: string = url.searchParams.get("orderby") ?? "";
+  const order: string = url.searchParams.get("order") ?? "asc";
+  const limit: number = parseInt(url.searchParams.get("limit") ?? "-1"); // -1 means no limit for just SQLite but to be safe we will just check.
 
-    if (mainTable === "true") {
-        try {
-            const query = `
-                SELECT p.berry, p.barcode, p.supplierCode, p.supplier, p.title, 
-                       ep.price AS ebay_price, ep.shipping AS ebay_shipping,
-                       ap.price AS amazon_price, ap.shipping AS amazon_shipping
-                FROM products p
-                LEFT JOIN (
-                    SELECT * FROM (
-                        SELECT * FROM prices WHERE shop = 'ebay' ORDER BY date DESC
-                    ) GROUP BY berry
-                ) ep ON p.berry = ep.berry
-                LEFT JOIN (
-                    SELECT * FROM (
-                        SELECT * FROM prices WHERE shop = 'amazon' ORDER BY date DESC
-                    ) GROUP BY berry
-                ) ap ON p.berry = ap.berry
-            `;
-
-            const result = db.query(query).all();
-            return ok(result);
-        } catch (e: any) {
-            return err("Invalid SQL", e.message);
-        }
-    }
-
-    if (table == "getunvalidatedgoogles") {
-        try {
-            const query = `
-                SELECT * FROM shops;
-            `;
-            const result = db.query(query).all();
-            return ok(result);
-        } catch (e: any) {
-            return err("Invalid SQL", e.message);
-        };
-    }
-
-    if (table == "unvalidatedasins") {
-        try {
-            const query = `
-                    SELECT * FROM products;
-                `;
-
-            const result = db.query(query).all();
-            return ok(result);
-        } catch (e: any) {
-            return err("Invalid SQL", e.message);
-        }
-    }
-
-    if (productPrices.trim() !== "") {
-        try {
-            const result = db.query(`
-                SELECT p.*, pr.title FROM (
-                    SELECT * FROM (
-                        SELECT * FROM prices WHERE berry = ? AND shop = 'ebay' ORDER BY date DESC LIMIT 1
-                    ) AS ebay_price
-                    UNION ALL
-                    SELECT * FROM (
-                        SELECT * FROM prices WHERE berry = ? AND shop = 'amazon' ORDER BY date DESC LIMIT 1
-                    ) AS amazon_price
-                ) p
-                JOIN products pr ON p.berry = pr.berry
-            `).all(productPrices, productPrices); return ok(result);
-        } catch (e: any) {
-            return err("Invalid SQL?", e.message); // now i think thats not a good or accurate error message.
-        };
-    }
-
-    const select: string = url.searchParams.get("s") || "*";
-    const orderby: string = url.searchParams.get("orderby") || "";
-    const order: string = url.searchParams.get("order") || "asc";
-    const limit: number = parseInt(url.searchParams.get("limit") || "100");
-
-    if (!(PARAMETERS.includes(select as Parameter)))
-        return err(ERR_INVALID_SELECT_PARAM, `Valid select parameters are: ${PARAMETERS.join(", ")}`);
-
-    if (!(TABLES).includes(table as Table))
-        return err(ERR_INVALID_TABLE, `Valid tables are: ${TABLES.join(", ")}, not: ${table}`);
-
+  if (table === "productsWithPrices") {
     try {
-        const result = db.query(`SELECT ${select} FROM ${table};` + (orderby ? ` ORDER BY ${orderby} ${order};` : "")).all().slice(0, limit);
-        return ok(result);
+      const result = db
+        .query(
+          `
+SELECT p.*,
+       e.date as e_date, a.date as a_date,
+       e.price as e_price, a.price as a_price,
+       e.shipping as e_ship, a.shipping as a_ship,
+       e.href as e_href, a.href as a_href,
+       e.json as e_json, a.json as a_json,
+       g.date1 as g_date1, g.date2 as g_date2, g.date3 as g_date3,
+       g.price1 as g_price1, g.price2 as g_price2, g.price3 as g_price3,
+       g.shipping1 as g_ship1, g.shipping2 as g_ship2, g.shipping3 as g_ship3,
+       g.href1 as g_href1, g.href2 as g_href2, g.href3 as g_href3,
+       g.json1 as g_json1, g.json2 as g_json2, g.json3 as g_json3
+FROM products p
+LEFT JOIN (
+    SELECT *
+    FROM prices
+    WHERE shop = 'ebay'
+    GROUP BY berry
+    HAVING date = MAX(date)
+) e ON e.berry = p.berry
+LEFT JOIN (
+    SELECT *
+    FROM prices
+    WHERE shop = 'amazon'
+    GROUP BY berry
+    HAVING date = MAX(date)
+) a ON a.berry = p.berry
+LEFT JOIN (
+    SELECT 
+        berry,
+        MAX(CASE WHEN rn = 1 THEN date END) as date1,
+        MAX(CASE WHEN rn = 2 THEN date END) as date2,
+        MAX(CASE WHEN rn = 3 THEN date END) as date3,
+        MAX(CASE WHEN rn = 1 THEN price END) as price1,
+        MAX(CASE WHEN rn = 2 THEN price END) as price2,
+        MAX(CASE WHEN rn = 3 THEN price END) as price3,
+        MAX(CASE WHEN rn = 1 THEN shipping END) as shipping1,
+        MAX(CASE WHEN rn = 2 THEN shipping END) as shipping2,
+        MAX(CASE WHEN rn = 3 THEN shipping END) as shipping3,
+        MAX(CASE WHEN rn = 1 THEN href END) as href1,
+        MAX(CASE WHEN rn = 2 THEN href END) as href2,
+        MAX(CASE WHEN rn = 3 THEN href END) as href3,
+        MAX(CASE WHEN rn = 1 THEN json END) as json1,
+        MAX(CASE WHEN rn = 2 THEN json END) as json2,
+        MAX(CASE WHEN rn = 3 THEN json END) as json3
+    FROM (
+        SELECT *,
+               ROW_NUMBER() OVER (PARTITION BY berry ORDER BY date DESC) as rn
+        FROM prices
+        WHERE shop = 'google'
+    ) subq
+    WHERE rn <= 3
+    GROUP BY berry
+) g ON g.berry = p.berry LIMIT ${limit}`,
+        )
+        .all();
+      return ok(result);
     } catch (e: any) {
-        return err("Invalid SQL", e.message);
-    };
+      console.error(e, table, orderby, order, limit);
+      return ok({ error: e.message });
+    }
+  }
+
+  try {
+    const result = db
+      .query(
+        `
+            SELECT * FROM ${table} ${orderby === "" ? "" : `ORDER BY ${orderby} ${order}`} ${limit < 0 ? "" : `LIMIT ${limit}`}
+        `,
+      )
+      .all();
+    return ok(result);
+  } catch (e: any) {
+    console.error(e, table, orderby, order, limit);
+    return ok({ error: e.message });
+  }
 };
 
 export const PUT: RequestHandler = async ({ request, url, params }) => {
-    const table: string = params.table ?? "sqlite_master";
-    const bodyArray = await request.json();
+  const table: string = params.table ?? "sqlite_master";
+  const body = await request.json();
+  console.log(request, body.length);
 
-    if (!(TABLES).includes(table as Table))
-        return err(ERR_INVALID_TABLE, `Valid tables are: ${TABLES.join(", ")}`);
-
-    let results: any[] = [];
-
-    if (!Array.isArray(bodyArray)) {
-        return err("Invalid body", "Body must be an array of valid product, price, supplier or shop objects");
+  if (table === "products" && Array.isArray(body)) {
+    const total = body.length;
+    const now = Math.floor(Date.now() / 1000);
+    for (let i = 0; i < body.length; i++) {
+      const product = body[i];
+      try {
+        if (product.berry === undefined || product.berry.trim().length === 0)
+          continue;
+        db.run(
+          `
+                            INSERT OR REPLACE INTO products (
+                                berry, barcode, supplierCode, supplier, description, image, 
+                                amazonLast, ebayLast, googleLast, asin, asin_validated, json
+                            )
+                            VALUES (
+                                $berry,
+                                COALESCE($barcode, (SELECT barcode FROM products WHERE berry = $berry)),
+                                COALESCE($supplierCode, (SELECT supplierCode FROM products WHERE berry = $berry)),
+                                COALESCE($supplier, (SELECT supplier FROM products WHERE berry = $berry), 'N/A'),
+                                COALESCE($description, (SELECT description FROM products WHERE berry = $berry)),
+                                COALESCE($image, (SELECT image FROM products WHERE berry = $berry)),
+                                COALESCE($amazonLast, (SELECT amazonLast FROM products WHERE berry = $berry), $now),
+                                COALESCE($ebayLast, (SELECT ebayLast FROM products WHERE berry = $berry), $now),
+                                COALESCE($googleLast, (SELECT googleLast FROM products WHERE berry = $berry), $now),
+                                COALESCE($asin, (SELECT asin FROM products WHERE berry = $berry), ''),
+                                COALESCE($asin_validated, (SELECT asin_validated FROM products WHERE berry = $berry), false),
+                                COALESCE($json, (SELECT json FROM products WHERE berry = $berry), '{}')
+                            );
+                        `,
+          {
+            // @ts-ignore
+            $berry: product.berry,
+            $barcode: product.barcode,
+            $supplierCode: product.supplierCode,
+            $supplier: product.supplier,
+            $description: product.description,
+            $image: product.image,
+            $amazonLast: product.amazonLast,
+            $ebayLast: product.ebayLast,
+            $googleLast: product.googleLast,
+            $asin: product.asin,
+            $asin_validated: product.asin_validated,
+            $json: product.json,
+            $now: now,
+          },
+        );
+      } catch (error) {
+        console.error(error);
+      }
     }
 
-    for (const body of bodyArray) {
-        console.log(JSON.stringify(body));
-        let result: any;
-        try {
-            if (isProduct(body)) {
-                result = PRODUCTS.all(body.berry, body.barcode, body.supplierCode, body.supplier, body.title, body.amazonLast, body.ebayLast, body.googleLast, body.amazonJSON);
-                console.log("IS A PRODUCT>.> ", result);
-            }
-            else if (isPrice(body))
-                result = PRICES.all(body.berry, body.price, body.shipping, body.date, body.shop, body.href);
-            else if (isSupplier(body))
-                result = SUPPLIERS.all(body.name);
-            else if (isShop(body))
-                result = SHOPS.all(body.name, body.url, body.priceJSON);
-            else {
-                result = err("Invalid body", "Body must be a valid product, price, supplier or shop object");
-                console.error(result);
-                console.error(body);
-            }
-        } catch (e: any) {
-            result = err("Invalid SQL", e.message);
-        };
-
-        console.log(result);
-        console.log("PUTTING:");
-        console.log(body.berry, body.barcode, body.supplierCode, body.supplier, body.title, body.amazonLast, body.ebayLast, body.googleLast)
-        results.push(result);
+    return ok({});
+  } else if (table === "prices" && Array.isArray(body)) {
+    for (const price of body) {
+      try {
+        db.run(
+          `
+                    INSERT INTO prices (
+                        berry, price, shipping, date, shop, image, href, json
+                    )
+                    VALUES (
+                        $berry, $price, $shipping, $date, $shop, $image, $href, $json
+                    );
+                `,
+          {
+            // @ts-ignore
+            $berry: price.berry,
+            $price: price.price,
+            $shipping: price.shipping,
+            $date: price.date,
+            $shop: price.shop,
+            $image: price.image,
+            $href: price.href,
+            $json: price.json,
+          },
+        );
+      } catch (error) {
+        console.error(error);
+      }
     }
+  } else if (table === "suppliers" && Array.isArray(body)) {
+    for (const supplier of body) {
+      try {
+        db.run(
+          `
+                    INSERT INTO suppliers (
+                        supplier, json
+                    )
+                    VALUES (
+                        $supplier, $json
+                    );
+                `,
+          {
+            // @ts-ignore
+            $supplier: supplier.supplier,
+            $json: supplier.json,
+          },
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  } else if (table === "shops" && Array.isArray(body)) {
+    for (const shop of body) {
+      try {
+        db.run(
+          `
+                    INSERT INTO shops (
+                        URL, name, regex, lastUsed, date, json
+                    )
+                    VALUES (
+                        $URL, $name, $regex, $lastUsed, $date, $json
+                    );
+                `,
+          {
+            // @ts-ignore
+            $URL: shop.URL,
+            $name: shop.name,
+            $regex: shop.regex,
+            $lastUsed: shop.lastUsed,
+            $date: shop.date,
+            $json: shop.json,
+          },
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  } else {
+    return ok({ error: "Invalid table" });
+  }
 
-    return ok(results);
-}
-
-export const DELETE: RequestHandler = async ({ request, url, params }) => {
-    console.log("CALLING DELETE");
-    const table: string = params.table ?? "sqlite_master";
-    let lastUpdated = url.searchParams.get("lastUpdated") || "";
-    console.log(request);
-
-    let query = `DELETE FROM ${table}`;
-    if (lastUpdated.length > 0 && table === "products") {
-        query += ` WHERE ebayLast != ${Math.round(parseInt(lastUpdated) / 1000)};`; // we will use EBAYLAST as the DELETE reference.
-    };
-    console.log(query);
-
-    if (!(TABLES).includes(table as Table))
-        return err(ERR_INVALID_TABLE, `Valid tables are: ${TABLES.join(", ")}`);
-
-    try {
-        const result = db.query(`${query}`).all();
-        return ok(result);
-    } catch (e: any) {
-        return err("Invalid SQL", e.message);
-    };
-}
+  return ok({});
+};
