@@ -12,7 +12,7 @@ jobs:
 
       - name: Build Docker image
         id: build
-        run: docker build -t scrapi:latest .
+        run: docker build --build-arg EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} --build-arg OPENAI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} -t scrapi:latest .
 
       - name: Stop and remove existing container
         if: success()
