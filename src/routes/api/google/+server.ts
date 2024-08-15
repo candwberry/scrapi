@@ -19,7 +19,7 @@ import OpenAi from "openai";
 import { JSDOM } from "jsdom";
 
 const openai = new OpenAi({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY ?? "HELLO",
 });
 
 puppeteer.use(StealthPlugin());
