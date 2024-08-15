@@ -360,8 +360,8 @@ async function google(query: string, baseUrl: string) {
     // write page content to file
     await page.evaluate(() => (document.body.style.zoom = "25%"));
     const searchResults: ElementHandle[] = await page.$$(
-      "div[jscontroller='SC7lYd']",
-    ); // NOTE: This selector may change.
+      "[data-snc]"
+    );
     clog(searchResults.length.toString());
     const items: { title: any; price: any; href: any; domain: any }[] = [];
 
@@ -374,7 +374,7 @@ async function google(query: string, baseUrl: string) {
       try {
         href = await page.evaluate(
           (el) =>
-            el.children[0].children[0].children[0].children[0].children[0]
+            el.children[0].children[0].children[0].children[0]
               .children[0].href,
           searchResults[i],
         );
@@ -384,14 +384,14 @@ async function google(query: string, baseUrl: string) {
         );
         domain = await page.evaluate(
           (el) =>
-            el.children[0].children[0].children[0].children[0].children[0]
+            el.children[0].children[0].children[0].children[0]
               .children[0].children[2].children[0].children[1].children[1]
               .children[0].textContent,
           searchResults[i],
         );
         price = await page.evaluate(
           (el) =>
-            el.children[0].getElementsByClassName("ChPIuf")[0].children[0]
+            el.getElementsByClassName("ChPIuf")[0].children[0]
               .textContent,
           searchResults[i],
         );
@@ -425,7 +425,7 @@ async function google(query: string, baseUrl: string) {
     for (let item of items) {
       try {
         // First let us see if there is a validatedRegex in the database.
-        clog(Date.now());
+        clog(Date.now().toString());
         const resp = await fetch(
           `${baseUrl}/api/db/getGoogleRegex?domain=${item.domain}`,
         );
