@@ -55,7 +55,6 @@ async function ebay(
 }
 
 export const GET: RequestHandler = async ({ request, url }) => {
-  const baseUrl = url.origin;
   const query = url.searchParams.get("query") ?? "";
   const batch = url.searchParams.get("batch") ?? "false";
 
@@ -100,28 +99,25 @@ export const GET: RequestHandler = async ({ request, url }) => {
   return ok({ first: firstItem, others: otherItems });
 };
 
-async function checkRateLimits() {
-  const devApi = await eBay.developer.analytics.getRateLimits("buy", "browse");
-  const limits = devApi.rateLimits[0].resources[0].rates[0];
-  isBatchProcessing.remaining = limits.remaining;
-  isBatchProcessing.limit = limits.limit;
-}
-
 export const POST: RequestHandler = async ({ request, url }) => {
-  if (isBatchProcessing.status)
-    return err("Batch processing is already in progress.", {
-      error: "Batch processing is already in progress.",
-    });
+  if (isBatchProcessing.status) {
+    cerr("Batch processing already in progress", "Batch processing already in progress");
+    return ok([]);
+  }
 
-  checkRateLimits();
+  await checkRateLimits();
   const body = await request.json();
   const baseUrl = url.origin;
   let products = [];
 
+  if (isBatchProcessing.limit < 500) {
+    cerr("Rate limit reached", "Rate limit reached");
+    return ok([]);
+  }
+
   if (Array.isArray(body)) products = body;
-  else
-    products = await fetch(
-      `${baseUrl}/api/db/products?orderby=ebayLast&order=asc&limit=5000`,
+  else products = await fetch(
+      `${baseUrl}/api/db/products?orderby=ebayLast&order=asc&limit=${isBatchProcessing.remaining - 500}`,
     ).then((res) => res.json());
 
   const result: { berry: any; price: any; shipping: any; href: any }[] = [];
@@ -153,7 +149,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
         async (product: {
           berry: any;
           barcode: string;
-          title: string;
+          description: string;
           supplierCode: any;
           supplier: any;
           amazonLast: any;
@@ -162,8 +158,20 @@ export const POST: RequestHandler = async ({ request, url }) => {
         }) => {
           clog(`Processing ${product.berry}`);
 
+          const query = (product.barcode && product.barcode !== null && product.barcode.replaceAll("null", "").replaceAll(" ", "").length > 0) 
+                        ? product.barcode :
+                        (product.description && product.description !== null && product.description.replaceAll("null", "").replaceAll(" ", "").length > 0) 
+                        ? product.description : 
+                        (product.supplierCode && product.supplierCode !== null && product.supplierCode.replaceAll("null", "").replaceAll(" ", "").length > 0)
+                        ? product.supplierCode : null;
+
+          if (query == null)  {
+            cerr("No query provided", { error: "No query provided" });
+            return;
+          }
+
           const items = await ebay(
-            product.barcode === "" ? product.title : product.barcode,
+            query.replaceAll(" "),
             "1",
             "price",
             "buyingOptions:{FIXED_PRICE},conditions:{NEW},sellerAccountTypes:{BUSINESS}",
@@ -243,5 +251,12 @@ export const POST: RequestHandler = async ({ request, url }) => {
   isBatchProcessing.status = false;
   return ok(result);
 };
+
+async function checkRateLimits() {
+  const devApi = await eBay.developer.analytics.getRateLimits("buy", "browse");
+  const limits = devApi.rateLimits[0].resources[0].rates[0];
+  isBatchProcessing.remaining = limits.remaining;
+  isBatchProcessing.limit = limits.limit;
+}
 
 checkRateLimits();

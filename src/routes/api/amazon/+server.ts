@@ -301,22 +301,30 @@ export const POST: RequestHandler = async ({ request, url }) => {
           asin_validated: any;
           json: string;
           barcode: string;
-          title: string;
+          description: string;
           berry: any;
+          supplierCode: any;
         }) => {
           try {
             let asin = product.asin ?? "";
             let asin_validated = product.asin_validated;
 
+            const query = (product.barcode && product.barcode !== null && product.barcode.replaceAll("null", "").replaceAll(" ", "").length > 0) 
+            ? product.barcode :
+            (product.description && product.description !== null && product.description.replaceAll("null", "").replaceAll(" ", "").length > 0) 
+            ? product.description : 
+            (product.supplierCode && product.supplierCode !== null && product.supplierCode.replaceAll("null", "").replaceAll(" ", "").length > 0)
+            ? product.supplierCode : null;
+
             let items = [];
             if (asin_validated !== 0)
               items = await amazon(
-                product.barcode === "" ? product.title : product.barcode,
+                query,
                 asin,
               );
             else
               items = await amazon(
-                product.barcode === "" ? product.title : product.barcode,
+                query
               );
 
             if (items.length > 0) {

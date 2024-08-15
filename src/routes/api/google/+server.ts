@@ -91,7 +91,7 @@ async function findPrice(
   );
   for (const script of scripts) {
     const content: string | null = await script.evaluate(
-      (el) => el.textContent,
+      (el) => el.textContent.toLowerCase()
     );
     if (!content) continue;
     try {
@@ -297,6 +297,7 @@ async function findPrice(
         { role: "user", content: modifiedContent },
       ],
     });
+
     cerr(`${priceFound} was actually null`, "hello"); // We will need to know if something failed.
     console.log(completion.data.choices[0].message.content);
     const result = completion.data.choices[0].message.content;
@@ -334,7 +335,6 @@ async function google(query: string, baseUrl: string) {
   try {
     if (!browser || !browser.connected)
       browser = await initBrowser(isBatchProcessing);
-    if (!browser) throw new Error("Browser not initialized");
 
     page = await browser.newPage();
     await page.setRequestInterception(true);
@@ -357,6 +357,7 @@ async function google(query: string, baseUrl: string) {
     await page.goto(`https://www.google.com/search?q=${query}`, {
       waitUntil: "domcontentloaded",
     });
+    // write page content to file
     await page.evaluate(() => (document.body.style.zoom = "25%"));
     const searchResults: ElementHandle[] = await page.$$(
       "div[jscontroller='SC7lYd']",
@@ -443,11 +444,13 @@ async function google(query: string, baseUrl: string) {
             },
           });
         }
+
         /* this is {
                 regex: 'regex',
                 lastUsed: 'regex' (regex || schema || meta || class || selector)
                 
                 }*/
+
         const page2 = await browser.newPage();
         await page2.goto(item.href, { waitUntil: "domcontentloaded" });
 
@@ -477,6 +480,8 @@ async function google(query: string, baseUrl: string) {
           });
         }
 
+        console.log(item.price, ourPrice);
+
         // if one of them is 1.2 * the other, then we give the vat EXC one theek hai.
         if (ourPrice === "99999") {
           ourPrice = item.price;
@@ -491,13 +496,16 @@ async function google(query: string, baseUrl: string) {
         ) {
           item.price = (parseFloat(ourPrice) / 1.2).toFixed(2);
         }
+
+        console.log(item.price, ourPrice);
+        item.price = ourPrice;
       } catch (error) {
         cerr(`Error processing item ${item.title}:`, error);
       }
     }
     return items;
   } catch (err) {
-    cerr(`Error in google function for query "${query}":`, err);
+    cerr(`Error in google function for query "${query}":`, err.message);
     return [];
   } finally {
     if (page) {
@@ -586,7 +594,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
       const batchPromises = batchProducts.map(
         async (product: {
           barcode: string;
-          title: string;
+          description: string;
           berry: any;
           supplierCode: any;
           supplier: any;
@@ -595,10 +603,29 @@ export const POST: RequestHandler = async ({ request, url }) => {
           amazonJSON: any;
         }) => {
           try {
-            const items = await google(
-              product.barcode === "" ? product.title : product.barcode,
+            //// MARK: Change order.
+            const query = (product.barcode && product.barcode !== null && product.barcode.replaceAll("null", "").replaceAll(" ", "").length > 0) 
+            ? product.barcode :
+            (product.description && product.description !== null && product.description.replaceAll("null", "").replaceAll(" ", "").length > 0) 
+            ? product.description : 
+            (product.supplierCode && product.supplierCode !== null && product.supplierCode.replaceAll("null", "").replaceAll(" ", "").length > 0)
+            ? product.supplierCode : null;
+
+            let items = await google(
+              query,
               baseUrl,
             );
+            if (items.length === 0) {
+              if (query == product.barcode) {
+                items = await google(
+                  product.description,
+                  baseUrl,
+                ); // no point trying suppliercode till we have suppliers uploaded.
+              }
+            }
+            //// MARK: Change order.
+
+
             clog(JSON.stringify(items));
 
             const maxItems = Math.min(items.length, 3);
