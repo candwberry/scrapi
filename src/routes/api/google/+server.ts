@@ -611,6 +611,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
             (product.supplierCode && product.supplierCode !== null && product.supplierCode.replaceAll("null", "").replaceAll(" ", "").length > 0)
             ? product.supplierCode : null;
 
+            clog(query); //?
             let items = await google(
               query,
               baseUrl,
