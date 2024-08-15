@@ -3,7 +3,9 @@
         fetch(`/api/db/${table}?limit=${limit}`)
         .then(res => res.json())
         .then(data => {
-            rows.set(data);
+            // if data is an array then update rows
+            if (Array.isArray(data))
+                rows.set(data);
         });
     }
 </script>
