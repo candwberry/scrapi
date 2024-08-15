@@ -32,7 +32,7 @@ function cerr(msg: string, error: any) {
 // Initialize eBay API object.
 const eBay = new eBayApi({
   appId: "CWBerryL-scraper-PRD-a942bf249-55fede6a",
-  certId: Bun.env.EBAY_CERT_ID,
+  certId: Bun.env.EBAY_CERT_ID ?? 'HELLO',
   sandbox: false,
   siteId: eBayApi.SiteId.EBAY_GB,
   marketplaceId: eBayApi.MarketplaceId.EBAY_GB,
