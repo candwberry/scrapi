@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
 export const db = new Database("mydb.sqlite");
-//db.exec('PRAGMA journal_mode=WAL');
+db.exec('PRAGMA journal_mode=WAL');
 
 const createProductsTable = `
     CREATE TABLE IF NOT EXISTS products (
@@ -66,8 +66,8 @@ db.run(`DROP TABLE IF EXISTS products`);
 db.run(`DROP TABLE IF EXISTS shops`);
 db.run(`DROP TABLE IF EXISTS suppliers`);
 db.run(`DROP TABLE IF EXISTS prices`);
-/* */
 db.run(`DROP TABLE IF EXISTS batches`);
+/* */
 
 db.run(createProductsTable);
 db.run(createShopsTable);
