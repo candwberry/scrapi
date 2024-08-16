@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-export const db = new Database("mydb.sqlite");
+export const db = new Database("mydb.sqlite", {create:false});
 db.exec('PRAGMA journal_mode=WAL');
 
 const createProductsTable = `
