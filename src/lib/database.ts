@@ -1,5 +1,13 @@
 import { Database } from "bun:sqlite";
-export const db = new Database("mydb.sqlite", {create:false});
+// check if mydb.sqlite exists:
+import fs from "fs";
+let db;
+if (!fs.existsSync("mydb.sqlite")) {
+    console.log("TEMP DB IN MEMORY.")
+    db = new Database(":memory:"); // this is for fixing build process bull.
+} else {
+    db = new Database("mydb.sqlite");
+}
 db.exec('PRAGMA journal_mode=WAL');
 
 const createProductsTable = `
