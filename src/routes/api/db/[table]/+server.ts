@@ -228,3 +228,24 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
 
   return ok({});
 };
+
+export const DELETE: RequestHandler = async({ request, url, params }) => {
+  const table: string = params.table ?? "sqlite_master";
+
+  if (table === "products") {
+    try {
+      db.run(
+        `
+            DELETE FROM products
+        `);
+    } catch (error) {
+      console.error(error);
+    }
+
+    finally {
+      return ok({});
+    }
+  }
+
+  return ok({ error: "Invalid table" });
+};

@@ -68,6 +68,7 @@
 
 	async function handleAllProducts() {
 		progress = { done: 0, total: 0 };
+		const now = Date.now();
 
 		// create a copy of the fileContents
 		const data: string[] = [...fileContents];
@@ -81,6 +82,20 @@
 				description: values[columns.indexOf(descriptionColumn)]
 			};
 		});
+
+		// beware if something goes wrong then we've just deleted all products before uploading new ones
+		// but it's not really a problem since all other data is still there.
+		if (deleteOld) {
+			await fetch('/api/db/products', {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					now: now,
+				})
+			});
+		}
 		
 		// batch size: 
 		const batchSize = 500;
@@ -94,11 +109,16 @@
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify(batch)
+			body: JSON.stringify({
+				array: batch,
+				now: now,
+			})
 		});
 
 			progress.done = i + batchSize;
 		}
+		progress.done = total;
+		
 	}
 </script>
 

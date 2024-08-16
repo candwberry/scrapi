@@ -1,10 +1,32 @@
 <script lang="ts">
 	export let show = true;
-	import { berry } from '$lib/stores';
-
+	import { berry, rows } from '$lib/stores';
+    import { onMount } from 'svelte';
+    import { browser } from '$app/environment';
     function epochToHuman(epoch: string) {
         return new Date(parseInt(epoch)).toLocaleDateString();
     }
+
+    async function update() {
+        // if browser..
+    }
+
+    async function refresh() {
+        // if berry.berry exists
+        if ($berry.berry) {
+            // post /api/db/batch with batch: "berry.berry"
+            const resp = await fetch (`/api/db/batch`, {
+                method: 'POST',
+                body: JSON.stringify( {batch: $berry.berry} ),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            update();
+        }
+    }
+
+    $: if ($berry.berry) update();
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -30,7 +52,7 @@
 				<div class="flex flex-row w-full justify-between items-center">
 					<p>{$berry.description}</p>
 				</div>
-                <button class="bg-berry-600 text-white rounded-md p-1">REFRESH</button>
+                <button class="bg-berry-600 text-white rounded-md p-1" on:click={refresh}>REFRESH</button>
 			</div>
 		</div>
 		<hr class="border-b border-gray-200" />

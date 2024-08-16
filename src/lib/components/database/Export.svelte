@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
+    import { onMount } from 'svelte';
 
     export let show: boolean;
     export let x: number;
@@ -8,6 +9,22 @@
     async function handleExport(exportType: string) {
         goto(`/api/db/export?type=${exportType}`);
     }
+
+    // add mousedown listener that if not inside our element then close 
+    onMount(() => {
+        const handleMouseDown = (event) => {
+            const element = document.querySelector('.context-menu');
+            if (element && !element.contains(event.target)) {
+                show = false;
+            }
+        };
+
+        window.addEventListener('mousedown', handleMouseDown);
+
+        return () => {
+            window.removeEventListener('mousedown', handleMouseDown);
+        };
+    });
 </script>
 
 {#if show}

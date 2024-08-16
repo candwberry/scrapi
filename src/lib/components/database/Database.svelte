@@ -63,7 +63,7 @@
         }
     }
 
-	let tableColumnWidths = [];
+	let tableColumnWidths: string | any[] = [];
 
 function setColumnWidths() {
 	const headerCells = document.querySelectorAll('table thead th');
@@ -101,6 +101,12 @@ onMount(() => {
 	}, 1000);
 	
 });
+
+function getBiggestElements() {
+    // return filteredArray, with the rows with the longest values for each column
+    
+    return $filteredRows.splice(0, 10);
+}
 
 </script>
 
@@ -146,7 +152,7 @@ onMount(() => {
                 </tr>
             </thead>
             <tbody style='visibility: collapse;'>
-                {#each $filteredRows.slice(0, 10) as row, index}
+                {#each getBiggestElements() as row, index}
                     <tr>
                         {#each Object.entries(row) as [key, value]}
                             <td class="px-1 break-all text-sm">

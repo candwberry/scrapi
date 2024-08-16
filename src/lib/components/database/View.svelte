@@ -33,6 +33,19 @@
         const res = await fetch('/api/db');
         const data = await res.json();
         tables = data;
+
+        const handleMouseDown = (event) => {
+            const element = document.querySelector('.context-menu');
+            if (element && !element.contains(event.target)) {
+                show = false;
+            }
+        };
+
+        window.addEventListener('mousedown', handleMouseDown);
+
+        return () => {
+            window.removeEventListener('mousedown', handleMouseDown);
+        };
     });
 </script>
 

@@ -2,6 +2,7 @@
     import { onMount, onDestroy } from "svelte";
 	import { writable } from "svelte/store";
     import { rows } from "$lib/stores";
+    import VirtualList from "svelte-tiny-virtual-list";
 
     export let name = "ebay";
     export let details = writable({
@@ -148,7 +149,14 @@
 </div>
 
 {#if showLogs}
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" on:click={(e) => e.target === e.currentTarget && (showLogs = false)}>
+    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+        on:click={(e) => e.target === e.currentTarget && (showLogs = false)}
+        on:keydown={(e) => e.key === "Escape" && (showLogs = false)}
+        role="dialog"
+        aria-modal="true"
+        tabIndex="-1"
+    >
         <div class="bg-white rounded-xl p-4 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold">Logs</h3>
@@ -157,14 +165,14 @@
                 </button>
             </div>
             {#if $details.logs.length > 0}
-                <ul class="space-y-2">
-                    {#each $details.logs.reverse() as log}
-                        <li class="border-b pb-2">
-                            <span class="text-xs text-gray-500">{(log.error || "hello")}</span>
-                            <p class="text-sm">{log.info}</p>
-                        </li>
-                    {/each}
-                </ul>
+                <VirtualList width="100%" height={400} itemCount={$details.logs.length} itemSize={60}>
+                    <div slot="item" let:index let:style {style}>
+                        <div class="border-b pb-2">
+                            <span class="text-xs text-gray-500">{($details.logs[index].error || "Info")}</span>
+                            <p class="text-sm">{$details.logs[index].info}</p>
+                        </div>
+                    </div>
+                </VirtualList>
             {:else}
                 <p class="text-sm text-gray-500">No logs available.</p>
             {/if}
