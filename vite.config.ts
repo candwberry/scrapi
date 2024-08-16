@@ -8,6 +8,6 @@ export default defineConfig({
 		strictPort: false, // means you can use another port if not 80
 	},
 	build: {
-		minify: true,
+		minify: false,
 	},
 });

@@ -13,7 +13,7 @@ interface Details {
 export const load: Load = async ({ fetch }) => {
   const names: string[] = ["ebay", "amazon"];
   const response: Record<string, Details> = {};
-
+  
   for (let i = 0; i < names.length; i++) {
     try {
       const resp: Response = await fetch(`/api/${names[i]}?batch=check`);
@@ -24,6 +24,7 @@ export const load: Load = async ({ fetch }) => {
       console.error("Error fetching batch status:", error);
     }
   }
+
 
   return {
     props: {

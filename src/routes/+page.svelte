@@ -8,8 +8,9 @@
     import Database from '$lib/components/Database.svelte';
     import { rows } from '$lib/stores';
     import BatchBatch from '$lib/components/database/BatchBatch.svelte';
+    import { onMount } from 'svelte';
 
-	import { onMount } from 'svelte';
+
 
     let show: boolean = false;
     let showSingleTime: boolean = false;
@@ -97,7 +98,7 @@
         <button on:click={() => show = true} class='bg-[#f9f3ed] text-[#8f32a8] font-bold px-2 py-1 rounded-lg text-sm'>Go to batch scheduler</button>
         -->
     </div>
-    <div class='col-span-4 h-full p-4'>
+    <div class='col-span-4 h-full p-4 overflow-hidden h-[100%]'>
         <Database data={{}} />
     </div>
 </Window>

@@ -29,6 +29,7 @@
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "svelte-adapter-bun": "^0.5.2",
-    "svelte-highlight": "^7.7.0"
+    "svelte-highlight": "^7.7.0",
+    "svelte-tiny-virtual-list": "^2.1.2"
   }
 }

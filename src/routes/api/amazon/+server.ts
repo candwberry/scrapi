@@ -157,6 +157,12 @@ async function amazon(query: string, asin?: string) {
     const items = [];
     for (let i = 0; i < results.length; i++) {
       try {
+        let sponsored = await results[i].$eval(
+          ".s-label-popover",
+          (node) => node.textContent,
+        );
+        if (sponsored) continue;
+
         let asin =
           (await results[i].evaluate((el) => el.getAttribute("data-asin"))) ||
           "";
@@ -194,7 +200,6 @@ async function amazon(query: string, asin?: string) {
           .slice(price.length / 2 - 1);
         let priceSplit = price.split(".");
         if (priceSplit.length > 1) if (priceSplit[1].length === 1) price += "0";
-
         items.push({
           asin: asin.slice(-10),
           title,
@@ -330,8 +335,12 @@ export const POST: RequestHandler = async ({ request, url }) => {
             if (items.length > 0) {
               const item = items[0];
               const price = item.price;
-              const shipping = item.shipping;
+              let shipping = item.shipping;
               const href = item.href;
+
+              if (shipping.includes("£")) {
+                shipping = shipping.split("£")[1].split(" ")[0];
+              }
 
               const now = Date.now();
               const thisResult = {
@@ -340,6 +349,11 @@ export const POST: RequestHandler = async ({ request, url }) => {
                 shipping,
                 href,
               };
+
+              //// VALIDATION: Here we could do validation that the product is anywhere close.
+
+
+              //
 
               await fetch(`${baseUrl}/api/db/prices`, {
                 method: "PUT",

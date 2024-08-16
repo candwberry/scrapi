@@ -214,7 +214,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
                   barcode: product.barcode,
                   supplierCode: product.supplierCode,
                   supplier: product.supplier,
-                  title: product.title,
+                  description: product.description,
                   amazonLast: product.amazonLast,
                   ebayLast: Date.now(),
                   googleLast: product.googleLast,

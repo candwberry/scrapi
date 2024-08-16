@@ -5,7 +5,7 @@
 	export let border = '#d1d5db';
 </script>
 
-<div class='flex flex-col rounded-xl shadow-lg w-full h-full max-h-full' style={`background-color: ${bg}`}>
+<div class='flex flex-col rounded-xl shadow-lg w-full h-full max-h-half overflow-hidden' style={`background-color: ${bg}`}>
 	<div class='grid grid-cols-2 border-b rounded-t-xl py-2 px-2' style={`background-color: ${head}; border-color: ${border}`}>
 		<div class="flex justify-self-start items-center justify-center gap-1 flex-shrink-0">
 			<div class="w-3 h-3 bg-[#fe5c54] rounded-full text-xs"></div>

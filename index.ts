@@ -24,8 +24,5 @@ const serverOptions = {
     }
 };
 
-// @ts-expect-error - websocket is optional but this works :)
-websocket && (serverOptions.websocket = websocket);
-
 console.info(`Listening on ${hostname + ":" + port}` + (websocket ? " (Websocket)" : ""));
 serve(serverOptions);

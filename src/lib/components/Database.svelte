@@ -78,7 +78,6 @@
 
 	onMount(() => {
 		if (data?.props?.data) rows.update(() => data.props.data);
-		getAllTable('productsWithPrices', '10');
 	});
 </script>
 
@@ -91,11 +90,11 @@
 		tabindex="0"
 		on:keydown={(e) => {
 			if (e.key === 'Enter') {
-				getAllTable('productsWithPrices', '10');
+				getAllTable('productsWithPrices', '-1');
 			}
 		}}
 		on:click={() => {
-			getAllTable('productsWithPrices', '10');
+			getAllTable('productsWithPrices', '-1');
 		}}
 	>
 		<Refresh width="16" height="16" />
