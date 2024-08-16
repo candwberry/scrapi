@@ -158,7 +158,7 @@
             </div>
             {#if $details.logs.length > 0}
                 <ul class="space-y-2">
-                    {#each $details.log.reverse() as log}
+                    {#each $details.logs.reverse() as log}
                         <li class="border-b pb-2">
                             <span class="text-xs text-gray-500">{(log.error || "hello")}</span>
                             <p class="text-sm">{log.info}</p>

@@ -468,6 +468,7 @@ async function google(query: string, baseUrl: string) {
           result = await findPrice(page2);
         }
         page2.close();
+        clog(JSON.stringify(result));
 
         let ourPrice = result.price;
         let priceFound = result.priceFound;
