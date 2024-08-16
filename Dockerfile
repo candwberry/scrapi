@@ -36,9 +36,6 @@ RUN apt update -qq \
 # Copy project to /home/scrapi
 COPY . /home/scrapi
 
-# Copy sqlite database to /home/scrapi
-COPY /home/berry/mydb.sqlite /home/scrapi/mydb.sqlite
-
 # Go to copied directory
 WORKDIR /home/scrapi
 
