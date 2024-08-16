@@ -337,6 +337,7 @@ async function google(query: string, baseUrl: string) {
       browser = await initBrowser(isBatchProcessing);
 
     page = await browser.newPage();
+
     await page.setRequestInterception(true);
     page.on("request", (req: HTTPRequest) => {
       const resourceType = req.resourceType();
@@ -452,6 +453,12 @@ async function google(query: string, baseUrl: string) {
                 }*/
 
         const page2 = await browser.newPage();
+
+        //// MARK: Important.
+        page2.setDefaultNavigationTimeout(2000);
+        page2.setDefaultTimeout(2000);
+
+        clog(item.href);
         await page2.goto(item.href, { waitUntil: "domcontentloaded" });
 
         let result = {};

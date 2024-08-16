@@ -120,6 +120,10 @@ export const POST: RequestHandler = async ({ request, url }) => {
       `${baseUrl}/api/db/products?orderby=ebayLast&order=asc&limit=${isBatchProcessing.remaining - 500}`,
     ).then((res) => res.json());
 
+  
+    clog(`Processing ${products.length} products`);
+    clog(`JSON: ${JSON.stringify(products)}`);
+
   const result: { berry: any; price: any; shipping: any; href: any }[] = [];
   const startTime = Date.now();
   isBatchProcessing.status = true;
@@ -171,7 +175,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
           }
 
           const items = await ebay(
-            query.replaceAll(" "),
+            query.replaceAll(" ", ""),
             "1",
             "price",
             "buyingOptions:{FIXED_PRICE},conditions:{NEW},sellerAccountTypes:{BUSINESS}",
@@ -179,6 +183,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
           const itemSummaries = items.itemSummaries ?? [];
 
+          clog(`Found ${itemSummaries.length} items with query ${query}`);
           if (itemSummaries.length > 0) {
             const item = itemSummaries[0];
             const price = item.price.value;
@@ -198,6 +203,15 @@ export const POST: RequestHandler = async ({ request, url }) => {
               },
             ]);
 
+            const thisResult = {
+              berry: product.berry,
+              price,
+              shipping,
+              href,
+            };
+
+            result.push(thisResult);
+            
             await fetch(`${baseUrl}/api/db/prices`, {
               method: "PUT",
               body: body,
@@ -226,14 +240,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
               },
             });
 
-            const thisResult = {
-              berry: product.berry,
-              price,
-              shipping,
-              href,
-            };
-
-            result.push(thisResult);
+            
           }
         },
       );
@@ -249,6 +256,8 @@ export const POST: RequestHandler = async ({ request, url }) => {
   }
 
   isBatchProcessing.status = false;
+  clog("okaying");
+  clog(JSON.stringify(result));
   return ok(result);
 };
 

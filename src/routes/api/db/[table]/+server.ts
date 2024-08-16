@@ -93,7 +93,6 @@ LEFT JOIN (
 export const PUT: RequestHandler = async ({ request, url, params }) => {
   const table: string = params.table ?? "sqlite_master";
   const body = await request.json();
-  console.log(request, body.length);
 
   if (table === "products" && Array.isArray(body)) {
     const total = body.length;

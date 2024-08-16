@@ -17,6 +17,7 @@
     let waiting = false;
     let progress = 0;
     let intervalId: Timer | undefined;
+    let showLogs = false;
 
     $: progress = $details.total > 0 ? ($details.processed / $details.total) * 100 : 0;
 
@@ -90,14 +91,24 @@
             clearInterval(intervalId);
         }
     });
+
+    function formatTimestamp(timestamp: number): string {
+    return new Date(timestamp).toLocaleString();
+}
+
+
 </script>
 
-<div class="bg-white rounded-xl h-full w-full p-2">
-    <div class="flex flex-col">
+<div class="bg-white flex flex-col rounded-xl h-full w-full p-2">
+    <div class="flex flex-col h-full">
         <div class="flex items-center justify-between">
             <div class="flex flex-row items-center gap-2">
                 <div class={`w-3 h-3 rounded-full text-xs ${waiting ? 'bg-[#febb2e]' : (!$details.status ? 'bg-[#fe5c54]' : 'bg-[#27c840]')}`}></div>
                 <h2 class="font-bold text-lg capitalize">{name}</h2>
+                {#if $details.remaining !== undefined && $details.limit !== undefined}
+                <div class="text-xs ml-4">({$details.remaining} / {$details.limit}) calls</div>
+                {/if}
+
             </div>
             <div class="flex items-center gap-2">
                 {#if waiting}
@@ -112,11 +123,51 @@
         <div class="flex items-center gap-2">
             <div class="flex flex-col gap-1">
                 <div class="text-xs">This Batch: {$details.processed} / {$details.total},  ({progress}%)</div>
-                {#if $details.remaining !== undefined && $details.limit !== undefined}
-                <div class="text-xs">API Limits: {$details.remaining} / {$details.limit}</div>
-                {/if}
-                <div class="text-xs">EST: {$details.estimatedTime}</div>
+                <div class="text-xs">EST: {$details.estimatedTime} </div>
             </div>
         </div>
+        <div class="flex items-center justify-between h-full">
+            <div class="flex flex-row items-center gap-2">
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y-no-static-element-interactions -->
+                <div class="text-xs" on:click={ () => {
+                    // show div with all logs
+                    
+                }}
+                >Log: {$details.logs.length > 0 ? $details.logs[$details.logs.length - 1].info.substring(0, 30): 'no logs'}</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button class="bg-[#f9f3ed] text-[#000] font-bold px-2 py-1 rounded-lg text-xs" on:click={() => showLogs = !showLogs}>
+                    Logs ({$details.logs.length})
+                </button>
+                
+                            </div>
+        </div>
+
     </div>
 </div>
+
+{#if showLogs}
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" on:click={(e) => e.target === e.currentTarget && (showLogs = false)}>
+        <div class="bg-white rounded-xl p-4 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Logs</h3>
+                <button class="text-gray-500 hover:text-gray-700" on:click={() => showLogs = false}>
+                    &times;
+                </button>
+            </div>
+            {#if $details.logs.length > 0}
+                <ul class="space-y-2">
+                    {#each $details.log.reverse() as log}
+                        <li class="border-b pb-2">
+                            <span class="text-xs text-gray-500">{(log.error || "hello")}</span>
+                            <p class="text-sm">{log.info}</p>
+                        </li>
+                    {/each}
+                </ul>
+            {:else}
+                <p class="text-sm text-gray-500">No logs available.</p>
+            {/if}
+        </div>
+    </div>
+{/if}

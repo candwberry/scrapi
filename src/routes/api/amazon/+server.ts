@@ -42,7 +42,7 @@ async function amazon(query: string, asin?: string) {
 
       // await a promise that resolves on browser.connected OR 5 seconds
       await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject("Timeout"), 5000);
+        const timeout = setTimeout(() => reject("Timeout"), 1000);
         if (!browser) return reject("Browser is undefined");
         browser.once("disconnected", () => reject("Disconnected"));
         browser.once("connected", () => {
@@ -58,6 +58,7 @@ async function amazon(query: string, asin?: string) {
 
     clog("Opening new page...");
     page = await browser.newPage();
+    page.setDefaultNavigationTimeout(1000);
 
     // This blocks requests to unnecessary resources, e.g. images, stylesheets, to speed up loading of the page.
     clog("Setting request interception...");
@@ -318,7 +319,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
             let asin = product.asin ?? "";
             let asin_validated = product.asin_validated;
 
-            const query = (product.barcode && product.barcode !== null && product.barcode.replaceAll("null", "").replaceAll(" ", "").length > 0) 
+            let query = (product.barcode && product.barcode !== null && product.barcode.replaceAll("null", "").replaceAll(" ", "").length > 0) 
             ? product.barcode :
             (product.description && product.description !== null && product.description.replaceAll("null", "").replaceAll(" ", "").length > 0) 
             ? product.description : 
@@ -336,7 +337,15 @@ export const POST: RequestHandler = async ({ request, url }) => {
                 query
               );
 
-            if (items.length > 0) {
+            if (!(items.length > 0 && items[0].price !== "0")) { 
+                if (query == product.barcode) {
+                  query = product.description;
+                  items = await amazon(
+                    query
+                  );
+                }
+            }
+            if (items.length > 0 && items[0].price !== "0") { 
               const item = items[0];
               const price = item.price;
               let shipping = item.shipping;

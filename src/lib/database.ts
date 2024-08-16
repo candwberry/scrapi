@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 // check if mydb.sqlite exists:
 import fs from "fs";
-let db;
+let db: Database;
 if (!fs.existsSync("mydb.sqlite")) {
     console.log("TEMP DB IN MEMORY.")
     db = new Database(":memory:"); // this is for fixing build process bull.

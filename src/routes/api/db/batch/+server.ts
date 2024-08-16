@@ -13,9 +13,9 @@ export const GET: RequestHandler = async ({ request, url, fetch }) => {
   const name = url.searchParams.get("name") || "";
   if (name == "")
     return ok(db.query(`SELECT * FROM batches ORDER BY next ASC`).all());
-  else {
+  else 
     return ok(db.query(`SELECT * FROM batches WHERE name = ?`).all(name));
-  }
+  
 };
 
 export const POST: RequestHandler = async ({ request, url, fetch }) => {
@@ -43,6 +43,7 @@ export const POST: RequestHandler = async ({ request, url, fetch }) => {
     method: "POST",
     body: JSON.stringify(batch),
   });
+  
   const amazon = await fetch("/api/amazon", {
     method: "POST",
     body: JSON.stringify(batch),
@@ -51,10 +52,35 @@ export const POST: RequestHandler = async ({ request, url, fetch }) => {
     method: "POST",
     body: JSON.stringify(batch),
   });
+  let amazonJSON;
+  let ebayJSON;
+  let googleJSON;
+
+  try {
+    amazonJSON = await amazon.json();
+  } catch (err) {
+    console.error("Amazon error:", err);
+    amazonJSON = [];
+  }
+  try {
+    ebayJSON = await ebay.json();
+  } catch (err) {
+    console.error("Ebay error:", err);
+    ebayJSON = [];
+  }
+  try {
+    googleJSON = await google.json();
+  } catch (err) {
+    console.error("Google error:", err);
+    googleJSON = [];
+  }
+
+  console.log(ebay, amazon, google);
+  console.log(ebayJSON, amazonJSON, googleJSON);
   return ok({
-    amazon: await amazon.json(),
-    ebay: await ebay.json(),
-    google: await google.json(),
+    amazon: amazonJSON,
+    ebay: ebayJSON,
+    google: googleJSON,
   });
 };
 

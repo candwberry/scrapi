@@ -14,7 +14,9 @@
                 }
             });
             const body = await resp.json();
-            rows.set([...body.google, ...body.amazon, ...body.ebay]);
+            console.log("BatchBatch body:", body);
+
+            rows.set([Array.isArray(body.google) ? body.google : [], Array.isArray(body.amazon) ? body.amazon : [], Array.isArray(body.ebay) ? body.ebay : []]);
             
         } catch (error) {
             console.error("Error starting batch:", error);

@@ -22,6 +22,7 @@ async function initializePage(
     if (browser === undefined) throw new Error("Browser not initialized");
     if (page === undefined) page = await browser.newPage();
     page.setViewport({ width: 1920, height: 1080 });
+    
     page.evaluate(() => {
       document.body.style.zoom = "0.5";
     });
