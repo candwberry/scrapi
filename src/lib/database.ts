@@ -90,3 +90,5 @@ export function ok(body: any) {
     },
   });
 }
+
+export { db };
