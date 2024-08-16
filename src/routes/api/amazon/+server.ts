@@ -157,11 +157,15 @@ async function amazon(query: string, asin?: string) {
     const items = [];
     for (let i = 0; i < results.length; i++) {
       try {
-        let sponsored = await results[i].$eval(
-          ".s-label-popover",
-          (node) => node.textContent,
-        );
-        if (sponsored) continue;
+        try{
+          let sponsored = await results[i].$eval(
+            ".puis-sponsored-label-info-icon",
+            (node) => node.textContent,
+          );
+          if (sponsored) continue;
+        } catch (err) {
+          // element doesn't exist thats expected for a non-sponseored item
+        }
 
         let asin =
           (await results[i].evaluate((el) => el.getAttribute("data-asin"))) ||
