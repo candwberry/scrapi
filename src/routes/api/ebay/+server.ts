@@ -174,12 +174,22 @@ export const POST: RequestHandler = async ({ request, url }) => {
             return;
           }
 
-          const items = await ebay(
+          let items = await ebay(
             query.replaceAll(" ", ""),
             "1",
             "price",
             "buyingOptions:{FIXED_PRICE},conditions:{NEW},sellerAccountTypes:{BUSINESS}",
           );
+
+          if (items.length == 0 && query === product.barcode) {
+            items = await ebay(
+              product.description,
+              "1",
+              "price",
+              "buyingOptions:{FIXED_PRICE},conditions:{NEW}",
+            );
+          }
+          
 
           const itemSummaries = items.itemSummaries ?? [];
 
