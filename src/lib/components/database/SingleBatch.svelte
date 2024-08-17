@@ -5,6 +5,14 @@
 
     async function startBatch() {
         try {
+            if (Notification.permission !== 'granted') {
+                await Notification.requestPermission();
+            }
+        } catch (error) {
+            console.error("Error requesting notification permission:", error);
+        }
+
+        try {
             waiting = true;
             const resp = await fetch(`/api/db/batch`, {
                 method: "POST",
@@ -23,7 +31,69 @@
         } finally {
             waiting = false;
         }
+
+        try{
+            if (Notification.permission === 'granted') {
+                new Notification('Batch completed', {
+                    body: 'Your batch has been completed.',
+                    icon: '/favicon.ico'
+                });
+            }
+        } catch (error) {
+            console.error("Error sending notification:", error);
+        }
     }
+
+    async function exportBatch() {
+    try {
+        waiting = true;
+        const berryList = brefs.split('\n').map((bref: string) => bref.trim());
+        
+        const response = await fetch('/api/db/export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                type: 'batch',
+                array: berryList
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Get the filename from the Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        const filenameMatch = contentDisposition && contentDisposition.match(/filename="?(.+)"?/i);
+        const filename = filenameMatch ? filenameMatch[1] : 'export.csv';
+
+        // Create a blob from the response
+        const blob = await response.blob();
+
+        // Create a temporary URL for the blob
+        const url = window.URL.createObjectURL(blob);
+
+        // Create a temporary anchor element and trigger the download
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+    } catch (error) {
+        console.error("Error exporting batch:", error);
+        // You might want to show an error message to the user here
+    } finally {
+        waiting = false;
+    }
+}
 </script>
 
 <div class="bg-white rounded-xl w-full w-full p-2">
@@ -34,7 +104,12 @@
                 <h2 class="font-bold text-lg capitalize">one time batch</h2>
             </div>
             <div class="flex items-center gap-2">
+                <button class="bg-[#f9f3ed] text-[#000] font-bold px-2 py-1 rounded-lg text-sm" on:click={exportBatch}>Export</button>
+                {#if !waiting}
                 <button class="bg-[#f9f3ed] text-[#27c840] font-bold px-2 py-1 rounded-lg text-sm" on:click={startBatch}>Launch</button>
+                {:else}
+                <button class="bg-[#f9f3ed] text-[#febb2e] font-bold px-2 py-1 rounded-lg text-sm" disabled>Waiting</button>
+                {/if}
             </div>
         </div>
         <div class="flex items-center gap-2 mt-2">

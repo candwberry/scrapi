@@ -8,7 +8,7 @@ import {
   ok,
   err,
 } from "$lib/utils";
-
+import fs from "fs";
 import type { Browser, HTTPRequest, Page } from "puppeteer";
 import { DEFAULT_INTERCEPT_RESOLUTION_PRIORITY } from "puppeteer";
 import puppeteer from "puppeteer-extra";
@@ -358,7 +358,11 @@ async function google(query: string, baseUrl: string) {
     await page.goto(`https://www.google.com/search?q=${query}`, {
       waitUntil: "domcontentloaded",
     });
-    // write page content to file
+    
+    // dump page to file "output.html"
+    const content = await page.content();
+    fs.writeFileSync('output.html', content);
+
     await page.evaluate(() => (document.body.style.zoom = "25%"));
     const searchResults: ElementHandle[] = await page.$$(
       "[data-snc]"

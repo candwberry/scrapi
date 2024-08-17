@@ -58,7 +58,7 @@ async function amazon(query: string, asin?: string) {
 
     clog("Opening new page...");
     page = await browser.newPage();
-    page.setDefaultNavigationTimeout(1000);
+    page.setDefaultNavigationTimeout(5000);
 
     // This blocks requests to unnecessary resources, e.g. images, stylesheets, to speed up loading of the page.
     clog("Setting request interception...");

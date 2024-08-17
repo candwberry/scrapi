@@ -46,6 +46,9 @@ export const berry = writable({
 //SELECT p.*, e.*, e.date as e_date, a.*, a.date as a_date, e.price as ebay_price, a.price as amazon_price, e.shipping as ebay_ship, a.shipping as amazon_ship
 
 const autoHide = [
+  "g_ship1",
+  "g_ship2",
+  "g_ship3",
   "image",
   "amazonLast",
   "ebayLast",

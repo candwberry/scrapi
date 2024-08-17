@@ -1,18 +1,33 @@
 <script lang="ts">
 	export let show = true;
 	import { berry, rows } from '$lib/stores';
-    import { onMount } from 'svelte';
     import { browser } from '$app/environment';
     function epochToHuman(epoch: string) {
         return new Date(parseInt(epoch)).toLocaleDateString();
     }
+    let fetching = false;
 
     async function update() {
-        // if browser..
+        if (! browser) return;
+        try {
+            const resp = await fetch(`/api/db/productWithPrice?berry=${$berry.berry}`);
+            if (resp.ok) {
+                const data = await resp.json();
+                console.log(data);
+                if (Array.isArray(data) && data.length > 0) {
+                    $berry = data[0];
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        } 
     }
 
     async function refresh() {
-        // if berry.berry exists
+        // if berry.berry exists       
+         try {
+            fetching = true;
+
         if ($berry.berry) {
             // post /api/db/batch with batch: "berry.berry"
             const resp = await fetch (`/api/db/batch`, {
@@ -23,10 +38,14 @@
                 }
             });
             update();
+        } } catch (e) {
+            console.error(e);
+        } finally {
+            fetching = false;
         }
     }
 
-    $: if ($berry.berry) update();
+    $: if (show) update();
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -49,10 +68,10 @@
 					<p>{$berry.barcode}</p>
 					<p>{$berry.supplier} : {$berry.supplierCode}</p>
 				</div>
-				<div class="flex flex-row w-full justify-between items-center">
-					<p>{$berry.description}</p>
-				</div>
-                <button class="bg-berry-600 text-white rounded-md p-1" on:click={refresh}>REFRESH</button>
+                <div class="flex flex-row w-full justify-between items-center">
+                    <p>{$berry.description}</p>
+                </div>
+                <button class={`rounded-md p-1 ${fetching ? 'bg-berry-500' : 'bg-berry-700'} text-white`} on:click={refresh}>{fetching ? "FETCHING DATA" : "REFRESH"}</button>
 			</div>
 		</div>
 		<hr class="border-b border-gray-200" />
@@ -60,6 +79,7 @@
 			<div class="flex flex-col gap-1">
 				<p class="text-sm font-bold">ebay</p>
 				<div class="flex flex-row justify-between">
+                    {#if $berry.e_price}
 					<div class="flex flex-row gap-4">
                         <p class='font-bold'>
                             £{parseFloat($berry.e_price) + parseFloat($berry.e_ship)}
@@ -71,11 +91,13 @@
                         <p>{epochToHuman($berry.e_date)}</p>
                         <a href={$berry.e_href} class="text-berry-500" target="_blank">link</a>
                     </div>
+                    {/if}
 				</div>
 			</div>
 			<div class="flex flex-col gap-1">
 				<p class="text-sm font-bold">amazon</p>
 				<div class="flex flex-row justify-between">
+                    {#if $berry.a_price}
 					<div class="flex flex-row gap-4">
                         <p class='font-bold'>
                             £{parseFloat($berry.a_price) + parseFloat($berry.a_ship)}
@@ -87,11 +109,13 @@
                         <p>{epochToHuman($berry.a_date)}</p>
                         <a href={$berry.a_href} class="text-berry-500" target="_blank">link</a>
                     </div>
+                    {/if}
 				</div>
 			</div>
             <p class="text-sm font-bold">google</p>
             <div class="flex flex-col gap-1">
 			<div class="flex flex-row justify-between">
+                {#if $berry.g_price1}
                 <div class="flex flex-row gap-4">
                     <p class='font-bold'>
                         £{parseFloat($berry.g_price1) + parseFloat($berry.g_ship1)}
@@ -103,8 +127,10 @@
                     <p>{epochToHuman($berry.g_date1)}</p>
                     <a href={$berry.g_href1} class="text-berry-500" target="_blank">link</a>
                 </div>
+                {/if}
         </div>
 			<div class="flex flex-row justify-between">
+                {#if $berry.g_price2}
                 <div class="flex flex-row gap-4">
                     <p class='font-bold'>
                         £{parseFloat($berry.g_price2) + parseFloat($berry.g_ship2)}
@@ -116,8 +142,10 @@
                     <p>{epochToHuman($berry.g_date2)}</p>
                     <a href={$berry.g_href2} class="text-berry-500" target="_blank">link</a>
                 </div>
+                {/if}
 			</div>
 			<div class="flex flex-row justify-between">
+                {#if $berry.g_price3}
                 <div class="flex flex-row gap-4">
                     <p class='font-bold'>
                         £{parseFloat($berry.g_price3) + parseFloat($berry.g_ship3)}
@@ -129,6 +157,7 @@
                     <p>{epochToHuman($berry.g_date3)}</p>
                     <a href={$berry.g_href3} class="text-berry-500" target="_blank">link</a>
                 </div>
+                {/if}
 			</div>
             </div>
 		</div>

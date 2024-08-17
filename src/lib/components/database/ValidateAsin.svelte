@@ -5,7 +5,7 @@
 	let textInput = '';
 	export let show: boolean = false;
 
-	let asin = '';
+	export let asin = '';
 	let their_description = '';
 	let our_description = '';
 	let supplierCode = '';
@@ -15,8 +15,7 @@
 	export let berry = '';
 
 	// watch for berry changing:
-	$: if (berry !== '') {
-		asin = '';
+	$: if (berry !== '' && asin !== ' ') {
 		their_description = '';
 		our_description = '';
 		supplierCode = '';
@@ -100,10 +99,9 @@
 						>Search </button
 					>
                     <a
-                    target="_blank"
-                    href={`https://www.amazon.co.uk/s?q=${encodeURIComponent(our_description)}`}
-                    class="bg-[#febb2e] w-full items-center justify-center middle text-white rounded-lg px-2 text-xs font-bold"
-                    >Link </a
+                    href={`https://www.amazon.co.uk/s?k=${encodeURIComponent(asin)}`}
+                    class="bg-[#0aa] w-full items-center flex justify-center middle text-white rounded-lg px-2 text-xs font-bold"
+                    >href </a
                 >
 
 					<button

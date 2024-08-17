@@ -13,6 +13,7 @@
     let sortDirection = 'asc';
     let show = false;
     let asinShow = false;
+    let asinAsin = '';
     let asinBerry = '';
     let rowHeight = 26;
     let listHeight = 500;
@@ -37,11 +38,10 @@
         show = true;
     }
 
-    function handleAsinClick(event: Event, berry: string) {
-        if ((event.target as HTMLElement).cellIndex === 0) {
+    function handleAsinClick(event: Event, berry: string, asin: string) {
             asinShow = true;
             asinBerry = berry;
-        }
+            asinAsin = asin;
     }
 
     function handleMouseEnter(index: number, berry: string) {
@@ -102,10 +102,17 @@ onMount(() => {
 	
 });
 
-function getBiggestElements() {
-    // return filteredArray, with the rows with the longest values for each column
-    
-    return $filteredRows.splice(0, 10);
+function getBiggestElements(_temp, _temp2) { // so stupid _temp is needed for reactivity?.... 
+    // for each column, find the row with the longest value in that column
+    return Object.keys($filteredRows[0]).reduce((acc, column) => {
+        const longestRow = $filteredRows.reduce((longest, row) => {
+            if (row[column] ? (row[column].toString().length) : 0 > longest[column] ? (longest[column].toString().length) : 0) { 
+                return row;
+            }
+            return longest;
+        });
+        return [longestRow];
+    }, []);
 }
 
 </script>
@@ -152,7 +159,7 @@ function getBiggestElements() {
                 </tr>
             </thead>
             <tbody style='visibility: collapse;'>
-                {#each getBiggestElements() as row, index}
+                {#each getBiggestElements($rows.length, $filteredRows.length) as row, index}
                     <tr>
                         {#each Object.entries(row) as [key, value]}
                             <td class="px-1 break-all text-sm">
@@ -175,6 +182,7 @@ function getBiggestElements() {
             </tbody>
         </table>
 
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
         <VirtualList
             bind:this={virtualList}
             width="100%"
@@ -182,20 +190,20 @@ function getBiggestElements() {
             itemCount={data.length}
             itemSize={40}
         >
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div slot="item" let:index let:style
-                style="{style}; display: flex;"
+                style={`${style}; display: flex; ${hoveredRowIndex === index ? 'background-color: #e2e2e2;' : ''}`}
                 class:even={index % 2 === 0}
-                class:hovered={hoveredRowIndex === index}
-                on:click={(e) => handleRowClick(e, data[index].berry)}
                 on:mouseenter={() => handleMouseEnter(index, data[index].berry)}
                 on:mouseleave={handleMouseLeave}
             >
                 {#each Object.entries(data[index]) as [key, value], colIndex}
                     <div class="px-1 break-all text-sm" style="width: {tableColumnWidths[colIndex] - 1}px; flex-shrink: 0;">
                         {#if key === 'asin'}
+                            <!-- svelte-ignore a11y-click-events-have-key-events -->
                             <span
                                 class={getValidatedAsin(value)}
-                                on:click={(e) => handleAsinClick(e, data[index].berry)}
+                                on:click={(e) => handleAsinClick(e, data[index].berry, value)}
                             >
                                 {value}
                             </span>
@@ -207,10 +215,13 @@ function getBiggestElements() {
                     </div>
                 {/each}
                 <div class="px-1 bg-gray-300" style="width: {tableColumnWidths[tableColumnWidths.length - 1]}px; flex-shrink: 0;">
-                    <button on:click={() => {/* Handle edit */}}>
+                    <button on:click={(e) => handleRowClick(e, data[index].berry)}>
                         <Edit width="16px" height="16px" />
                     </button>
                 </div>
+            </div>
+            <div slot="footer">
+                <div class="text-center text-gray-500 py-2">End of list.</div>
             </div>
         </VirtualList>
     {/if}
@@ -226,4 +237,10 @@ function getBiggestElements() {
 {/if}
 
 <Berry bind:show={show}/>
-<ValidateAsin bind:show={asinShow} bind:berry={asinBerry}/>
+<ValidateAsin bind:show={asinShow} bind:berry={asinBerry} bind:asin={asinAsin}/>
+
+<style>
+    .even {
+        background-color: #eee;
+    }
+</style>
