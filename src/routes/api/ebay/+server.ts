@@ -181,7 +181,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
             "buyingOptions:{FIXED_PRICE},conditions:{NEW},sellerAccountTypes:{BUSINESS}",
           );
 
-          if (items.length == 0 && query === product.barcode) {
+          if (items.itemSummaries && items.itemSummaries.length === 0 && query === product.barcode) {
             items = await ebay(
               product.description,
               "1",

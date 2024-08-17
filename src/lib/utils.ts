@@ -37,6 +37,7 @@ function consoleerror(
   });
 }
 
+// chromium --headless --dump-dom https://www.google.com --disable-gpu --no-sandbox --disable-accelerated-2d-canvas --disable-setuid-sandbox --disable-dev-shm-usage --no-first-run --no-zygote > output.html
 async function initBrowser(
   isBatchProcessing?: { logs: { error: string; info: string }[] },
   headless?: boolean,
