@@ -163,7 +163,7 @@ function getBiggestElements(_temp1, _temp2) {
                                 {:else if key === 'href'}
                                     <a href={value} target="_blank">{value}</a>
                                 {:else}
-                                    {value}
+                                    {value ? value.toString().substring(0, 50) : ''}
                                 {/if}
                             </td>
                         {/each}
@@ -199,8 +199,8 @@ function getBiggestElements(_temp1, _temp2) {
                             <span
                                 class={getValidatedAsin(value)}
                                 on:click={(e) => {
-                                    navigator.clipboard.writeText(value);
                                     handleAsinClick(e, data[index].berry, value)
+                                    if (navigator && navigator.clipboard) navigator.clipboard.writeText(value);
                                 }}
                             >
                                 {value}
@@ -211,7 +211,7 @@ function getBiggestElements(_temp1, _temp2) {
                             <span
                                 class="copy-value"
                                 on:click={() => {
-                                    navigator.clipboard.writeText(value);
+                                    if (navigator && navigator.clipboard) navigator.clipboard.writeText(value);
                                 }}
                             >
                                 {value}
