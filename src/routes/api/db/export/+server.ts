@@ -38,6 +38,16 @@ export const GET: RequestHandler = async ({ request, url, fetch }) => {
     return newRow;
   });
 
+  const ignores = ["image", "json", "g_ship"];
+
+  result.forEach(row => {
+    for (const key of Object.keys(row)) {
+      if (ignores.some(ignore => key.toLowerCase().includes(ignore))) {
+        delete row[key];
+      }
+    }
+  });
+
   // Convert to CSV.
   const head = Object.keys(result[0] as Object);
 

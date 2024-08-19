@@ -26,7 +26,7 @@ const createProductsTable = `
         asin_validated INTEGER NOT NULL DEFAULT 0,
         json TEXT
     );
-`; // asin_validated can be 0 if not, epoch time if yes.
+`; //\\// asin_validated can be 0 if not, epoch time if yes.
 
 const createShopsTable = `
     CREATE TABLE IF NOT EXISTS shops (

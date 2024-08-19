@@ -735,6 +735,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
       );
 
       await Promise.all(batchPromises);
+      isBatchProcessing.processed = end;
     } catch (error) {
       cerr("Error in batch processing.", error);
     }
