@@ -486,7 +486,7 @@ async function google(query: string, baseUrl: string) {
         clog(item.href);
         await Promise.race([
           page2.goto(item.href, { waitUntil: "domcontentloaded" }),
-          new Promise(resolve => setTimeout(resolve, 4000))
+          new Promise(resolve => setTimeout(resolve, 1000))
         ]);
         
         // cancel page2 navigation:
