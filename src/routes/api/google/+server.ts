@@ -355,9 +355,13 @@ async function google(query: string, baseUrl: string) {
       else req.continue();
     });
 
-    await page.goto(`https://www.google.com/search?q=${query}`, {
-      waitUntil: "domcontentloaded",
-    });
+    try{
+      await page.goto(`https://www.google.com/search?q=${query}`, {
+        waitUntil: "domcontentloaded",
+      });
+    } catch(e) {
+      cerr("Error in google function forLOADING INTIIALPAGE query " + query + ":", e.message);
+    }
     
     // dump page to file "output.html"
     const content = await page.content();

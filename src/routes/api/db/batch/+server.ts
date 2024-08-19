@@ -48,11 +48,11 @@ export const POST: RequestHandler = async ({ request, url, fetch }) => {
     method: "POST",
     body: JSON.stringify(batch),
   });
-  const google = await fetch("/api/google", {
+  const manomano = await fetch("/api/manomano", {
     method: "POST",
     body: JSON.stringify(batch),
   });
-  const manomano = await fetch("/api/manomano", {
+  const google = await fetch("/api/google", {
     method: "POST",
     body: JSON.stringify(batch),
   });
