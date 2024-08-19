@@ -363,10 +363,6 @@ async function google(query: string, baseUrl: string) {
       cerr("Error in google function forLOADING INTIIALPAGE query " + query + ":", e.message);
     }
     
-    // dump page to file "output.html"
-    const content = await page.content();
-    fs.writeFileSync('output.html', content);
-
     await page.evaluate(() => (document.body.style.zoom = "25%"));
     const searchResults: ElementHandle[] = await page.$$(
       "[data-snc]"
@@ -480,8 +476,8 @@ async function google(query: string, baseUrl: string) {
         });
 
         //// MARK: Important.
-        page2.setDefaultNavigationTimeout(4000);
-        page2.setDefaultTimeout(4000);
+        page2.setDefaultNavigationTimeout(1000);
+        page2.setDefaultTimeout(1000);
 
         clog(item.href);
         await Promise.race([
