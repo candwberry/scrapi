@@ -24,7 +24,7 @@
             const body = await resp.json();
             console.log("BatchBatch body:", body);
 
-            rows.set((Array.isArray(body.google) ? body.google : []).concat(Array.isArray(body.amazon) ? body.amazon : []).concat(Array.isArray(body.ebay) ? body.ebay : []));
+            rows.set([Array.isArray(body.google) ? body.google : [], Array.isArray(body.amazon) ? body.amazon : [], Array.isArray(body.ebay) ? body.ebay : [], Array.isArray(body.manomano) ? body.manomano : []]);
             
         } catch (error) {
             console.error("Error starting batch:", error);

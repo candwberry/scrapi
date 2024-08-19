@@ -14,11 +14,11 @@ export const GET: RequestHandler = async ({ request, url, params }) => {
         .query(
           `
 SELECT p.*,
-       e.date as e_date, a.date as a_date,
-       e.price as e_price, a.price as a_price,
-       e.shipping as e_ship, a.shipping as a_ship,
-       e.href as e_href, a.href as a_href,
-       e.json as e_json, a.json as a_json,
+       e.date as e_date, a.date as a_date, m.date as m_date,
+       e.price as e_price, a.price as a_price, m.price as m_price,
+       e.shipping as e_ship, a.shipping as a_ship, m.shipping as m_ship,
+       e.href as e_href, a.href as a_href, m.href as m_href,
+       e.json as e_json, a.json as a_json, m.json as m_json,
        g.date1 as g_date1, g.date2 as g_date2, g.date3 as g_date3,
        g.price1 as g_price1, g.price2 as g_price2, g.price3 as g_price3,
        g.shipping1 as g_ship1, g.shipping2 as g_ship2, g.shipping3 as g_ship3,
@@ -39,6 +39,13 @@ LEFT JOIN (
     GROUP BY berry
     HAVING date = MAX(date)
 ) a ON a.berry = p.berry
+LEFT JOIN (
+    SELECT *
+    FROM prices
+    WHERE shop = 'manomano'
+    GROUP BY berry
+    HAVING date = MAX(date)
+) m ON m.berry = p.berry
 LEFT JOIN (
     SELECT 
         berry,
@@ -96,6 +103,7 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
 
   if (table === "products" && Array.isArray(body)) {
     const total = body.length;
+    console.log(total);
     const now = Math.floor(Date.now() / 1000);
     for (let i = 0; i < body.length; i++) {
       const product = body[i];
@@ -106,7 +114,7 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
           `
                             INSERT OR REPLACE INTO products (
                                 berry, barcode, supplierCode, supplier, description, image, 
-                                amazonLast, ebayLast, googleLast, asin, asin_validated, json
+                                amazonLast, ebayLast, googleLast, manoLast, asin, asin_validated, json
                             )
                             VALUES (
                                 $berry,
@@ -118,6 +126,7 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
                                 COALESCE($amazonLast, (SELECT amazonLast FROM products WHERE berry = $berry), $now),
                                 COALESCE($ebayLast, (SELECT ebayLast FROM products WHERE berry = $berry), $now),
                                 COALESCE($googleLast, (SELECT googleLast FROM products WHERE berry = $berry), $now),
+                                COALESCE($manoLast, (SELECT manoLast FROM products WHERE berry = $berry), $now),
                                 COALESCE($asin, (SELECT asin FROM products WHERE berry = $berry), ''),
                                 COALESCE($asin_validated, (SELECT asin_validated FROM products WHERE berry = $berry), false),
                                 COALESCE($json, (SELECT json FROM products WHERE berry = $berry), '{}')
@@ -134,6 +143,7 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
             $amazonLast: product.amazonLast,
             $ebayLast: product.ebayLast,
             $googleLast: product.googleLast,
+            $manoLast: product.manoLast,
             $asin: product.asin,
             $asin_validated: product.asin_validated,
             $json: product.json,
@@ -231,21 +241,21 @@ export const PUT: RequestHandler = async ({ request, url, params }) => {
 
 export const DELETE: RequestHandler = async({ request, url, params }) => {
   const table: string = params.table ?? "sqlite_master";
+  const body = await request.json();
 
-  if (table === "products") {
+  if (table === "products" && Array.isArray(body)) {
     try {
-      db.run(
-        `
-            DELETE FROM products
-        `);
+      const placeholders = body.map(() => '?').join(',');
+      const query = `DELETE FROM products WHERE berry NOT IN (${placeholders})`;
+      
+      db.run(query, body);
     } catch (error) {
       console.error(error);
+      return ok({ error: "An error occurred while deleting products" });
     }
 
-    finally {
-      return ok({});
-    }
+    return ok({ message: "Products deleted successfully" });
   }
 
-  return ok({ error: "Invalid table" });
+  return ok({ error: "Invalid table or body" });
 };

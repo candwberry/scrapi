@@ -69,7 +69,7 @@
 					<p>{$berry.supplier} : {$berry.supplierCode}</p>
 				</div>
                 <div class="flex flex-row w-full justify-between items-center">
-                    <p>{$berry.description}</p>
+                    <p class='text-sm'>{$berry.description}</p>
                 </div>
                 <button class={`rounded-md p-1 ${fetching ? 'bg-berry-500' : 'bg-berry-700'} text-white`} on:click={refresh}>{fetching ? "FETCHING DATA" : "REFRESH"}</button>
 			</div>
@@ -108,6 +108,24 @@
                     <div class='flex flex-row gap-4'>
                         <p>{epochToHuman($berry.a_date)}</p>
                         <a href={$berry.a_href} class="text-berry-500" target="_blank">link</a>
+                    </div>
+                    {/if}
+				</div>
+			</div>
+            <div class="flex flex-col gap-1">
+				<p class="text-sm font-bold">manomano</p>
+				<div class="flex flex-row justify-between">
+                    {#if $berry.m_price}
+					<div class="flex flex-row gap-4">
+                        <p class='font-bold'>
+                            £{parseFloat($berry.m_price) + parseFloat($berry.m_ship)}
+                        </p> |
+                        <p>£{$berry.m_price}</p>
+						<p>with £{$berry.m_ship} shipping</p>
+					</div>
+                    <div class='flex flex-row gap-4'>
+                        <p>{epochToHuman($berry.m_date)}</p>
+                        <a href={$berry.m_href} class="text-berry-500" target="_blank">link</a>
                     </div>
                     {/if}
 				</div>

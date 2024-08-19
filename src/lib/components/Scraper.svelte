@@ -28,7 +28,6 @@
             const resp = await fetch(`/api/${name}?batch=check`);
             if (resp.ok) {
                 const data = await resp.json();
-                console.log(data);
 
                 details.update((currentDetails) => ({
                     ...currentDetails,

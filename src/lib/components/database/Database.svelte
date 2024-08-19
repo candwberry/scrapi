@@ -56,7 +56,7 @@
 
     function getValidatedAsin(asin: string) {
         const actualRow = $rows.find((r) => r.asin === asin);
-        if (actualRow.asin_validated && actualRow.asin_validated !== 0) {
+        if (actualRow && actualRow.asin_validated && actualRow.asin_validated !== 0) {
             return 'text-berry-600';
         } else {
             return 'text-red-600';
@@ -198,14 +198,24 @@ function getBiggestElements(_temp1, _temp2) {
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
                             <span
                                 class={getValidatedAsin(value)}
-                                on:click={(e) => handleAsinClick(e, data[index].berry, value)}
+                                on:click={(e) => {
+                                    navigator.clipboard.writeText(value);
+                                    handleAsinClick(e, data[index].berry, value)
+                                }}
                             >
                                 {value}
                             </span>
                         {:else if key === 'href'}
-                            <a href={value} target="_blank">{value}</a>
+                            <a href={value} target="_blank">{value ? value.toString().substring(0, 50) : ''}</a>
                         {:else}
-                            {value}
+                            <span
+                                class="copy-value"
+                                on:click={() => {
+                                    navigator.clipboard.writeText(value);
+                                }}
+                            >
+                                {value}
+                            </span>
                         {/if}
                     </div>
                 {/each}

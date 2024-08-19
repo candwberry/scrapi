@@ -52,9 +52,15 @@ export const POST: RequestHandler = async ({ request, url, fetch }) => {
     method: "POST",
     body: JSON.stringify(batch),
   });
+  const manomano = await fetch("/api/manomano", {
+    method: "POST",
+    body: JSON.stringify(batch),
+  });
+
   let amazonJSON;
   let ebayJSON;
   let googleJSON;
+  let manoJSON;
 
   try {
     amazonJSON = await amazon.json();
@@ -74,13 +80,20 @@ export const POST: RequestHandler = async ({ request, url, fetch }) => {
     console.error("Google error:", err);
     googleJSON = [];
   }
+  try {
+    manoJSON = await manomano.json();
+  } catch (err) {
+    console.error("Manomano error:", err);
+    manoJSON = [];
+  }
 
-  console.log(ebay, amazon, google);
-  console.log(ebayJSON, amazonJSON, googleJSON);
+  console.log(ebay, amazon, google, manomano);
+  console.log(ebayJSON, amazonJSON, googleJSON , manoJSON);
   return ok({
     amazon: amazonJSON,
     ebay: ebayJSON,
     google: googleJSON,
+    manomano: manoJSON,
   });
 };
 

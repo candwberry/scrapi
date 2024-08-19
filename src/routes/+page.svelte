@@ -1,30 +1,23 @@
-<script lang='ts'>
-    import Window from '$lib/components/Window.svelte';
-    import Scraper from '$lib/components/Scraper.svelte';
-    import BatchImport from '$lib/components/database/BatchImport.svelte';
-    import Batch from '$lib/components/database/Batch.svelte';
-    import OneTimeBatch from '$lib/components/database/OneTimeBatch.svelte';
-    import SingleBatch from '$lib/components/database/SingleBatch.svelte';
-    import Database from '$lib/components/Database.svelte';
-    import { rows } from '$lib/stores';
-    import BatchBatch from '$lib/components/database/BatchBatch.svelte';
-    import { onMount } from 'svelte';
-
-
+<script lang="ts">
+    import Window from "$lib/components/Window.svelte";
+    import Scraper from "$lib/components/Scraper.svelte";
+    import SingleBatch from "$lib/components/database/SingleBatch.svelte";
+    import Database from "$lib/components/Database.svelte";
+    import { onMount } from "svelte";
 
     let show: boolean = false;
     let showSingleTime: boolean = false;
     let batches: {
-        name: '',
-        date: 0,
-        last: 0,
-        frequency: 0,
-        batch: '',
-        next: 0,
+        name: "";
+        date: 0;
+        last: 0;
+        frequency: 0;
+        batch: "";
+        next: 0;
     }[] = [];
 
     async function getBatches() {
-        const resp = await fetch('/api/db/batch');
+        const resp = await fetch("/api/db/batch");
         if (resp.ok) {
             batches = await resp.json();
         }
@@ -40,11 +33,12 @@
 </svelte:head>
 
 <Window>
-    <h1 slot='title' class='font-bold'>Home</h1>
-    <div class='grid grid-cols-5 p-4 pb-0 gap-4 items-center max-h-full'>
-        <Scraper name='ebay' />
-        <Scraper name='amazon' />
-        <Scraper name='google' />
+    <h1 slot="title" class="font-bold">Home</h1>
+    <div class="grid grid-cols-5 p-4 pb-0 gap-4 items-center max-h-full">
+        <Scraper name="ebay" />
+        <Scraper name="amazon" />
+        <Scraper name="manomano" />
+        <Scraper name="google" />
         <SingleBatch />
         <!--
         <div class="bg-white rounded-xl w-full w-full p-2">
@@ -98,7 +92,7 @@
         <button on:click={() => show = true} class='bg-[#f9f3ed] text-[#8f32a8] font-bold px-2 py-1 rounded-lg text-sm'>Go to batch scheduler</button>
         -->
     </div>
-    <div class='col-span-4 h-full p-4 overflow-hidden h-[100%]'>
+    <div class="col-span-4 h-full p-4 overflow-hidden h-[100%]">
         <Database data={{}} />
     </div>
 </Window>

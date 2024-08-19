@@ -106,6 +106,8 @@ export const GET: RequestHandler = async ({ request, url }) => {
 };
 
 export const POST: RequestHandler = async ({ request, url }) => {
+  try {
+
   if (isBatchProcessing.status) {
     cerr("Batch processing already in progress", "Batch processing already in progress");
     return ok([]);
@@ -121,6 +123,8 @@ export const POST: RequestHandler = async ({ request, url }) => {
     return ok([]);
   }
 
+  isBatchProcessing.status = true;
+
   if (Array.isArray(body)) products = body;
   else products = await fetch(
       `${baseUrl}/api/db/products?orderby=ebayLast&order=asc&limit=${isBatchProcessing.remaining - 500}`,
@@ -132,7 +136,6 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
   const result: { berry: any; price: any; shipping: any; href: any }[] = [];
   const startTime = Date.now();
-  isBatchProcessing.status = true;
   isBatchProcessing.total = products.length;
   isBatchProcessing.processed = 0;
   isBatchProcessing.logs = [];
@@ -275,6 +278,12 @@ export const POST: RequestHandler = async ({ request, url }) => {
   clog("okaying");
   clog(JSON.stringify(result));
   return ok(result);
+}
+catch (error) {
+  cerr("Error in batch processing", error);
+  isBatchProcessing.status = false;
+  return ok([]);
+}
 };
 
 async function checkRateLimits() {

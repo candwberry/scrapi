@@ -21,6 +21,7 @@ const createProductsTable = `
         amazonLast INTEGER,
         ebayLast INTEGER,
         googleLast INTEGER,
+        manoLast INTEGER,
         asin TEXT,
         asin_validated INTEGER NOT NULL DEFAULT 0,
         json TEXT
@@ -69,7 +70,7 @@ CREATE TABLE IF NOT EXISTS batches (
     );
 `; // if next is 0, then this batch is OFF.
 
-/*
+/* 
 db.run(`DROP TABLE IF EXISTS products`);
 db.run(`DROP TABLE IF EXISTS shops`);
 db.run(`DROP TABLE IF EXISTS suppliers`);

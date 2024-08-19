@@ -82,20 +82,6 @@
 				description: values[columns.indexOf(descriptionColumn)]
 			};
 		});
-
-		// beware if something goes wrong then we've just deleted all products before uploading new ones
-		// but it's not really a problem since all other data is still there.
-		if (deleteOld) {
-			await fetch('/api/db/products', {
-				method: 'DELETE',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					now: now,
-				})
-			});
-		}
 		
 		// batch size: 
 		const batchSize = 500;
@@ -109,16 +95,24 @@
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify({
-				array: batch,
-				now: now,
-			})
+			body: JSON.stringify(batch)
 		});
 
 			progress.done = i + batchSize;
 		}
 		progress.done = total;
 		
+		if (deleteOld) {
+			// get all berry references from the above products
+			const berryRefs = products.map((product) => product.berry);
+			await fetch('/api/db/products', {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(berryRefs)
+			});
+		}
 	}
 </script>
 
