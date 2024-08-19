@@ -60,7 +60,6 @@ async function initBrowser(
       ],
       timeout: 30000,
       keep_alive: 10000,
-      
     });
     consolelog("Browser launched successfully.", isBatchProcessing);
   } catch (err) {
