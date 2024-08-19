@@ -102,17 +102,12 @@ onMount(() => {
 	
 });
 
-function getBiggestElements(_temp, _temp2) { // so stupid _temp is needed for reactivity?.... 
-    // for each column, find the row with the longest value in that column
-    return Object.keys($filteredRows[0]).reduce((acc, column) => {
-        const longestRow = $filteredRows.reduce((longest, row) => {
-            if (row[column] ? (row[column].toString().length) : 0 > longest[column] ? (longest[column].toString().length) : 0) { 
-                return row;
-            }
-            return longest;
-        });
-        return [longestRow];
-    }, []);
+function getBiggestElements(_temp1, _temp2) { 
+    return $filteredRows.sort((a, b) => {
+        const aLength = Object.values(a).join('').length;
+        const bLength = Object.values(b).join('').length;
+        return bLength - aLength;
+    }).slice(0, 1);
 }
 
 </script>
