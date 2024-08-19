@@ -27,6 +27,8 @@ jobs:
         run: |
           docker run -d \
             -v /home/berry/mydb.sqlite:/home/scrapi/mydb.sqlite \
+            -v /home/berry/mydb.sqlite-shm:/home/scrapi/mydb.sqlite-shm \
+            -v /home/berry/mydb.sqlite-wal:/home/scrapi/mydb.sqlite-wal \
             --name scrapi \
             -p 80:8080 \
             --cap-add=SYS_ADMIN \
@@ -35,7 +37,7 @@ jobs:
             -m 5g \
             scrapi:latest \
             /bin/sh -c "bun ."
-            
+
       - name: Notify on failure
         if: failure()
         run: echo "Build failed. Old container may not have been stopped or replaced."

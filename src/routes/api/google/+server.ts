@@ -480,18 +480,24 @@ async function google(query: string, baseUrl: string) {
         });
 
         //// MARK: Important.
-        page2.setDefaultNavigationTimeout(1000);
-        page2.setDefaultTimeout(1000);
+        page2.setDefaultNavigationTimeout(4000);
+        page2.setDefaultTimeout(4000);
 
         clog(item.href);
+        await Promise.race([
+          page2.goto(item.href, { waitUntil: "domcontentloaded" }),
+          new Promise(resolve => setTimeout(resolve, 4000))
+        ]);
+        
+        // cancel page2 navigation:
         try {
-
-          await page2.goto(item.href, { waitUntil: "domcontentloaded" })
+          await page2.evaluate(() => {
+            window.stop();
+          });
         } catch (e) {
-          cerr("Error in google function forLOADING PAGE PAGE query " + item.href + ":", e.message);
+          cerr("Error in google function forSTOPPINGPAGE2 query " + query + ":", e.message);
         }
-
-                
+        
         let result = {};
         if (body.regex) {
           result = await findPrice(page2, body.regex);
