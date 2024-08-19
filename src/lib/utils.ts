@@ -71,6 +71,39 @@ async function initBrowser(
   }
 }
 
+async function initBrowserNew(
+  isBatchProcessing?: { logs: { error: string; info: string }[] },
+  headless?: boolean,
+): Promise<Browser | undefined> {
+  if (!isBatchProcessing) isBatchProcessing = { logs: [] };
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      executablePath: "/usr/bin/chromium",
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--no-zygote",
+        "--disable-gpu",
+        '--single-process',
+      ],
+      timeout: 30000,
+      keep_alive: 10000,
+      
+    });
+    consolelog("Browser launched successfully.", isBatchProcessing);
+  } catch (err) {
+    consoleerror("Failed to launch browser:", err, isBatchProcessing);
+    throw err;
+  } finally {
+    return browser;
+  }
+}
+
 function getDecentTime(time: number) {
   if (time < 1000) return `${time.toFixed(0)}ms`;
   if (time < 60000) return `${(time / 1000).toFixed(0)}s`;
@@ -115,4 +148,5 @@ export {
   initBrowser,
   consolelog,
   consoleerror,
+  initBrowserNew
 };

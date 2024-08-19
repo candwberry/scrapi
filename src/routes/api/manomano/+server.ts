@@ -2,7 +2,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import type { Browser, HTTPRequest, Page } from 'puppeteer';
 import {
     getDecentTime,
-    initBrowser,
+    initBrowserNew,
     consolelog,
     consoleerror,
     ok,
@@ -35,7 +35,7 @@ async function manomano(query: string) {
     let page: Page | undefined;
     try {
         if (!browser || !browser.connected) {
-            browser = await initBrowser(isBatchProcessing);
+            browser = await initBrowserNew(isBatchProcessing);
 
             await new Promise((resolve, reject) => {
                 const timeout = setTimeout(() => reject("Timeout"), 1000);
