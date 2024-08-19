@@ -8,6 +8,7 @@
     import ValidateAsin from '$lib/components/database/ValidateAsin.svelte';
     import VirtualList from 'svelte-tiny-virtual-list';
     import { browser } from '$app/environment';
+    import Rubbish from '$lib/assets/svgs/Rubbish.svelte';
 
     let sortColumn = 'berry';
     let sortDirection = 'asc';
@@ -150,6 +151,7 @@ function getBiggestElements(_temp1, _temp2) {
                             </th>
                         {/each}
                         <th class="bg-gray-200 p-1 break-all"></th>
+                        <th class="bg-gray-200 p-1 break-all"></th>
                     {/if}
                 </tr>
             </thead>
@@ -168,8 +170,13 @@ function getBiggestElements(_temp1, _temp2) {
                             </td>
                         {/each}
                         <td class="px-1 bg-gray-300">
-                            <button on:click={() => {/* Handle edit */}}>
+                            <button>
                                 <Edit width="16px" height="16px" />
+                            </button>
+                        </td>
+                        <td class="px-1 bg-gray-300">
+                            <button>
+                                <Rubbish width="16px" height="16px" />
                             </button>
                         </td>
                     </tr>
@@ -222,6 +229,21 @@ function getBiggestElements(_temp1, _temp2) {
                 <div class="px-1 bg-gray-300" style="width: {tableColumnWidths[tableColumnWidths.length - 1]}px; flex-shrink: 0;">
                     <button on:click={(e) => handleRowClick(e, data[index].berry)}>
                         <Edit width="16px" height="16px" />
+                    </button>
+                </div>
+                <div class="px-1 bg-gray-300" style="width: {tableColumnWidths[tableColumnWidths.length - 1]}px; flex-shrink: 0;">
+                    <button on:click={async (e) => {
+                      await fetch(`/api/db/products`, {
+                        method: 'DELETE',
+                        body: JSON.stringify({ berry: data[index].berry }),
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                      });
+
+                      getAllTable('productsWithPrices');
+                    }}>
+                        <Rubbish width="16px" height="16px" />
                     </button>
                 </div>
             </div>

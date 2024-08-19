@@ -255,6 +255,17 @@ export const DELETE: RequestHandler = async({ request, url, params }) => {
     }
 
     return ok({ message: "Products deleted successfully" });
+  } else if (table === "products" && body.berry) {
+    try {
+      db.run(`DELETE FROM products WHERE berry = $berry`, {
+        $berry: body.berry,
+      });
+    } catch (error) {
+      console.error(error);
+      return ok({ error: "An error occurred while deleting product" });
+    }
+
+    return ok({ message: "Product deleted successfully" });
   }
 
   return ok({ error: "Invalid table or body" });

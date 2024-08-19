@@ -3,7 +3,13 @@ import { ok, db } from "$lib/database";
 
 function epochToDate(epoch: number) {
   if (typeof(epoch) === 'number' && epoch && !isNaN(epoch)) {
-    return new Date(epoch).toISOString();
+    // return it to date as JUST DD/MM/YYYY
+    const date = new Date(epoch);
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    // Q: Why does it 
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   }
   return epoch;
 }
@@ -31,7 +37,6 @@ export const GET: RequestHandler = async ({ request, url, fetch }) => {
     }
     return newRow;
   });
-
 
   // Convert to CSV.
   const head = Object.keys(result[0] as Object);

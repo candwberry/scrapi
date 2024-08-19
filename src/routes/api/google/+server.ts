@@ -9,7 +9,7 @@ import {
   err,
 } from "$lib/utils";
 import fs from "fs";
-import type { Browser, HTTPRequest, Page } from "puppeteer";
+import type { Browser, ElementHandle, HTTPRequest, Page } from "puppeteer";
 import { DEFAULT_INTERCEPT_RESOLUTION_PRIORITY } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
@@ -360,7 +360,7 @@ async function google(query: string, baseUrl: string) {
         waitUntil: "domcontentloaded",
       });
     } catch(e) {
-      cerr("Error in google function forLOADING INTIIALPAGE query " + query + ":", e.message);
+      cerr("Error in google function for LOADING INTIIAL PAGE query " + query + ":", e.message);
     }
     
     await page.evaluate(() => (document.body.style.zoom = "25%"));
