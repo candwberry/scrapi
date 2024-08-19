@@ -480,8 +480,8 @@ async function google(query: string, baseUrl: string) {
         });
 
         //// MARK: Important.
-        page2.setDefaultNavigationTimeout(4000);
-        page2.setDefaultTimeout(4000);
+        page2.setDefaultNavigationTimeout(1000);
+        page2.setDefaultTimeout(1000);
 
         clog(item.href);
         try {
