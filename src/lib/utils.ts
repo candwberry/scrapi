@@ -47,7 +47,7 @@ async function initBrowser(
   try {
     browser = await puppeteer.launch({
       executablePath: "/usr/bin/chromium",
-      headless: headless || true,
+      headless: "shell",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -59,7 +59,8 @@ async function initBrowser(
         '--single-process',
       ],
       timeout: 30000,
-      keep_alive: 10000
+      keep_alive: 10000,
+      
     });
     consolelog("Browser launched successfully.", isBatchProcessing);
   } catch (err) {

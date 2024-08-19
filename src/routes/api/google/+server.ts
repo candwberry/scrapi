@@ -484,8 +484,20 @@ async function google(query: string, baseUrl: string) {
         page2.setDefaultTimeout(4000);
 
         clog(item.href);
-        await page2.goto(item.href, { waitUntil: "domcontentloaded" });
-
+        await Promise.race([
+          page2.goto(item.href, { waitUntil: "domcontentloaded" }),
+          new Promise(resolve => setTimeout(resolve, 3000))
+        ]);
+        
+        // cancel page2 navigation:
+        try {
+          await page2.evaluate(() => {
+            window.stop();
+          });
+        } catch (e) {
+          cerr("Error in google function forSTOPPINGPAGE2 query " + query + ":", e.message);
+        }
+        
         let result = {};
         if (body.regex) {
           result = await findPrice(page2, body.regex);
