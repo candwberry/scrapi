@@ -147,10 +147,12 @@ async function amazon(query: string, asin?: string) {
     }
 
     clog(`Searching for: ${query}`);
-    await page.goto(
+    await Promise.race([ page.goto(
       `https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`,
-      { waitUntil: "domcontentloaded" },
-    );
+      { waitUntil: "domcontentloaded" }
+    ), new Promise(
+      (resolve, reject) => setTimeout(() => reject("Timeout"), 5000))]).catch((err) => cerr("Error loading page.", err));
+
     const results = await page.$$(
       "[data-asin][data-component-type='s-search-result']",
     );
