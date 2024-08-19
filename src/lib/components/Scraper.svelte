@@ -28,22 +28,23 @@
             const resp = await fetch(`/api/${name}?batch=check`);
             if (resp.ok) {
                 const data = await resp.json();
+                console.log(data);
 
                 details.update((currentDetails) => ({
                     ...currentDetails,
-                    status: data.isBatchProcessing.status,
-                    total: data.isBatchProcessing.total,
-                    processed: data.isBatchProcessing.processed,
-                    limit: data.isBatchProcessing.limit,
-                    remaining: data.isBatchProcessing.remaining,
-                    estimatedTime: data.isBatchProcessing.estimatedTime,
+                    status: data.isBatchProcessingCopy.status,
+                    total: data.isBatchProcessingCopy.total,
+                    processed: data.isBatchProcessingCopy.processed,
+                    limit: data.isBatchProcessingCopy.limit,
+                    remaining: data.isBatchProcessingCopy.remaining,
+                    estimatedTime: data.isBatchProcessingCopy.estimatedTime,
                     logs: [
                         ...currentDetails.logs,
-                        ...data.isBatchProcessing.logs,
+                        ...data.isBatchProcessingCopy.logs,
                     ],
                 }));
 
-                if (data.isBatchProcessing.status) {
+                if (data.isBatchProcessingCopy.status) {
                     waiting = false;
                 }
             }
