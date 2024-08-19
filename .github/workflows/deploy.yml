@@ -26,16 +26,16 @@ jobs:
         if: success()
         run: |
           docker run -d \
-           -v /home/berry/mydb.sqlite:/home/scrapi/mydb.sqlite \
-           --name scrapi \
-           -p 80:8080 \
-           --cap-add=SYS_ADMIN \
-           -e EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} \
-           -e OPENAI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} \
-           scrapi:latest \
-           -m 5g \
-           /bin/sh -c "bun ."
-
+            -v /home/berry/mydb.sqlite:/home/scrapi/mydb.sqlite \
+            --name scrapi \
+            -p 80:8080 \
+            --cap-add=SYS_ADMIN \
+            -e EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} \
+            -e OPENAI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} \
+            -m 5g \
+            scrapi:latest \
+            /bin/sh -c "bun ."
+            
       - name: Notify on failure
         if: failure()
         run: echo "Build failed. Old container may not have been stopped or replaced."
