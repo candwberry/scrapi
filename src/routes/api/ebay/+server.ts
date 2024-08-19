@@ -61,10 +61,16 @@ export const GET: RequestHandler = async ({ request, url }) => {
   if (batch === "stop") {
     isBatchProcessing.status = false;
     checkRateLimits();
-    return ok({ isBatchProcessing });
+    const isBatchProcessingCopy = { ...isBatchProcessing };
+    isBatchProcessing.logs = [];
+    return ok({ isBatchProcessingCopy });
   }
 
-  if (batch === "check") return ok({ isBatchProcessing });
+  if (batch === "check") {
+    const isBatchProcessingCopy = { ...isBatchProcessing };
+    isBatchProcessing.logs = [];
+    return ok({ isBatchProcessingCopy });
+  }
 
   if (query.trim().length === 0)
     return err("No query provided", { error: "No query provided" });

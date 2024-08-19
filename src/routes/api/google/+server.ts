@@ -533,10 +533,16 @@ export const GET: RequestHandler = async ({ request, url }) => {
 
   if (batch === "stop") {
     isBatchProcessing.status = false;
-    return ok({ isBatchProcessing });
+    const isBatchProcessingCopy = { ...isBatchProcessing };
+    isBatchProcessing.logs = [];
+    return ok({ isBatchProcessingCopy });
   }
 
-  if (batch === "check") return ok({ isBatchProcessing });
+  if (batch === "check") {
+    const isBatchProcessingCopy = { ...isBatchProcessing };
+    isBatchProcessing.logs = [];
+    return ok({ isBatchProcessingCopy });
+  }
 
   try {
     if (query.trim().length === 0) {

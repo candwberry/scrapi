@@ -158,12 +158,9 @@ async function amazon(query: string, asin?: string) {
     const items = [];
     for (let i = 0; i < results.length; i++) {
       try {
-        try{
-          let sponsored = await results[i].$eval(
-            ".puis-sponsored-label-info-icon",
-            (node) => node.textContent,
-          );
-          if (sponsored) continue;
+        try {
+          let sponsoredElement = await results[i].$(".puis-sponsored-label-text");
+          if (sponsoredElement) continue;
         } catch (err) {
           // element doesn't exist thats expected for a non-sponseored item
         }
@@ -235,10 +232,15 @@ export const GET: RequestHandler = async ({ request, url }) => {
 
   if (batch === "stop") {
     isBatchProcessing.status = false;
-    return ok({ isBatchProcessing });
+    const isBatchProcessingCopy = { ...isBatchProcessing };
+    isBatchProcessing.logs = [];
+    return ok({ isBatchProcessingCopy });
   }
+
   if (batch === "check") {
-    return ok({ isBatchProcessing });
+    const isBatchProcessingCopy = { ...isBatchProcessing };
+    isBatchProcessing.logs = [];
+    return ok({ isBatchProcessingCopy });
   }
 
   try {
@@ -319,12 +321,12 @@ export const POST: RequestHandler = async ({ request, url }) => {
             let asin = product.asin ?? "";
             let asin_validated = product.asin_validated;
 
-            let query = (product.barcode && product.barcode !== null && product.barcode.replaceAll("null", "").replaceAll(" ", "").length > 0) 
-            ? product.barcode :
-            (product.description && product.description !== null && product.description.replaceAll("null", "").replaceAll(" ", "").length > 0) 
-            ? product.description : 
-            (product.supplierCode && product.supplierCode !== null && product.supplierCode.replaceAll("null", "").replaceAll(" ", "").length > 0)
-            ? product.supplierCode : null;
+            let query = (product.barcode && product.barcode !== null && product.barcode.replaceAll("null", "").replaceAll(" ", "").length > 0)
+              ? product.barcode :
+              (product.description && product.description !== null && product.description.replaceAll("null", "").replaceAll(" ", "").length > 0)
+                ? product.description :
+                (product.supplierCode && product.supplierCode !== null && product.supplierCode.replaceAll("null", "").replaceAll(" ", "").length > 0)
+                  ? product.supplierCode : null;
 
             let items = [];
             if (asin_validated !== 0)
@@ -337,15 +339,15 @@ export const POST: RequestHandler = async ({ request, url }) => {
                 query
               );
 
-            if (!(items.length > 0 && items[0].price !== "0")) { 
-                if (query == product.barcode) {
-                  query = product.description;
-                  items = await amazon(
-                    query
-                  );
-                }
+            if (!(items.length > 0 && items[0].price !== "0")) {
+              if (query == product.barcode) {
+                query = product.description;
+                items = await amazon(
+                  query
+                );
+              }
             }
-            if (items.length > 0 && items[0].price !== "0") { 
+            if (items.length > 0 && items[0].price !== "0") {
               const item = items[0];
               const price = item.price;
               let shipping = item.shipping;
