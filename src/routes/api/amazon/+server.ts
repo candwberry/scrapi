@@ -221,8 +221,7 @@ async function amazon(query: string, asin?: string) {
     cerr(`Error in amazon function for query "${query}".`, err);
     return [];
   } finally {
-    if (page)
-      await page.close().catch((err) => cerr("Error closing page.", err));
+    if (page) await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
   }
 }
 
@@ -419,6 +418,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
     cerr("Error in batch processing:", error);
   } finally {
     isBatchProcessing.status = false;
+    if (browser) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
     return ok(result);
   }
 };

@@ -457,10 +457,27 @@ async function google(query: string, baseUrl: string) {
                 }*/
 
         const page2 = await browser.newPage();
+        page2.setRequestInterception(true);
+        page2.on("request", (req: HTTPRequest) => {
+          const resourceType = req.resourceType();
+          const url = req.url();
+          if (
+            ["image", "stylesheet", "font", "media", "websocket"].includes(
+              resourceType,
+            ) ||
+            url.startsWith("https://www.google-analytics.com") ||
+            url.startsWith("https://www.googletagmanager.com") ||
+            url.startsWith("https://www.facebook.com") ||
+            url.startsWith("https://connect.facebook.net")
+          )
+
+            req.abort();
+          else req.continue();
+        });
 
         //// MARK: Important.
-        page2.setDefaultNavigationTimeout(2000);
-        page2.setDefaultTimeout(2000);
+        page2.setDefaultNavigationTimeout(4000);
+        page2.setDefaultTimeout(4000);
 
         clog(item.href);
         await page2.goto(item.href, { waitUntil: "domcontentloaded" });
@@ -520,9 +537,7 @@ async function google(query: string, baseUrl: string) {
     cerr(`Error in google function for query "${query}":`, err.message);
     return [];
   } finally {
-    if (page) {
-      await page.close().catch((err) => cerr("Error closing page:", err));
-    }
+    if (page) await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
   }
 }
 
@@ -713,6 +728,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
     }
   }
 
+  if (browser) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
   isBatchProcessing.status = false;
   return ok(result);
 };

@@ -141,6 +141,8 @@ async function manomano(query: string) {
     } catch (error) {
         cerr('Error processing query', error);
         return [];
+    } finally {
+        //if (page) await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
     }
 }
 
@@ -289,6 +291,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
         cerr('Error processing products', error);
     } finally {
         isBatchProcessing.status = false;
+        if (browser) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
         return ok(result);
     }
 }

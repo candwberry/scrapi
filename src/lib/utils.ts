@@ -56,8 +56,10 @@ async function initBrowser(
         "--no-first-run",
         "--no-zygote",
         "--disable-gpu",
+        '--single-process',
       ],
       timeout: 30000,
+      keep_alive: 10000
     });
     consolelog("Browser launched successfully.", isBatchProcessing);
   } catch (err) {
