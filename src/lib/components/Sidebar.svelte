@@ -6,6 +6,7 @@
     import Terminal from "$lib/assets/svgs/Terminal.svelte";
     import Spreadsheet from "$lib/assets/svgs/Spreadsheet.svelte";
     import Browser from "$lib/assets/svgs/Browser.svelte";
+    import VPN from "$lib/assets/svgs/VPN.svelte";
     let open = false;
 
     /*
@@ -49,6 +50,11 @@
             name: "Browser",
             icon: Browser,
             href: "/browser",
+        },
+        {
+            name: "VPN",
+            icon: VPN,
+            href: "/vpn",
         },
         {
             name: "Shell",

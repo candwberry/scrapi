@@ -34,6 +34,7 @@ function cerr(msg: string, error: any) {
 
 let browser: Browser | undefined;
 
+const cache = {};
 async function amazon(query: string, asin?: string) {
   let page;
   try {
@@ -63,7 +64,7 @@ async function amazon(query: string, asin?: string) {
     // This blocks requests to unnecessary resources, e.g. images, stylesheets, to speed up loading of the page.
     clog("Setting request interception...");
     await page.setRequestInterception(true);
-    page.on("request", (req: HTTPRequest) => {
+    page.on("request", async (req: HTTPRequest) => {
       const resourceType = req.resourceType();
       const url = req.url();
       if (
@@ -73,11 +74,45 @@ async function amazon(query: string, asin?: string) {
         url.startsWith("https://www.google-analytics.com") ||
         url.startsWith("https://www.googletagmanager.com") ||
         url.startsWith("https://www.facebook.com") ||
-        url.startsWith("https://connect.facebook.net")
-      )
-        req.abort();
-      else req.continue();
+        url.startsWith("https://connect.facebook.net") ||
+        url.includes("google-analytics") ||
+        url.includes("googletagmanager") ||
+        url.includes("facebook") ||
+        url.includes("doubleclick")
+      ){ req.abort(); }
+      else if (cache[url] && cache[url].expires > Date.now()) {
+        await req.respond(cache[url]);
+        return;
+      } else {
+        req.continue();
+      }
     });
+
+    page.on('response', async (response) => {
+      const url = response.url();
+      const headers = response.headers();
+      const cacheControl = headers['cache-control'] || '';
+      const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
+      const maxAge = maxAgeMatch && maxAgeMatch.length > 1 ? parseInt(maxAgeMatch[1], 10) : 0;
+      if (maxAge) {
+          if (cache[url] && cache[url].expires > Date.now()) return;
+  
+          let buffer;
+          try {
+              buffer = await response.buffer();
+          } catch (error) {
+              // some responses do not contain buffer and do not need to be catched
+              return;
+          }
+  
+          cache[url] = {
+              status: response.status(),
+              headers: response.headers(),
+              body: buffer,
+              expires: Date.now() + (maxAge * 1000),
+          };
+      }
+  });
 
     // If the product has a validated ASIN, we can skip the Amazon search, and jump straight to the product page.
     if (asin) {

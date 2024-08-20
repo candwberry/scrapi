@@ -2,7 +2,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import type { Browser, HTTPRequest, Page } from 'puppeteer';
 import {
     getDecentTime,
-    initBrowserNew,
+    initBrowser,
     consolelog,
     consoleerror,
     ok,
@@ -31,11 +31,12 @@ let browser: Browser | undefined;
 function clog(msg: string) { consolelog(msg, isBatchProcessing); }
 function cerr(msg: string, error: any) { consoleerror(msg, error, isBatchProcessing); }
 
+const cache = {};
 async function manomano(query: string) {
     let page: Page | undefined;
     try {
         if (!browser || !browser.connected) {
-            browser = await initBrowserNew(isBatchProcessing);
+            browser = await initBrowser(isBatchProcessing);
 
             await new Promise((resolve, reject) => {
                 const timeout = setTimeout(() => reject("Timeout"), 1000);
@@ -63,26 +64,58 @@ async function manomano(query: string) {
 
         clog('Setting request interception...');
         await page.setRequestInterception(true);
-        page.on("request", (req: HTTPRequest) => {
-            const resourceType = req.resourceType();
-            const url = req.url();
-            if (
-                ["image", "stylesheet", "font", "media", "websocket", "script", "xhr", "fetch", "eventsource"].includes(
-                    resourceType,
-                ) ||
-                url.startsWith("https://www.google-analytics.com") ||
-                url.startsWith("https://www.googletagmanager.com") ||
-                url.startsWith("https://www.facebook.com") ||
-                url.startsWith("https://connect.facebook.net")
-            )
-                req.abort();
-            else req.continue();
+        page.on("request", async (req: HTTPRequest) => {
+          const resourceType = req.resourceType();
+          const url = req.url();
+          if (
+            ["image", "stylesheet", "font", "media", "websocket", "script", "xhr", "fetch", "eventsource"].includes(
+              resourceType,
+            ) ||
+            url.startsWith("https://www.google-analytics.com") ||
+            url.startsWith("https://www.googletagmanager.com") ||
+            url.startsWith("https://www.facebook.com") ||
+            url.startsWith("https://connect.facebook.net") ||
+            url.includes("google-analytics") ||
+            url.includes("googletagmanager") ||
+            url.includes("facebook") ||
+            url.includes("doubleclick")
+          ){ req.abort(); }
+          else if (cache[url] && cache[url].expires > Date.now()) {
+            await req.respond(cache[url]);
+            return;
+          } else {
+            req.continue();
+          }
         });
 
-        clog(`Searching for query: ${query}`);
-        page.goto(`https://www.manomano.co.uk/search/${encodeURIComponent(query)}`, {
-            waitUntil: "domcontentloaded",
-        });
+        page.on('response', async (response) => {
+          const url = response.url();
+          const headers = response.headers();
+          const cacheControl = headers['cache-control'] || '';
+          const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
+          const maxAge = maxAgeMatch && maxAgeMatch.length > 1 ? parseInt(maxAgeMatch[1], 10) : 0;
+          if (maxAge) {
+              if (cache[url] && cache[url].expires > Date.now()) return;
+      
+              let buffer;
+              try {
+                  buffer = await response.buffer();
+              } catch (error) {
+                  // some responses do not contain buffer and do not need to be catched
+                  return;
+              }
+      
+              cache[url] = {
+                  status: response.status(),
+                  headers: response.headers(),
+                  body: buffer,
+                  expires: Date.now() + (maxAge * 1000),
+              };
+          }
+      });
+
+      page.goto(`https://www.manomano.co.uk/search/${encodeURIComponent(query)}`, { waitUntil: 'domcontentloaded' });
+
 
         // Results are the anchor children of the first child of the fourth child of #listing-layout
         await page.waitForSelector('#listing-layout');
@@ -142,7 +175,7 @@ async function manomano(query: string) {
         cerr('Error processing query', error);
         return [];
     } finally {
-        //if (page) await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
+        if (page) await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
     }
 }
 

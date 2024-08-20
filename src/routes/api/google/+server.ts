@@ -196,146 +196,148 @@ async function findPrice(
     }
   }
 
-    if (price === "99999" || price === undefined || price === null || priceFound === "none") {
-      // last chance, look for <element class="<ANYCHARACTERS>price<ANYCHARACTERS>">
-      const prices: ElementHandle<Element>[] = await page.$$(
-        '*[class*="price" i], *[id*="price" i]',
-      );
-      let expensivest: number = -99999;
+  if (price === "99999" || price === undefined || price === null || priceFound === "none") {
+    // last chance, look for <element class="<ANYCHARACTERS>price<ANYCHARACTERS>">
+    const prices: ElementHandle<Element>[] = await page.$$(
+      '*[class*="price" i], *[id*="price" i]',
+    );
+    let expensivest: number = -99999;
 
-      for (let priceElement of prices) {
-        const textContent = await priceElement.evaluate(
-          (el: Element) => el.textContent,
-        );
-        if (!textContent) continue;
-        const num = textContent.replace(/[£\s]/g, "");
-        if (num === "") continue;
-        try {
-          if (parseFloat(num) > expensivest) {
-            expensivest = parseFloat(num);
-            price = num;
-            priceFound = "class";
-            break; // let's actually just do the first element instead of the expensivest.
-          }
-        } catch (error) {
+    for (let priceElement of prices) {
+      const textContent = await priceElement.evaluate(
+        (el: Element) => el.textContent,
+      );
+      if (!textContent) continue;
+      const num = textContent.replace(/[£\s]/g, "");
+      if (num === "") continue;
+      try {
+        if (parseFloat(num) > expensivest) {
+          expensivest = parseFloat(num);
+          price = num;
+          priceFound = "class";
+          break; // let's actually just do the first element instead of the expensivest.
         }
+      } catch (error) {
       }
     }
+  }
 
-    price = price.replace(/[^0-9.,]/g, "");
-    price = isNaN(parseFloat(price)) ? "99999" : parseFloat(price).toFixed(2);
+  price = price.replace(/[^0-9.,]/g, "");
+  price = isNaN(parseFloat(price)) ? "99999" : parseFloat(price).toFixed(2);
 
-    if (price === "99999" || price === undefined || price === null || priceFound === "none") {
-      // Then we result to GPT-4o-mini to find it.
-      const textContent = await page.evaluate(() => document.body.textContent);
-      const dom = new JSDOM(textContent); //oh..
+  if (price === "99999" || price === undefined || price === null || priceFound === "none") {
+    // Then we result to GPT-4o-mini to find it.
+    const textContent = await page.evaluate(() => document.body.textContent);
+    const dom = new JSDOM(textContent); //oh..
 
-      const { document } = dom.window;
+    const { document } = dom.window;
 
-      // Remove all script tags
-      const scriptTags = document.querySelectorAll("script");
-      scriptTags.forEach((scriptTag) => scriptTag.remove());
+    // Remove all script tags
+    const scriptTags = document.querySelectorAll("script");
+    scriptTags.forEach((scriptTag) => scriptTag.remove());
 
-      // Remove the style attribute from all elements
-      const elementsWithStyle = document.querySelectorAll("[style]");
-      elementsWithStyle.forEach((element) => element.removeAttribute("style"));
+    // Remove the style attribute from all elements
+    const elementsWithStyle = document.querySelectorAll("[style]");
+    elementsWithStyle.forEach((element) => element.removeAttribute("style"));
 
-      // Remove all img, svg, and picture tags
-      const imgTags = document.querySelectorAll("img");
-      imgTags.forEach((imgTag) => imgTag.remove());
+    // Remove all img, svg, and picture tags
+    const imgTags = document.querySelectorAll("img");
+    imgTags.forEach((imgTag) => imgTag.remove());
 
-      const svgTags = document.querySelectorAll("svg");
-      svgTags.forEach((svgTag) => svgTag.remove());
+    const svgTags = document.querySelectorAll("svg");
+    svgTags.forEach((svgTag) => svgTag.remove());
 
-      const pictureTags = document.querySelectorAll("picture");
-      pictureTags.forEach((pictureTag) => pictureTag.remove());
+    const pictureTags = document.querySelectorAll("picture");
+    pictureTags.forEach((pictureTag) => pictureTag.remove());
 
-      // Remove anchor links
-      const anchorTags = document.querySelectorAll("a");
-      anchorTags.forEach((anchorTag) => anchorTag.remove());
+    // Remove anchor links
+    const anchorTags = document.querySelectorAll("a");
+    anchorTags.forEach((anchorTag) => anchorTag.remove());
 
-      // Remove iframes
-      const iframeTags = document.querySelectorAll("iframe");
-      iframeTags.forEach((iframeTag) => iframeTag.remove());
+    // Remove iframes
+    const iframeTags = document.querySelectorAll("iframe");
+    iframeTags.forEach((iframeTag) => iframeTag.remove());
 
-      // Remove any childrenless elements with no textContent
-      const emptyElements = Array.from(document.querySelectorAll("*")).filter(
-        (element) =>
-          element.children.length === 0 && element.textContent.trim() === "",
-      );
-      emptyElements.forEach((emptyElement) => emptyElement.remove());
+    // Remove any childrenless elements with no textContent
+    const emptyElements = Array.from(document.querySelectorAll("*")).filter(
+      (element) =>
+        element.children.length === 0 && element.textContent.trim() === "",
+    );
+    emptyElements.forEach((emptyElement) => emptyElement.remove());
 
-      // remove any childrenless elements with textContent larger than 100 characters
-      const largeTextElements = Array.from(document.querySelectorAll("*")).filter(
-        (element) =>
-          element.children.length === 0 && element.textContent.length > 50,
-      );
-      largeTextElements.forEach((largeTextElement) => largeTextElement.remove());
+    // remove any childrenless elements with textContent larger than 100 characters
+    const largeTextElements = Array.from(document.querySelectorAll("*")).filter(
+      (element) =>
+        element.children.length === 0 && element.textContent.length > 50,
+    );
+    largeTextElements.forEach((largeTextElement) => largeTextElement.remove());
 
-      // Remove all comments and whitespace
-      document.querySelectorAll("*").forEach((element) => {
-        for (let i = element.childNodes.length - 1; i >= 0; i--) {
-          const child = element.childNodes[i];
-          if (
-            child.nodeType === 8 ||
-            (child.nodeType === 3 && !/\S/.test(child.nodeValue))
-          ) {
-            // 8 is comment, 3 is text, cool,.
-            element.removeChild(child);
-          }
+    // Remove all comments and whitespace
+    document.querySelectorAll("*").forEach((element) => {
+      for (let i = element.childNodes.length - 1; i >= 0; i--) {
+        const child = element.childNodes[i];
+        if (
+          child.nodeType === 8 ||
+          (child.nodeType === 3 && !/\S/.test(child.nodeValue))
+        ) {
+          // 8 is comment, 3 is text, cool,.
+          element.removeChild(child);
         }
-      });
+      }
+    });
 
-      // Get the modified HTML content
-      const modifiedContent = dom.serialize();
+    // Get the modified HTML content
+    const modifiedContent = dom.serialize();
 
-      // Now let us call gpt-4o-mini
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `
+    // Now let us call gpt-4o-mini
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `
                       Respond with just the price of this product in this format: 
                       
                       { price: "<price>", incVAT: "<'true'_or_'false'>"
   
                       If you cannot find either of the two based on the information given below (the clues are in the HTML), then just give your best guess, based only on the information below, and put "?" after it. Don't assume that it's including tax since this industry includes wholesale.
                   `,
-          },
-          { role: "user", content: modifiedContent },
-        ],
-      });
+        },
+        { role: "user", content: modifiedContent },
+      ],
+    });
 
-      console.log(completion.data.choices[0].message.content);
-      const result = completion.data.choices[0].message.content;
-      // it should be JSON format
-      let incVat = "false";
-      try {
-        const json = JSON.parse(result);
-        price = json.price.replaceAll("£", "").replaceAll("?", "");
-        incVat = json.incVAT.replaceAll("£", "").replaceAll("?", "");
-        if (incVat === "false") price = (parseFloat(price) * 1.2).toFixed(2);
-        priceFound = "gpt";
-      } catch (e) {
-        // parse it using regex, find the first number.
-        // and find "true" OR "false"
-        const priceRegex = /\d+(?:\.\d+)?/;
-        const vatRegex = /true|false/;
-        const priceMatch = result.match(priceRegex);
-        const vatMatch = result.match(vatRegex);
-        if (priceMatch) price = priceMatch[0];
-        if (vatMatch) incVat = vatMatch[0];
-        if (incVat === "false") price = (parseFloat(price) * 1.2).toFixed(2);
-        priceFound = "gpt";
-      }
+    console.log(completion.data.choices[0].message.content);
+    const result = completion.data.choices[0].message.content;
+    // it should be JSON format
+    let incVat = "false";
+    try {
+      const json = JSON.parse(result);
+      price = json.price.replaceAll("£", "").replaceAll("?", "");
+      incVat = json.incVAT.replaceAll("£", "").replaceAll("?", "");
+      if (incVat === "false") price = (parseFloat(price) * 1.2).toFixed(2);
+      priceFound = "gpt";
+    } catch (e) {
+      // parse it using regex, find the first number.
+      // and find "true" OR "false"
+      const priceRegex = /\d+(?:\.\d+)?/;
+      const vatRegex = /true|false/;
+      const priceMatch = result.match(priceRegex);
+      const vatMatch = result.match(vatRegex);
+      if (priceMatch) price = priceMatch[0];
+      if (vatMatch) incVat = vatMatch[0];
+      if (incVat === "false") price = (parseFloat(price) * 1.2).toFixed(2);
+      priceFound = "gpt";
     }
+  }
 
-    return {
-      price,
-      priceFound,
-    };
+  return {
+    price,
+    priceFound,
+  };
 }
+const cache = {};
+
 async function google(query: string, baseUrl: string) {
   let page;
   try {
@@ -361,14 +363,14 @@ async function google(query: string, baseUrl: string) {
       else req.continue();
     });
 
-    try{
+    try {
       await page.goto(`https://www.google.com/search?q=${query}`, {
         waitUntil: "domcontentloaded",
       });
-    } catch(e) {
+    } catch (e) {
       cerr("Error in google function for LOADING INTIIAL PAGE query " + query + ":", e.message);
     }
-    
+
     await page.evaluate(() => (document.body.style.zoom = "25%"));
     const searchResults: ElementHandle[] = await page.$$(
       "[data-snc]"
@@ -462,9 +464,10 @@ async function google(query: string, baseUrl: string) {
                 
                 }*/
 
+
         const page2 = await browser.newPage();
         page2.setRequestInterception(true);
-        page2.on("request", (req: HTTPRequest) => {
+        page2.on("request", async (req: HTTPRequest) => {
           const resourceType = req.resourceType();
           const url = req.url();
           if (
@@ -474,39 +477,60 @@ async function google(query: string, baseUrl: string) {
             url.startsWith("https://www.google-analytics.com") ||
             url.startsWith("https://www.googletagmanager.com") ||
             url.startsWith("https://www.facebook.com") ||
-            url.startsWith("https://connect.facebook.net") || 
+            url.startsWith("https://connect.facebook.net") ||
             url.includes("google-analytics") ||
             url.includes("googletagmanager") ||
             url.includes("facebook") ||
             url.includes("doubleclick")
-          )
-
-            req.abort();
-          else req.continue();
+          ){ req.abort(); }
+          else if (cache[url] && cache[url].expires > Date.now()) {
+            await req.respond(cache[url]);
+            return;
+          } else {
+            req.continue();
+          }
         });
+
+        page2.on('response', async (response) => {
+          const url = response.url();
+          const headers = response.headers();
+          const cacheControl = headers['cache-control'] || '';
+          const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
+          const maxAge = maxAgeMatch && maxAgeMatch.length > 1 ? parseInt(maxAgeMatch[1], 10) : 0;
+          if (maxAge) {
+              if (cache[url] && cache[url].expires > Date.now()) return;
+      
+              let buffer;
+              try {
+                  buffer = await response.buffer();
+              } catch (error) {
+                  // some responses do not contain buffer and do not need to be catched
+                  return;
+              }
+      
+              cache[url] = {
+                  status: response.status(),
+                  headers: response.headers(),
+                  body: buffer,
+                  expires: Date.now() + (maxAge * 1000),
+              };
+          }
+      });
+      
+      
+      
 
         //// MARK: Important.
         page2.setDefaultNavigationTimeout(2000);
         page2.setDefaultTimeout(2000);
 
         clog(item.href);
-        await Promise.race([
-          page2.goto(item.href, { waitUntil: "domcontentloaded" }),
-          new Promise(resolve => setTimeout(resolve, 2000))
-        ]);
-        
-        // cancel page2 navigation:
-        try {
-          await page2.evaluate(() => {
-            window.stop();
-          });
-        } catch (e) {
-          cerr("Error in google function forSTOPPINGPAGE2 query " + query + ":", e.message);
-        }
+        await page2.goto(item.href, { waitUntil: "domcontentloaded" });
+
 
         // dump page2content to file
         // fs.writeFileSync("page2content.html", await page2.content());
-        
+
         let result = {};
         if (body.regex) {
           result = await findPrice(page2, body.regex);
@@ -662,12 +686,12 @@ export const POST: RequestHandler = async ({ request, url }) => {
         }) => {
           try {
             //// MARK: Change order.
-            const query = (product.barcode && product.barcode !== null && product.barcode.replaceAll("null", "").replaceAll(" ", "").length > 0) 
-            ? product.barcode :
-            (product.description && product.description !== null && product.description.replaceAll("null", "").replaceAll(" ", "").length > 0) 
-            ? product.description : 
-            (product.supplierCode && product.supplierCode !== null && product.supplierCode.replaceAll("null", "").replaceAll(" ", "").length > 0)
-            ? product.supplierCode : null;
+            const query = (product.barcode && product.barcode !== null && product.barcode.replaceAll("null", "").replaceAll(" ", "").length > 0)
+              ? product.barcode :
+              (product.description && product.description !== null && product.description.replaceAll("null", "").replaceAll(" ", "").length > 0)
+                ? product.description :
+                (product.supplierCode && product.supplierCode !== null && product.supplierCode.replaceAll("null", "").replaceAll(" ", "").length > 0)
+                  ? product.supplierCode : null;
 
             clog(query); //?
             let items = await google(
