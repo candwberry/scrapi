@@ -46,38 +46,46 @@ async function initBrowser(
   let browser;
   try {
     browser = await puppeteer.launch({
-      executablePath: "/usr/bin/chromium",
-      headless: 'shell',
-      defaultViewport: { //--window-size in args
-        width: 1280,
-        height: 882
-      },
+      //executablePath: "/usr/bin/chromium",
+      headless: "shell",
       args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        '--disable-canvas-aa', // Disable antialiasing on 2d canvas
-        '--disable-2d-canvas-clip-aa', // Disable antialiasing on 2d canvas clips
-        '--disable-gl-drawing-for-tests', // BEST OPTION EVER! Disables GL drawing operations which produce pixel output. With this the GL output will not be correct but tests will run faster.
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        '--use-gl=swiftshader', // better cpu usage with --use-gl=desktop rather than --use-gl=swiftshader, still needs more testing.
-        '--enable-webgl',
-        '--hide-scrollbars',
-        '--mute-audio',
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
         '--no-first-run',
-        '--disable-infobars',
+        '--no-zygote',
+        '--disable-gpu',
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-sync',
+        '--disable-translate',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--disable-features=TranslateUI',
+        '--disable-field-trial-config',
+        '--disable-features=InterestFeedContentSuggestions',
+        '--disable-features=AutofillServerCommunication',
+        '--disable-component-extensions-with-background-pages',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-ipc-flooding-protection',
+        '--disable-client-side-phishing-detection',
+        '--disable-default-apps',
+        '--disable-hang-monitor',
+        '--disable-prompt-on-repost',
+        '--disable-domain-reliability',
         '--disable-breakpad',
-        '--window-size=1280,1024', // see defaultViewport
-        "--no-zygote",
-        "--disable-gpu",
-        '--single-process',
-        "--no-extensions",  // Disable all extensions
-        "--disable-background-networking",  // Disable unnecessary networking
-        "--disable-sync",  // Disable Chrome's syncing feature
-        "--disable-translate",  // Disable translation prompts
-        "--disable-features=IsolateOrigins,site-per-process", // Disable site isolation (might affect security but improve perf)
+        '--enable-async-dns',
+        '--enable-simple-cache-backend',
+        '--no-default-browser-check',
+        '--js-flags=--expose-gc',
       ],
-      timeout: 30000,
+          defaultViewport: {
+        width: 1280,
+        height: 720
+      },
+          timeout: 30000,
       keep_alive: 10000,
     });
     consolelog("Browser launched successfully.", isBatchProcessing);
