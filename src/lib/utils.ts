@@ -48,7 +48,6 @@ async function initBrowser(
     browser = await puppeteer.launch({
       executablePath: "/usr/bin/chromium",
       headless: 'shell',
-      ignoreDefaultArgs: true, // needed ?
       defaultViewport: { //--window-size in args
         width: 1280,
         height: 882
