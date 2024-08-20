@@ -169,7 +169,7 @@ function getBiggestElements(_temp1, _temp2) {
                                 {/if}
                             </td>
                         {/each}
-                        <td class="px-1 bg-gray-300">
+                        <td class="px-1 bg-gray-300 ">
                             <button>
                                 <Edit width="16px" height="16px" />
                             </button>
@@ -226,12 +226,12 @@ function getBiggestElements(_temp1, _temp2) {
                         {/if}
                     </div>
                 {/each}
-                <div class="px-1 bg-gray-300" style="width: {tableColumnWidths[tableColumnWidths.length - 1]}px; flex-shrink: 0;">
+                <div class="px-1 bg-gray-300 flex flex-col justify-center items-center" style="width: {tableColumnWidths[tableColumnWidths.length - 1]}px; flex-shrink: 0;">
                     <button on:click={(e) => handleRowClick(e, data[index].berry)}>
                         <Edit width="16px" height="16px" />
                     </button>
                 </div>
-                <div class="px-1 bg-gray-300" style="width: {tableColumnWidths[tableColumnWidths.length - 1]}px; flex-shrink: 0;">
+                <div class="px-1 bg-gray-400 flex flex-col justify-center items-center" style="width: {tableColumnWidths[tableColumnWidths.length - 1]}px; flex-shrink: 0;">
                     <button on:click={async (e) => {
                       await fetch(`/api/db/products`, {
                         method: 'DELETE',

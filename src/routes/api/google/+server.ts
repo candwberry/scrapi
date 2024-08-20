@@ -462,13 +462,17 @@ async function google(query: string, baseUrl: string) {
           const resourceType = req.resourceType();
           const url = req.url();
           if (
-            ["image", "stylesheet", "font", "media", "websocket", "script"].includes(
+            ["image", "stylesheet", "font", "media", "websocket", "script", "xhr", "fetch", "eventsource"].includes(
               resourceType,
             ) ||
             url.startsWith("https://www.google-analytics.com") ||
             url.startsWith("https://www.googletagmanager.com") ||
             url.startsWith("https://www.facebook.com") ||
-            url.startsWith("https://connect.facebook.net")
+            url.startsWith("https://connect.facebook.net") || 
+            url.includes("google-analytics") ||
+            url.includes("googletagmanager") ||
+            url.includes("facebook") ||
+            url.includes("doubleclick")
           )
 
             req.abort();
@@ -476,13 +480,13 @@ async function google(query: string, baseUrl: string) {
         });
 
         //// MARK: Important.
-        page2.setDefaultNavigationTimeout(1000);
-        page2.setDefaultTimeout(1000);
+        page2.setDefaultNavigationTimeout(2000);
+        page2.setDefaultTimeout(2000);
 
         clog(item.href);
         await Promise.race([
           page2.goto(item.href, { waitUntil: "domcontentloaded" }),
-          new Promise(resolve => setTimeout(resolve, 1000))
+          new Promise(resolve => setTimeout(resolve, 2000))
         ]);
         
         // cancel page2 navigation:

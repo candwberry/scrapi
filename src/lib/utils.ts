@@ -57,6 +57,11 @@ async function initBrowser(
         "--no-zygote",
         "--disable-gpu",
         '--single-process',
+        "--no-extensions",  // Disable all extensions
+        "--disable-background-networking",  // Disable unnecessary networking
+        "--disable-sync",  // Disable Chrome's syncing feature
+        "--disable-translate",  // Disable translation prompts
+        "--disable-features=IsolateOrigins,site-per-process", // Disable site isolation (might affect security but improve perf)
       ],
       timeout: 30000,
       keep_alive: 10000,
@@ -78,7 +83,7 @@ async function initBrowserNew(
   let browser;
   try {
     browser = await puppeteer.launch({
-      executablePath: "/usr/bin/chromium",
+      //executablePath: "/usr/bin/chromium",
       headless: true,
       args: [
         "--no-sandbox",
