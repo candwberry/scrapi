@@ -67,7 +67,7 @@ async function amazon(query: string, asin?: string) {
       const resourceType = req.resourceType();
       const url = req.url();
       if (
-        ["image", "stylesheet", "font", "media", "websocket"].includes(
+        ["image", "stylesheet", "font", "media", "websocket", "script", "xhr", "fetch", "eventsource"].includes(
           resourceType,
         ) ||
         url.startsWith("https://www.google-analytics.com") ||
