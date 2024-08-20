@@ -52,6 +52,7 @@ function cerr(msg: string, error: any) {
   consoleerror(msg, error, isBatchProcessing);
 }
 
+
 async function findPrice(
   page: Page,
   validatedRegex?: string,
@@ -86,14 +87,17 @@ async function findPrice(
     }
   }
 
+  // This finds the price using the schema. JSON-LD
   const scripts: ElementHandle<Element>[] = await page.$$(
     "script[type='application/ld+json']",
   );
   for (const script of scripts) {
     const content: string | null = await script.evaluate(
-      (el) => el.textContent.toLowerCase()
-    );
+      (el) => el.textContent?.toLowerCase()
+    ) as string;
+
     if (!content) continue;
+
     try {
       const jsonData = JSON.parse(content);
 
@@ -119,14 +123,10 @@ async function findPrice(
       if (productEntity) {
         if (productEntity.price) {
           price = productEntity.price.toString(); // just being safe.
-          clog("HELLO");
-          clog(price);
           priceFound = "schema";
         }
         if (productEntity.offers?.price) {
           price = productEntity.offers.price.toString(); // just being safe.
-          clog("HELLO");
-          clog(price);
           priceFound = "schema";
         }
         // else offers is an array
@@ -137,17 +137,14 @@ async function findPrice(
             ),
           );
           price = cheapest.toString();
-          clog("HELLO");
-          clog(price);
           priceFound = "schema";
         }
       }
     } catch (error) {
-      cerr("Error parsing JSON:", error);
     }
 
-    if (price === "99999") {
-      // First fallback: "price": NUMBER
+    // First fallback: "price":NUMBER
+    if (price === undefined || price == null || priceFound === "none") {
       const priceRegex = /"price"\s*:\s*("?\d+(?:\.\d+)?"?)/;
       const priceMatch = content?.match(priceRegex);
       if (priceMatch && priceMatch[1]) {
@@ -166,11 +163,24 @@ async function findPrice(
     }
   }
 
-  //
+  // Look for itemprop="price"
+  if (price === undefined || price == null || priceFound === "none") {
+    const priceElement = await page.$("[itemprop='price']");
+    if (priceElement) {
+      const textContent = await priceElement.evaluate(
+        (el: Element) => el.textContent,
+      );
+      if (textContent) {
+        price = textContent.replace(/[^0-9.,]/g, "");
+        priceFound = "itemprop";
+      }
+    }
+  }
 
-  // if it is 99999 then look for <meta property="product:price:amount" content=PRICE>
-  if (price === undefined || price == null) price = "99999";
-  if (price === "99999") {
+  // If not in LD+JSON we look for meta tags.
+  if (price === undefined || price == null || priceFound === "none") {
+    price = "99999";
+    priceFound = "none";
     const metas: ElementHandle<Element>[] = await page.$$(
       "meta[property='product:price:amount']",
     );
@@ -186,150 +196,146 @@ async function findPrice(
     }
   }
 
-  if (price === "99999") {
-    // last chance, look for <element class="<ANYCHARACTERS>price<ANYCHARACTERS>">
-    const prices: ElementHandle<Element>[] = await page.$$(
-      '*[class*="price" i], *[id*="price" i]',
-    );
-    let expensivest: number = -99999;
-
-    for (let priceElement of prices) {
-      const textContent = await priceElement.evaluate(
-        (el: Element) => el.textContent,
+    if (price === "99999" || price === undefined || price === null || priceFound === "none") {
+      // last chance, look for <element class="<ANYCHARACTERS>price<ANYCHARACTERS>">
+      const prices: ElementHandle<Element>[] = await page.$$(
+        '*[class*="price" i], *[id*="price" i]',
       );
-      if (!textContent) continue;
-      const num = textContent.replace(/[£\s]/g, "");
-      if (num === "") continue;
+      let expensivest: number = -99999;
+
+      for (let priceElement of prices) {
+        const textContent = await priceElement.evaluate(
+          (el: Element) => el.textContent,
+        );
+        if (!textContent) continue;
+        const num = textContent.replace(/[£\s]/g, "");
+        if (num === "") continue;
+        try {
+          if (parseFloat(num) > expensivest) {
+            expensivest = parseFloat(num);
+            price = num;
+            priceFound = "class";
+            break; // let's actually just do the first element instead of the expensivest.
+          }
+        } catch (error) {
+        }
+      }
+    }
+
+    price = price.replace(/[^0-9.,]/g, "");
+    price = isNaN(parseFloat(price)) ? "99999" : parseFloat(price).toFixed(2);
+
+    if (price === "99999" || price === undefined || price === null || priceFound === "none") {
+      // Then we result to GPT-4o-mini to find it.
+      const textContent = await page.evaluate(() => document.body.textContent);
+      const dom = new JSDOM(textContent); //oh..
+
+      const { document } = dom.window;
+
+      // Remove all script tags
+      const scriptTags = document.querySelectorAll("script");
+      scriptTags.forEach((scriptTag) => scriptTag.remove());
+
+      // Remove the style attribute from all elements
+      const elementsWithStyle = document.querySelectorAll("[style]");
+      elementsWithStyle.forEach((element) => element.removeAttribute("style"));
+
+      // Remove all img, svg, and picture tags
+      const imgTags = document.querySelectorAll("img");
+      imgTags.forEach((imgTag) => imgTag.remove());
+
+      const svgTags = document.querySelectorAll("svg");
+      svgTags.forEach((svgTag) => svgTag.remove());
+
+      const pictureTags = document.querySelectorAll("picture");
+      pictureTags.forEach((pictureTag) => pictureTag.remove());
+
+      // Remove anchor links
+      const anchorTags = document.querySelectorAll("a");
+      anchorTags.forEach((anchorTag) => anchorTag.remove());
+
+      // Remove iframes
+      const iframeTags = document.querySelectorAll("iframe");
+      iframeTags.forEach((iframeTag) => iframeTag.remove());
+
+      // Remove any childrenless elements with no textContent
+      const emptyElements = Array.from(document.querySelectorAll("*")).filter(
+        (element) =>
+          element.children.length === 0 && element.textContent.trim() === "",
+      );
+      emptyElements.forEach((emptyElement) => emptyElement.remove());
+
+      // remove any childrenless elements with textContent larger than 100 characters
+      const largeTextElements = Array.from(document.querySelectorAll("*")).filter(
+        (element) =>
+          element.children.length === 0 && element.textContent.length > 50,
+      );
+      largeTextElements.forEach((largeTextElement) => largeTextElement.remove());
+
+      // Remove all comments and whitespace
+      document.querySelectorAll("*").forEach((element) => {
+        for (let i = element.childNodes.length - 1; i >= 0; i--) {
+          const child = element.childNodes[i];
+          if (
+            child.nodeType === 8 ||
+            (child.nodeType === 3 && !/\S/.test(child.nodeValue))
+          ) {
+            // 8 is comment, 3 is text, cool,.
+            element.removeChild(child);
+          }
+        }
+      });
+
+      // Get the modified HTML content
+      const modifiedContent = dom.serialize();
+
+      // Now let us call gpt-4o-mini
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `
+                      Respond with just the price of this product in this format: 
+                      
+                      { price: "<price>", incVAT: "<'true'_or_'false'>"
+  
+                      If you cannot find either of the two based on the information given below (the clues are in the HTML), then just give your best guess, based only on the information below, and put "?" after it. Don't assume that it's including tax since this industry includes wholesale.
+                  `,
+          },
+          { role: "user", content: modifiedContent },
+        ],
+      });
+
+      console.log(completion.data.choices[0].message.content);
+      const result = completion.data.choices[0].message.content;
+      // it should be JSON format
+      let incVat = "false";
       try {
-        if (parseFloat(num) > expensivest) {
-          expensivest = parseFloat(num);
-          price = num;
-          priceFound = "class";
-          break; // let's actually just do the first element instead of the expensivest.
-        }
-      } catch (error) {
-        cerr("ERR", error);
+        const json = JSON.parse(result);
+        price = json.price.replaceAll("£", "").replaceAll("?", "");
+        incVat = json.incVAT.replaceAll("£", "").replaceAll("?", "");
+        if (incVat === "false") price = (parseFloat(price) * 1.2).toFixed(2);
+        priceFound = "gpt";
+      } catch (e) {
+        // parse it using regex, find the first number.
+        // and find "true" OR "false"
+        const priceRegex = /\d+(?:\.\d+)?/;
+        const vatRegex = /true|false/;
+        const priceMatch = result.match(priceRegex);
+        const vatMatch = result.match(vatRegex);
+        if (priceMatch) price = priceMatch[0];
+        if (vatMatch) incVat = vatMatch[0];
+        if (incVat === "false") price = (parseFloat(price) * 1.2).toFixed(2);
+        priceFound = "gpt";
       }
     }
-  }
 
-  price = price.replace(/[^0-9.,]/g, "");
-  price = isNaN(parseFloat(price)) ? "99999" : parseFloat(price).toFixed(2);
-
-  if (price === "99999") {
-    // Then we result to GPT-4o-mini to find it.
-    const textContent = await page.evaluate(() => document.body.textContent);
-    const dom = new JSDOM(textContent); //oh..
-
-    const { document } = dom.window;
-
-    // Remove all script tags
-    const scriptTags = document.querySelectorAll("script");
-    scriptTags.forEach((scriptTag) => scriptTag.remove());
-
-    // Remove the style attribute from all elements
-    const elementsWithStyle = document.querySelectorAll("[style]");
-    elementsWithStyle.forEach((element) => element.removeAttribute("style"));
-
-    // Remove all img, svg, and picture tags
-    const imgTags = document.querySelectorAll("img");
-    imgTags.forEach((imgTag) => imgTag.remove());
-
-    const svgTags = document.querySelectorAll("svg");
-    svgTags.forEach((svgTag) => svgTag.remove());
-
-    const pictureTags = document.querySelectorAll("picture");
-    pictureTags.forEach((pictureTag) => pictureTag.remove());
-
-    // Remove anchor links
-    const anchorTags = document.querySelectorAll("a");
-    anchorTags.forEach((anchorTag) => anchorTag.remove());
-
-    // Remove iframes
-    const iframeTags = document.querySelectorAll("iframe");
-    iframeTags.forEach((iframeTag) => iframeTag.remove());
-
-    // Remove any childrenless elements with no textContent
-    const emptyElements = Array.from(document.querySelectorAll("*")).filter(
-      (element) =>
-        element.children.length === 0 && element.textContent.trim() === "",
-    );
-    emptyElements.forEach((emptyElement) => emptyElement.remove());
-
-    // remove any childrenless elements with textContent larger than 100 characters
-    const largeTextElements = Array.from(document.querySelectorAll("*")).filter(
-      (element) =>
-        element.children.length === 0 && element.textContent.length > 50,
-    );
-    largeTextElements.forEach((largeTextElement) => largeTextElement.remove());
-
-    // Remove all comments and whitespace
-    document.querySelectorAll("*").forEach((element) => {
-      for (let i = element.childNodes.length - 1; i >= 0; i--) {
-        const child = element.childNodes[i];
-        if (
-          child.nodeType === 8 ||
-          (child.nodeType === 3 && !/\S/.test(child.nodeValue))
-        ) {
-          // 8 is comment, 3 is text, cool,.
-          element.removeChild(child);
-        }
-      }
-    });
-
-    // Get the modified HTML content
-    const modifiedContent = dom.serialize();
-
-    // Now let us call gpt-4o-mini
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `
-                    Respond with just the price of this product in this format: 
-                    
-                    { price: "<price>", incVAT: "<'true'_or_'false'>"
-
-                    If you cannot find either of the two based on the information given below (the clues are in the HTML), then just give your best guess, based only on the information below, and put "?" after it. Don't assume that it's including tax since this industry includes wholesale.
-                `,
-        },
-        { role: "user", content: modifiedContent },
-      ],
-    });
-
-    cerr(`${priceFound} was actually null`, "hello"); // We will need to know if something failed.
-    console.log(completion.data.choices[0].message.content);
-    const result = completion.data.choices[0].message.content;
-    // it should be JSON format
-    let incVat = "false";
-    try {
-      const json = JSON.parse(result);
-      price = json.price.replaceAll("£", "").replaceAll("?", "");
-      incVat = json.incVAT.replaceAll("£", "").replaceAll("?", "");
-      if (incVat === "false") price = (parseFloat(price) * 1.2).toFixed(2);
-      priceFound = "gpt";
-    } catch (e) {
-      // parse it using regex, find the first number.
-      // and find "true" OR "false"
-      const priceRegex = /\d+(?:\.\d+)?/;
-      const vatRegex = /true|false/;
-      const priceMatch = result.match(priceRegex);
-      const vatMatch = result.match(vatRegex);
-      if (priceMatch) price = priceMatch[0];
-      if (vatMatch) incVat = vatMatch[0];
-      if (incVat === "false") price = (parseFloat(price) * 1.2).toFixed(2);
-      cerr(`GPT-4o-mini failed to parse JSON ${result}`, "hello");
-      priceFound = "gpt";
-    }
-  }
-
-  return {
-    price,
-    priceFound,
-  };
+    return {
+      price,
+      priceFound,
+    };
 }
-
 async function google(query: string, baseUrl: string) {
   let page;
   try {
@@ -497,6 +503,9 @@ async function google(query: string, baseUrl: string) {
         } catch (e) {
           cerr("Error in google function forSTOPPINGPAGE2 query " + query + ":", e.message);
         }
+
+        // dump page2content to file
+        fs.writeFileSync("page2content.html", await page2.content());
         
         let result = {};
         if (body.regex) {
