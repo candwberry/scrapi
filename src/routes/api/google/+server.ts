@@ -505,7 +505,7 @@ async function google(query: string, baseUrl: string) {
         }
 
         // dump page2content to file
-        fs.writeFileSync("page2content.html", await page2.content());
+        // fs.writeFileSync("page2content.html", await page2.content());
         
         let result = {};
         if (body.regex) {

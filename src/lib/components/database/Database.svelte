@@ -163,7 +163,7 @@ function getBiggestElements(_temp1, _temp2) {
                                 {#if key === 'asin'}
                                     <span class={getValidatedAsin(value)}>{value}</span>
                                 {:else if key === 'href'}
-                                    <a href={value} target="_blank">{value}</a>
+                                    <a href={value} target="_blank">{value ? value.toString().substring(0, 50) : ''}</a>
                                 {:else}
                                     {value ? value.toString().substring(0, 50) : ''}
                                 {/if}
