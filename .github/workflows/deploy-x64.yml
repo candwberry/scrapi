@@ -17,7 +17,10 @@ jobs:
       - name: Stop and remove existing container
         if: success()
         run: |
-            if (docker ps -a --format '{{.Names}}' | Select-String -Pattern '^scrapi$') { docker stop scrapi; docker rm scrapi; }
+          if docker ps -a --format '{{.Names}}' | grep -q '^scrapi$'; then
+              docker stop scrapi
+              docker rm scrapi
+          fi
 
       - name: Run new container
         if: success()
