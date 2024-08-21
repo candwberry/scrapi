@@ -8,8 +8,8 @@ async function executeCommand(
 ): Promise<{ stdout: string; stderr: string }> {
   if (command.trim().startsWith("cd")) {
     currentWorkingDirectory = currentWorkingDirectory
-      .replaceAll("/", "\\")
-      .substring(0, currentWorkingDirectory.lastIndexOf("\\"));
+      .replaceAll("/", "/")
+      .substring(0, currentWorkingDirectory.lastIndexOf("/"));
 
     Bun.$.cwd(currentWorkingDirectory);
     const result = await Bun.$`pwd`;

@@ -424,8 +424,6 @@ async function google(query: string, baseUrl: string) {
         if (domain.toLowerCase().includes(ignore)) {
           skip = true;
           break;
-          domain = "\x1b[31m" + domain + " / PRICE: " + price + "\x1b[0m";
-          price = "__IGNORE__";
         }
       }
       if (skip) continue;

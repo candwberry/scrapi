@@ -1,0 +1,36 @@
+name: Build, Stop and Run
+on:
+    push:
+      branches:
+        - main
+jobs:
+    build:
+        runs-on: [self-hosted, Windows]
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Build our Thing
+              id: build
+              run: bun --bun run build
+
+            - name: If the build fails, stop here
+              if: failure()
+              run: exit 1
+
+            - name: Stop and remove existing process if it exists
+              if: success()
+              run: |
+                if pgrep -f "bun" > /dev/null; then
+                  pkill -f "bun"
+                fi
+
+            - name: Run new process
+              if: success()
+              run: |
+                bun --bun .
+
+            - name: Notify on failure
+              if: failure()
+              run: echo "Build failed. Old process may not have been stopped or replaced."
+      

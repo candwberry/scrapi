@@ -19,7 +19,8 @@
     let table = 'products';
     let tables: {name: string, count: number}[] = [];
 
-    $: {
+    hidden.subscribe(value => {
+        console.log("HELLO");
         $filteredRows = $hidden.length === 0 ? $rows : $rows.map(row => {
             const newRow = {...row};
             $hidden.forEach(key => {
@@ -27,7 +28,7 @@
             });
             return newRow;
         });
-    }
+    });
 
     onMount(async () => {
         const res = await fetch('/api/db');

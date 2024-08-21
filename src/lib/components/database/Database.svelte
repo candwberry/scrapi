@@ -23,10 +23,24 @@
 
     let virtualList;
 
-    $: if ($filteredRows.length > 0 && $filteredRows[0][sortColumn] !== undefined)
-        if (sortDirection === 'asc')
-            $filteredRows = $filteredRows.sort((a, b) => (a[sortColumn] > b[sortColumn] ? 1 : -1));
-        else $filteredRows = $filteredRows.sort((a, b) => (a[sortColumn] < b[sortColumn] ? 1 : -1));
+    function sortRows(_temp, _temp2) {
+        if ($filteredRows.length > 0 && $filteredRows[0][sortColumn] !== undefined) {
+            console.log(sortDirection, sortColumn);
+            $filteredRows.sort((a, b) => {
+                console.log(a[sortColumn], b[sortColumn]);
+                if (sortDirection === 'asc') {
+                    return a[sortColumn] > b[sortColumn] ? 1 : -1;
+                } else {
+                    return a[sortColumn] < b[sortColumn] ? 1 : -1;
+                }
+            });
+        }
+
+        console.log($filteredRows);
+        if (virtualList) virtualList.recomputeSizes();
+    }
+
+    $: sortRows(sortColumn, sortDirection);
 
     let hoveredRowIndex: number | null = null;
     let mouseX = 0;
