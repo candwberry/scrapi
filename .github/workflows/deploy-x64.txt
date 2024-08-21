@@ -1,0 +1,42 @@
+name: Build, Stop and Run
+on:
+    push:
+      branches:
+        - main
+
+env: 
+  EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+  OPENAI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
+
+jobs:
+    build:
+        runs-on: [self-hosted, Windows]
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Build our Thing
+              id: build
+              run: bun install; bun --bun run build
+
+            - name: If the build fails, stop here
+              if: failure()
+              run: exit 1
+
+            - name: Stop and remove existing process if it exists
+              if: success()
+              run: |
+                if (Get-Process -Name "bun" -ErrorAction SilentlyContinue) {
+                  Stop-Process -Name "bun" -Force
+                }
+
+            - name: Run new process
+              if: success()
+              run: |
+                Start-Process -FilePath "bun" -ArgumentList "--bun ." -NoNewWindow -PassThru
+
+
+            - name: Notify on failure
+              if: failure()
+              run: echo "Build failed. Old process may not have been stopped or replaced."
+      

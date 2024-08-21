@@ -1,42 +1,43 @@
-name: Build, Stop and Run
+name: Build and Deploy Docker Image
 on:
-    push:
-      branches:
-        - main
-
-env: 
-  EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
-  OPENAI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
-
+  push:
+    branches:
+      - main
 jobs:
-    build:
-        runs-on: [self-hosted, Windows]
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  build:
+    runs-on: [self-hosted, scrapi]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Build our Thing
-              id: build
-              run: bun install; bun --bun run build
+      - name: Build Docker image
+        id: build
+        run: docker build --build-arg EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} --build-arg OPENAI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} -t scrapi:latest .
 
-            - name: If the build fails, stop here
-              if: failure()
-              run: exit 1
+      - name: Stop and remove existing container
+        if: success()
+        run: |
+            if (docker ps -a --format '{{.Names}}' | Select-String -Pattern '^scrapi$') {
+            docker stop scrapi
+            docker rm scrapi
+            }
 
-            - name: Stop and remove existing process if it exists
-              if: success()
-              run: |
-                if (Get-Process -Name "bun" -ErrorAction SilentlyContinue) {
-                  Stop-Process -Name "bun" -Force
-                }
+      - name: Run new container
+        if: success()
+        run: |
+          docker run -d \
+            -v /home/berry/mydb.sqlite:/home/scrapi/mydb.sqlite \
+            -v /home/berry/mydb.sqlite-shm:/home/scrapi/mydb.sqlite-shm \
+            -v /home/berry/mydb.sqlite-wal:/home/scrapi/mydb.sqlite-wal \
+            --name scrapi \
+            -p 80:8080 \
+            --cap-add=SYS_ADMIN \
+            -e EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} \
+            -e OPENAI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} \
+            -m 5g \
+            scrapi:latest \
+            /bin/sh -c "bun ."
 
-            - name: Run new process
-              if: success()
-              run: |
-                Start-Process -FilePath "bun" -ArgumentList "--bun ." -NoNewWindow -PassThru
-
-
-            - name: Notify on failure
-              if: failure()
-              run: echo "Build failed. Old process may not have been stopped or replaced."
-      
+      - name: Notify on failure
+        if: failure()
+        run: echo "Build failed. Old container may not have been stopped or replaced."
