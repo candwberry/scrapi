@@ -5,7 +5,7 @@ on:
       - main
 jobs:
   build:
-    runs-on: [self-hosted, scrapi]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
