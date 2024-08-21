@@ -20,7 +20,7 @@ jobs:
     - name: Build application
       run: |
         bun install
-        chmod 644 /node_modules/proxy-from-env/
+        sudo chmod 644 node_modules/proxy-from-env/
         bun --bun run build
         
     - name: Stop old application
