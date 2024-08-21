@@ -26,9 +26,9 @@ jobs:
         if: success()
         run: |
           docker run -d \
-            -v /home/berry/mydb.sqlite:/home/scrapi/mydb.sqlite \
-            -v /home/berry/mydb.sqlite-shm:/home/scrapi/mydb.sqlite-shm \
-            -v /home/berry/mydb.sqlite-wal:/home/scrapi/mydb.sqlite-wal \
+            -v /scrapi/mydb.sqlite:/home/scrapi/mydb.sqlite \
+            -v /scrapi/mydb.sqlite-shm:/home/scrapi/mydb.sqlite-shm \
+            -v /scrapi/mydb.sqlite-wal:/home/scrapi/mydb.sqlite-wal \
             --name scrapi \
             -p 80:8080 \
             --cap-add=SYS_ADMIN \
