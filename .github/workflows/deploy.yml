@@ -35,7 +35,8 @@ jobs:
       if: success()
       run: |
         sudo rm -rf /home/jamie/scrapi
-        sudo cp -r . /home/jamie/scrapi
+        cd ..
+        sudo cp -r scrapi /home/jamie/scrapi
         sudo cp /home/jamie/.env /home/jamie/scrapi/.env
         
     - name: Start new application
