@@ -1,43 +1,44 @@
-name: Build and Deploy Docker Image
+name: Build and Deploy Application
+
 on:
   push:
     branches:
       - main
+
 jobs:
   build:
     runs-on: [self-hosted, Linux, X64]
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker image
-        id: build
-        run: docker build --build-arg EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} --build-arg OPENAI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} -t scrapi:latest .
-
-      - name: Stop and remove existing container
-        if: success()
-        run: |
-          if docker ps -a --format '{{.Names}}' | grep -q '^scrapi$'; then
-            docker stop scrapi
-            docker rm scrapi
-          fi
-
-      - name: Run new container
-        if: success()
-        run: |
-          docker run -d \
-            -v /home/jamie/mydb.sqlite:/home/scrapi/mydb.sqlite \
-            -v /home/jamie/mydb.sqlite-shm:/home/scrapi/mydb.sqlite-shm \
-            -v /home/jamie/mydb.sqlite-wal:/home/scrapi/mydb.sqlite-wal \
-            --name scrapi \
-            -p 80:8080 \
-            --cap-add=SYS_ADMIN \
-            -e EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} \
-            -e OPENAI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} \
-            -m 5g \
-            scrapi:latest \
-            /bin/sh -c "bun ."
-
-      - name: Notify on failure
-        if: failure()
-        run: echo "Build failed. Old container may not have been stopped or replaced."
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Build application
+      run: |
+        bun install
+        bun --bun run build
+        
+    - name: Stop old application
+      if: success()
+      run: |
+        # Find and kill all running bun processes
+        pids=$(pgrep -f bun)
+        if [ -n "$pids" ]; then
+          sudo kill $pids
+        fi
+        
+    - name: Remove old application and copy new
+      if: success()
+      run: |
+        sudo rm -rf /home/scrapi
+        sudo cp -r . /home/scrapi
+        
+    - name: Start new application
+      if: success()
+      run: |
+        cd /home/scrapi
+        bun --bun index.ts &
+        
+    - name: Notify on failure
+      if: failure()
+      run: echo "Build failed. Old application may not have been stopped or replaced."
