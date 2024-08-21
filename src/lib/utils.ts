@@ -70,7 +70,7 @@ async function initBrowser(
   let browser: Browser | undefined;
   try {
     browser = await puppeteer.launch({
-      executablePath: "C:\Users\j.white\.cache\puppeteer\chrome\win64-127.0.6533.119\chrome-win64\chrome.exe",
+      executablePath: "/usr/bin/google-chrome",
       headless: "shell",
       args: [
         '--no-sandbox',
