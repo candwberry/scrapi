@@ -33,7 +33,7 @@ jobs:
             - name: Run new process
               if: success()
               run: |
-                bun --bun .
+                bun --bun . &
 
             - name: Notify on failure
               if: failure()
