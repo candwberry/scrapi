@@ -12,7 +12,7 @@ jobs:
 
             - name: Build our Thing
               id: build
-              run: bun --bun run build
+              run: bun install; bun --bun run build
 
             - name: If the build fails, stop here
               if: failure()
