@@ -26,9 +26,9 @@ jobs:
             - name: Stop and remove existing process if it exists
               if: success()
               run: |
-                if pgrep -f "bun" > /dev/null; then
-                  pkill -f "bun"
-                fi
+                if (Get-Process -Name "bun" -ErrorAction SilentlyContinue) {
+                  Stop-Process -Name "bun" -Force
+                }
 
             - name: Run new process
               if: success()
