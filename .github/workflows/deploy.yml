@@ -36,7 +36,7 @@ jobs:
       run: |
         sudo rm -rf /home/scrapi
         sudo cp -r . /home/scrapi
-        cp /.env /home/scrapi
+        cp /home/.env /home/scrapi
         
     - name: Start new application
       if: success()
