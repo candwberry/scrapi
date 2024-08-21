@@ -3,6 +3,11 @@ on:
     push:
       branches:
         - main
+
+env: 
+  EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+  OPENAI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
+
 jobs:
     build:
         runs-on: [self-hosted, Windows]
