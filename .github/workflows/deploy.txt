@@ -21,6 +21,7 @@ jobs:
       run: |
         bun install
         bun --bun run build
+        sudo chmod 644 node_modules/proxy-from-env/
         
     - name: Stop old application
       if: success()
@@ -35,8 +36,7 @@ jobs:
       if: success()
       run: |
         sudo rm -rf /home/jamie/scrapi
-        cd ..
-        sudo cp -r scrapi /home/jamie/scrapi
+        sudo cp -r . /home/jamie/scrapi
         sudo cp /home/jamie/.env /home/jamie/scrapi/.env
         
     - name: Start new application
