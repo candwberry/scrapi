@@ -102,8 +102,6 @@ async function findPrice(
       const jsonData = JSON.parse(content);
 
       const findProduct = (obj: any): any => {
-        console.log(obj);
-        console.log(obj["@type"]);
         if (
           obj["@type"] !== undefined &&
           obj["@type"].toString().toLowerCase() === "product"
@@ -307,6 +305,7 @@ async function findPrice(
       ],
     });
 
+    console.log("ChatGPT Response:");
     console.log(completion.data.choices[0].message.content);
     const result = completion.data.choices[0].message.content;
     // it should be JSON format
@@ -417,6 +416,7 @@ async function google(query: string, baseUrl: string) {
       if (domain == null || domain === undefined) title = "CNF";
       if (title == null || title === undefined) title = "CNF";
       domain = domain.split(" ")[0].replace("https://", "").replace("www.", "");
+      if (domain.endsWith(".ie")) continue;
 
       const titleIgnores = ["ebay", "amazon", "cwberry"]; // we don't want our results either.
       let skip = false;
@@ -463,68 +463,88 @@ async function google(query: string, baseUrl: string) {
                 }*/
 
 
-        const page2 = await browser.newPage();
+        let page2;
+        if (browser.connected)
+          page2 = await browser.newPage();
+        else {
+          try {
+            browser?.close();
+            browser = await initBrowser(isBatchProcessing);
+            page2 = await browser.newPage();
+
+          } catch (error) {
+            cerr("Error in google function for browser reinit:", error);
+          }
+        }
         page2.setRequestInterception(true);
         page2.on("request", async (req: HTTPRequest) => {
-          const resourceType = req.resourceType();
-          const url = req.url();
-          if (
-            ["image", "stylesheet", "font", "media", "websocket", "script", "xhr", "fetch", "eventsource"].includes(
-              resourceType,
-            ) ||
-            url.startsWith("https://www.google-analytics.com") ||
-            url.startsWith("https://www.googletagmanager.com") ||
-            url.startsWith("https://www.facebook.com") ||
-            url.startsWith("https://connect.facebook.net") ||
-            url.includes("google-analytics") ||
-            url.includes("googletagmanager") ||
-            url.includes("facebook") ||
-            url.includes("doubleclick")
-          ){ req.abort(); }
-          else if (cache[url] && cache[url].expires > Date.now()) {
-            await req.respond(cache[url]);
-            return;
-          } else {
-            req.continue();
+          try {
+            const resourceType = req.resourceType();
+            const url = req.url();
+            if (
+              ["image", "stylesheet", "font", "media", "websocket", "script", "xhr", "fetch", "eventsource"].includes(
+                resourceType,
+              ) ||
+              url.startsWith("https://www.google-analytics.com") ||
+              url.startsWith("https://www.googletagmanager.com") ||
+              url.startsWith("https://www.facebook.com") ||
+              url.startsWith("https://connect.facebook.net") ||
+              url.includes("google-analytics") ||
+              url.includes("googletagmanager") ||
+              url.includes("facebook") ||
+              url.includes("doubleclick")
+            ) { req.abort(); }
+            else if (cache[url] && cache[url].expires > Date.now()) {
+              await req.respond(cache[url]);
+              return;
+            } else {
+              req.continue();
+            }
+          } catch (error) {
+            cerr("Error in google function for request interception:", error);
           }
         });
 
         page2.on('response', async (response) => {
-          const url = response.url();
-          const headers = response.headers();
-          const cacheControl = headers['cache-control'] || '';
-          const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
-          const maxAge = maxAgeMatch && maxAgeMatch.length > 1 ? parseInt(maxAgeMatch[1], 10) : 0;
-          if (maxAge) {
-              if (cache[url] && cache[url].expires > Date.now()) return;
-      
+          try {
+            const url = response.url();
+            const headers = response.headers();
+            const cacheControl = headers['cache-control'] || '';
+            const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
+            const maxAge = maxAgeMatch && maxAgeMatch.length > 1 ? parseInt(maxAgeMatch[1], 10) : 0;
+            if (maxAge) {
+              if (cache[url] && cache[url].expires > Date.now() + 100) return;
+
               let buffer;
               try {
-                  buffer = await response.buffer();
+                buffer = await response.buffer();
               } catch (error) {
-                  // some responses do not contain buffer and do not need to be catched
-                  return;
+                // some responses do not contain buffer and do not need to be caught
+                return;
               }
-      
+              const headers = response.headers();
+              // remove cookies from header:
+              delete headers['set-cookie'];
+
               cache[url] = {
-                  status: response.status(),
-                  headers: response.headers(),
-                  body: buffer,
-                  expires: Date.now() + (maxAge * 1000),
+                status: response.status(),
+                headers: headers,
+                body: buffer,
+                expires: Date.now() + (maxAge * 1000),
               };
+            }
+          } catch (error) {
+            cerr("Error in google function for response interception:", error);
           }
-      });
-      
-      
-      
+        });
 
         //// MARK: Important.
-        page2.setDefaultNavigationTimeout(2000);
-        page2.setDefaultTimeout(2000);
+        //page2.setDefaultNavigationTimeout(2000);
+        //page2.setDefaultTimeout(2000);
 
         clog(item.href);
         await page2.goto(item.href, { waitUntil: "domcontentloaded" });
-
+        console.log("FINDING PRICE");
 
         // dump page2content to file
         // fs.writeFileSync("page2content.html", await page2.content());
