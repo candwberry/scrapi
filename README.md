@@ -90,6 +90,7 @@ Now, whenever someone pushes to main branch, the application will automatically 
 
 Click that `tick`, click `See Details`, then `Re-run all jobs` to set-off the initial build. Follow these steps also, should the server ever go down or the application crash. 
 
+6. Oh and don't forget to install and run [Express VPN](https://www.expressvpn.com/vpn-download/vpn-windows) on Windows, this way you can use the GUI and things will be easier.
 **:)**
 
 ## For Development
