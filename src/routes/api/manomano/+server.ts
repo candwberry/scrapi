@@ -71,10 +71,6 @@ async function manomano(query: string) {
             ["image", "stylesheet", "font", "media", "websocket", "script", "xhr", "fetch", "eventsource"].includes(
               resourceType,
             ) ||
-            url.startsWith("https://www.google-analytics.com") ||
-            url.startsWith("https://www.googletagmanager.com") ||
-            url.startsWith("https://www.facebook.com") ||
-            url.startsWith("https://connect.facebook.net") ||
             url.includes("google-analytics") ||
             url.includes("googletagmanager") ||
             url.includes("facebook") ||

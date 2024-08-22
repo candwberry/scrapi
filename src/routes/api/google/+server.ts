@@ -353,10 +353,10 @@ async function google(query: string, baseUrl: string) {
         ["image", "stylesheet", "font", "media", "websocket"].includes(
           resourceType,
         ) ||
-        url.startsWith("https://www.google-analytics.com") ||
-        url.startsWith("https://www.googletagmanager.com") ||
-        url.startsWith("https://www.facebook.com") ||
-        url.startsWith("https://connect.facebook.net")
+        url.includes("google-analytics") ||
+        url.includes("googletagmanager") ||
+        url.includes("facebook") ||
+        url.includes("doubleclick")
       )
         req.abort();
       else req.continue();
@@ -485,15 +485,11 @@ async function google(query: string, baseUrl: string) {
               ["image", "stylesheet", "font", "media", "websocket", "script", "xhr", "fetch", "eventsource"].includes(
                 resourceType,
               ) ||
-              url.startsWith("https://www.google-analytics.com") ||
-              url.startsWith("https://www.googletagmanager.com") ||
-              url.startsWith("https://www.facebook.com") ||
-              url.startsWith("https://connect.facebook.net") ||
               url.includes("google-analytics") ||
               url.includes("googletagmanager") ||
               url.includes("facebook") ||
               url.includes("doubleclick")
-            ) { req.abort(); }
+                  ) { req.abort(); }
             else if (cache[url] && cache[url].expires > Date.now()) {
               await req.respond(cache[url]);
               return;
