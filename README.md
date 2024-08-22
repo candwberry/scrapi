@@ -1,5 +1,5 @@
 # scrapi
-Scrapi is a homemade web scraper for C&W Berry LTD - Builders' Merchant.
+Scrapi is a homemade web scraper for C&W Berry LTD - Builders` Merchant.
 ![C&W Berry Ltd](image.png)
 
 ## Features
