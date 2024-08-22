@@ -1,74 +1,19 @@
 import { Database } from "bun:sqlite";
-// check if mydb.sqlite exists:
+import { createProductsTable, createShopsTable, createSuppliersTable, createPricesTable, createBatchesTable } from '$lib/schema';
 import fs from "fs";
+
 let db: Database;
+
 if (!fs.existsSync("mydb.sqlite")) {
-    console.log("TEMP DB IN MEMORY.")
-    db = new Database(":memory:"); // this is for fixing build process bull.
+    // This is necessary for the build process, otherwise it will create a new 'mydb.sqlite' and persistence will fail.
+    console.log("Creating temp database in memory.")
+    db = new Database(":memory:"); 
 } else {
     db = new Database("mydb.sqlite");
 }
+
+// WAL mode is faster read and writes, requires mydb.sqlite-wal and mydb.sqlite-shm files.
 db.exec('PRAGMA journal_mode=WAL');
-
-const createProductsTable = `
-    CREATE TABLE IF NOT EXISTS products (
-        berry TEXT PRIMARY KEY,
-        barcode TEXT,
-        supplierCode TEXT,
-        supplier TEXT,
-        description TEXT,
-        image TEXT,
-        amazonLast INTEGER,
-        ebayLast INTEGER,
-        googleLast INTEGER,
-        manoLast INTEGER,
-        asin TEXT,
-        asin_validated INTEGER NOT NULL DEFAULT 0,
-        json TEXT
-    );
-`; //// asin_validated can be 0 if not, epoch time if yes.
-
-const createShopsTable = `
-    CREATE TABLE IF NOT EXISTS shops (
-        URL TEXT PRIMARY KEY,
-        name TEXT,
-        regex TEXT,
-        lastUsed TEXT,
-        date INTEGER,
-        json TEXT
-    );
-`;
-
-const createSuppliersTable = `
-    CREATE TABLE IF NOT EXISTS suppliers (
-        name TEXT PRIMARY KEY,
-        json TEXT
-    )  ;
-`;
-
-const createPricesTable = `
-    CREATE TABLE IF NOT EXISTS prices (
-        berry TEXT,
-        price REAL,
-        shipping REAL,
-        date INTEGER,
-        shop TEXT,
-        image TEXT,
-        href TEXT,
-        json TEXT
-    );
-`;
-
-const createBatchesTable = `
-CREATE TABLE IF NOT EXISTS batches (
-        name TEXT PRIMARY KEY,
-        date INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        last INTEGER NOT NULL DEFAULT 0,
-        frequency INTEGER NOT NULL,
-        batch TEXT NOT NULL,
-        next INTEGER NOT NULL DEFAULT 0
-    );
-`; // if next is 0, then this batch is OFF.
 
 /* 
 db.run(`DROP TABLE IF EXISTS products`);
@@ -84,7 +29,13 @@ db.run(createSuppliersTable);
 db.run(createPricesTable);
 db.run(createBatchesTable);
 
-export function ok(body: any) {
+/**
+ * Creates a JSON response with the provided body.
+ * 
+ * @param {any} body - The body of the response to be returned.
+ * @returns {Response} - A Response object containing the JSON stringified body.
+ */
+function ok(body: any): Response {
   return new Response(JSON.stringify(body), {
     headers: {
       "content-type": "application/json",
@@ -92,4 +43,4 @@ export function ok(body: any) {
   });
 }
 
-export { db };
+export { db, ok };

@@ -71,7 +71,10 @@
                     throw new Error("Network response was not ok.");
                 })
                 .then((body) => {
-                    rows.set(body);
+                    if (Array.isArray(body))
+                        rows.set(body);
+                    else
+                        console.error("Error starting batch:", body);
                 })
                 .catch((error) => {
                     console.error(

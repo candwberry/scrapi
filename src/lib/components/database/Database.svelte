@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { berry, filteredRows, limit, rows } from '$lib/stores';
+    import { berry, filteredRows, rows } from '$lib/stores';
     import ArrowLeft from '$lib/assets/svgs/ArrowLeft.svelte';
     import Edit from '$lib/assets/svgs/Edit.svelte';
     import { onMount } from 'svelte';
@@ -48,9 +48,13 @@
     let currentBerry: string | null = null;
 
     function handleRowClick(event: Event, berry: string) {
-        const actualRow = $rows.find((r) => r.berry === berry);
-        $berry = actualRow;
-        show = true;
+        try {
+            const actualRow = $rows.find((r) => r.berry === berry);
+            $berry = actualRow;
+            show = true;
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     function handleAsinClick(event: Event, berry: string, asin: string) {
@@ -70,11 +74,15 @@
     }
 
     function getValidatedAsin(asin: string) {
-        const actualRow = $rows.find((r) => r.asin === asin);
-        if (actualRow && actualRow.asin_validated && actualRow.asin_validated !== 0) {
-            return 'text-berry-600';
-        } else {
-            return 'text-red-600';
+        try {
+            const actualRow = $rows.find((r) => r.asin === asin);
+            if (actualRow && actualRow.asin_validated && actualRow.asin_validated !== 0) {
+                return 'text-berry-600';
+            } else {
+                return 'text-red-600';
+            }
+        } catch (e) {
+            console.error(e);
         }
     }
 

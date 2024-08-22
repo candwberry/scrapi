@@ -52,11 +52,6 @@
             href: "/browser",
         },
         {
-            name: "VPN",
-            icon: VPN,
-            href: "/vpn",
-        },
-        {
             name: "Shell",
             icon: Terminal,
             href: "/shell",
