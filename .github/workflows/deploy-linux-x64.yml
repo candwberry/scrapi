@@ -5,7 +5,7 @@ on:
       - main
 jobs:
   build:
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,17 +17,20 @@ jobs:
       - name: Stop and remove existing container
         if: success()
         run: |
-            if (docker ps -a --format '{{.Names}}' | Select-String -Pattern '^scrapi$') { docker stop scrapi; docker rm scrapi; }
+          if docker ps -a --format '{{.Names}}' | grep -q '^scrapi$'; then
+            docker stop scrapi
+            docker rm scrapi
+          fi
 
       - name: Run new container
         if: success()
         run: |
           docker run -d \
-            -v /scrapi/mydb.sqlite:/home/scrapi/mydb.sqlite \
-            -v /scrapi/mydb.sqlite-shm:/home/scrapi/mydb.sqlite-shm \
-            -v /scrapi/mydb.sqlite-wal:/home/scrapi/mydb.sqlite-wal \
+            -v /home/jamie/mydb.sqlite:/home/scrapi/mydb.sqlite \
+            -v /home/jamie/mydb.sqlite-shm:/home/scrapi/mydb.sqlite-shm \
+            -v /home/jamie/mydb.sqlite-wal:/home/scrapi/mydb.sqlite-wal \
             --name scrapi \
-            -p 80:8080 \
+            -p 80:80 \
             --cap-add=SYS_ADMIN \
             -e EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} \
             -e OPENAI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} \

@@ -30,7 +30,7 @@ jobs:
             -v /home/berry/mydb.sqlite-shm:/home/scrapi/mydb.sqlite-shm \
             -v /home/berry/mydb.sqlite-wal:/home/scrapi/mydb.sqlite-wal \
             --name scrapi \
-            -p 80:8080 \
+            -p 80:80 \
             --cap-add=SYS_ADMIN \
             -e EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} \
             -e OPENAI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} \
