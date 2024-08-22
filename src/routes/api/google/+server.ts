@@ -539,8 +539,8 @@ async function google(query: string, baseUrl: string) {
         });
 
         //// MARK: Important.
-        //page2.setDefaultNavigationTimeout(2000);
-        //page2.setDefaultTimeout(2000);
+        page2.setDefaultNavigationTimeout(2000);
+        page2.setDefaultTimeout(2000);
 
         clog(item.href);
         await page2.goto(item.href, { waitUntil: "domcontentloaded" });
