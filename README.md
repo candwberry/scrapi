@@ -1,5 +1,6 @@
 # scrapi
 Scrapi is a homemade web scraper for C&W Berry LTD - Builders' Merchant.
+
 ![C&W Berry Ltd](https://github.com/user-attachments/assets/f377e89c-ecf2-4e59-a4df-bcbf3e20ef3c)
 
 ## Features
