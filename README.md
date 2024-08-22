@@ -1,6 +1,7 @@
 # scrapi
-Scrapi is a homemade web scraper for C&W Berry LTD - Builders` Merchant.
-![C&W Berry Ltd](image.png)
+Scrapi is a homemade web scraper for C&W Berry LTD - Builders' Merchant.
+
+![C&W Berry Ltd](https://github.com/user-attachments/assets/f377e89c-ecf2-4e59-a4df-bcbf3e20ef3c)
 
 ## Features
 - **Websites:** Scrapes from ebay, amazon, and manomano.
@@ -86,10 +87,11 @@ $ ./run.sh
 
 **That is the setup completed.**
 Now, whenever someone pushes to main branch, the application will automatically be built and deployed. To set it up for the first time now our action runner is installed, go to the [Scrapi repository](https://github.com/candwberry). You should see this:
-![alt text](image-1.png)
+![Scrapi Repo Page](https://github.com/user-attachments/assets/1b4af854-689b-4ff8-b1f8-5164b6d16da9)
 
 Click that `tick`, click `See Details`, then `Re-run all jobs` to set-off the initial build. Follow these steps also, should the server ever go down or the application crash. 
 
+6. Oh and don't forget to install and run [Express VPN](https://www.expressvpn.com/vpn-download/vpn-windows) on Windows, this way you can use the GUI and things will be easier.
 **:)**
 
 ## For Development
