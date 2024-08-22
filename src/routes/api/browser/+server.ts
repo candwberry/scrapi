@@ -39,7 +39,7 @@ async function findPrice(
           (el: Element) => el.textContent,
         );
         if (textContent) {
-          price = textContent.replace(/[^0-9.,]/g, "");
+          price = textContent.replaceAll(/[^0-9.,]/g, "");
           priceFound = "selector";
         }
       }
@@ -107,7 +107,7 @@ async function findPrice(
       const priceRegex = /"price"\s*:\s*("?\d+(?:\.\d+)?"?)/;
       const priceMatch = content?.match(priceRegex);
       if (priceMatch && priceMatch[1]) {
-        price = priceMatch[1].replace(/"/g, "");
+        price = priceMatch[1].replaceAll(/"/g, "");
         priceFound = "schema";
       } else {
         // Second fallback: "raw":{"withTax":NUMBER}

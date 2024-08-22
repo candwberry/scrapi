@@ -140,7 +140,7 @@ async function amazon(query: string, asin?: string) {
         price = await page.$eval(".a-price", (node) => {
           let priceText = node.textContent || "0";
           return priceText
-            .replace("..", ".")
+            .replaceAll("..", ".")
             .replaceAll("£", "")
             .slice(priceText.length / 2 - 1);
         });
@@ -234,7 +234,7 @@ async function amazon(query: string, asin?: string) {
 
         if (shipping.toLowerCase().includes("free delivery")) shipping = "0.00";
         price = price
-          .replace("..", ".")
+          .replaceAll("..", ".")
           .replaceAll("£", "")
           .slice(price.length / 2 - 1);
         let priceSplit = price.split(".");
