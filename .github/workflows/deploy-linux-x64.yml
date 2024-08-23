@@ -35,6 +35,8 @@ jobs:
           # ~/deploy.sh stop
 
           sudo rm -rf ~/scrapi
+
+          mkdir ~/scrapi
           
           # Copy the built application to the deployment directory
           sudo cp -R ./* ~/scrapi
