@@ -3,9 +3,8 @@ on:
   push:
     branches:
       - main
-      
 jobs:
-  build:
+  build-and-deploy:
     runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Checkout code
@@ -15,21 +14,9 @@ jobs:
         run: bun install
 
       - name: Build project
-        env:
-          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
-          OPENAI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
-          PUPPETEER_EXECUTABLE_PATH: '/usr/bin/chromium'
-          CHROME_PATH: '/usr/bin/chromium'
         run: bun --bun run build
-          
-      - name: Stop existing process
-        run: |
-          if pgrep -f "bun"; then
-            sudo pkill -f "bun"
-          fi
 
-      - name: Run application
+      - name: Deploy application
         env:
           EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
           OPENAI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
@@ -37,8 +24,25 @@ jobs:
           PUPPETEER_EXECUTABLE_PATH: '/usr/bin/chromium'
           CHROME_PATH: '/usr/bin/chromium'
         run: |
-          nohup bun --bun . > app.log 2>&1 &
-          echo $! > .pid
+          # Stop the existing application
+          ~/deploy.sh stop
+          
+          # Copy the built application to the deployment directory
+          sudo cp -R ./* ~/scrapi
+          
+          # Start the new version of the application
+          ~/deploy.sh start
+
+      - name: Verify deployment
+        run: |
+          sleep 10  # Give the application time to start
+          if curl -s http://localhost:8080 > /dev/null; then
+            echo "Application is running and responding"
+          else
+            echo "Application is not responding"
+            cat /path/to/your/app/app.log
+            exit 1
+          fi
 
       - name: Notify on failure
         if: failure()
