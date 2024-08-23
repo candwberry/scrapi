@@ -1,19 +1,31 @@
-name: Build and Deploy Application
+name: Conditional Bun Build and Run with nohup
+
 on:
   push:
     branches:
       - main
+
 jobs:
-  build-and-deploy:
-    runs-on: [self-hosted, Linux, X64]
+  local-job:
+    runs-on: self-hosted
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Navigate to project directory
+        run: cd /home/scrapi/scrapi
 
-      - name: Install dependencies
-        run: bun install
+      - name: Pull latest changes from the repository
+        run: git pull
 
-      - name: Build project
+      - name: Remove existing build directory
+        run: rm -rf build
+
+      - name: Stop existing bun process
+        run: |
+          echo "Stopping existing bun process..."
+          pkill -f "bun" || echo "No bun process found"
+
+      - name: Run the build process
+        id: build
         env:
           EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
           OPENAI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
@@ -21,40 +33,12 @@ jobs:
           PUPPETEER_EXECUTABLE_PATH: '/usr/bin/chromium'
           CHROME_PATH: '/usr/bin/chromium'
 
-        run: bun --bun run build
-
-      - name: Deploy application
-        env:
-          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
-          OPENAI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
-          PUPPETEER_EXECUTABLE_PATH: '/usr/bin/chromium'
-          CHROME_PATH: '/usr/bin/chromium'
         run: |
-          # Stop the existing application
-          # ~/deploy.sh stop
+          echo "Running bun build..."
+          bun --bun run build
 
-          sudo rm -rf ~/scrapi
-
-          mkdir ~/scrapi
-          
-          # Copy the built application to the deployment directory
-          sudo cp -R ./* ~/scrapi
-          
-          # Start the new version of the application
-          ~/deploy.sh start
-
-      - name: Verify deployment
+      - name: Start the application if build succeeds
+        if: ${{ success() }}
         run: |
-          sleep 10  # Give the application time to start
-          if curl -s http://localhost:8080 > /dev/null; then
-            echo "Application is running and responding"
-          else
-            echo "Application is not responding"
-            cat ~/scrapi/app.log
-            exit 1
-          fi
-
-      - name: Notify on failure
-        if: failure()
-        run: echo "Build or deployment failed."
+          echo "Build succeeded, starting the application..."
+          nohup bun --bun . > app.log 2>&1 &
