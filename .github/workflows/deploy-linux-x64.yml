@@ -33,6 +33,8 @@ jobs:
         run: |
           # Stop the existing application
           ~/deploy.sh stop
+
+          sudo rm -rf ~/scrapi
           
           # Copy the built application to the deployment directory
           sudo cp -R ./* ~/scrapi
