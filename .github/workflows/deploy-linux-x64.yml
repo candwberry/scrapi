@@ -26,7 +26,7 @@ jobs:
       - name: Stop existing process
         run: |
           if pgrep -f "bun ."; then
-            pkill -f "bun ."
+            sudo pkill -f "bun ."
           fi
 
       - name: Run application
