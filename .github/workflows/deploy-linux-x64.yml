@@ -10,6 +10,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install bun
+        uses: curl -fsSL https://bun.sh/install | bash # for macOS, Linux, and WSL
+      
+      - name: Source bun
+        uses: source 
+
       - name: Install dependencies
         run: bun install
 
