@@ -33,7 +33,7 @@
 </svelte:head>
 
 <Window>
-    <h1 slot="title" class="font-bold">Home (Test)</h1>
+    <h1 slot="title" class="font-bold">Home</h1>
     <div class="grid grid-cols-5 p-4 pb-0 gap-4 items-center max-h-full">
         <Scraper name="ebay" />
         <Scraper name="amazon" />
