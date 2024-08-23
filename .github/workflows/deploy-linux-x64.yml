@@ -7,11 +7,13 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted
-
-    steps:
+    runs-on: [self-hosted, Linux, X64]
+    steps:        
       - name: Reload by calling the server
         run: curl http://localhost:8081
+
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install Bun
         run: bun install
