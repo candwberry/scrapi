@@ -40,9 +40,17 @@ jobs:
             echo "Application is running and responding"
           else
             echo "Application is not responding"
-            cat /path/to/your/app/app.log
+            cat ~/scrapi/app.log
             exit 1
           fi
+          # Stop the existing application
+          ~/deploy.sh stop
+          
+          # Copy the built application to the deployment directory
+          sudo cp -R ./* ~/scrapi
+          
+          # Start the new version of the application
+          ~/deploy.sh start
 
       - name: Notify on failure
         if: failure()
