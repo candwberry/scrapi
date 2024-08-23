@@ -25,8 +25,8 @@ jobs:
           
       - name: Stop existing process
         run: |
-          if pgrep -f "bun ."; then
-            sudo pkill -f "bun ."
+          if pgrep -f "bun"; then
+            sudo pkill -f "bun"
           fi
 
       - name: Run application
@@ -37,7 +37,7 @@ jobs:
           PUPPETEER_EXECUTABLE_PATH: '/usr/bin/chromium'
           CHROME_PATH: '/usr/bin/chromium'
         run: |
-          nohup bun . > app.log 2>&1 &
+          nohup bun --bun . > app.log 2>&1 &
           echo $! > .pid
 
       - name: Notify on failure
