@@ -14,6 +14,13 @@ jobs:
         run: bun install
 
       - name: Build project
+        env:
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
+          PUPPETEER_EXECUTABLE_PATH: '/usr/bin/chromium'
+          CHROME_PATH: '/usr/bin/chromium'
+
         run: bun --bun run build
 
       - name: Deploy application
