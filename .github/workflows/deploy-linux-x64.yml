@@ -1,4 +1,4 @@
-name: Build and Deploy Docker Image
+name: Build and Deploy Application
 on:
   push:
     branches:
@@ -10,34 +10,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        id: build
-        run: docker build --build-arg EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} --build-arg OPENAI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} -t scrapi:latest .
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
 
-      - name: Stop and remove existing container
-        if: success()
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build project
+        run: bun --bun run build
+
+      - name: Install system dependencies
         run: |
-          if docker ps -a --format '{{.Names}}' | grep -q '^scrapi$'; then
-            docker stop scrapi
-            docker rm scrapi
+          sudo apt update -qq
+          sudo apt install -qq -y --no-install-recommends \
+            chromium \
+            chromium-sandbox \
+            fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst
+
+      - name: Stop existing process
+        run: |
+          if pgrep -f "bun ."; then
+            pkill -f "bun ."
           fi
 
-      - name: Run new container
-        if: success()
+      - name: Run application
+        env:
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
+          PUPPETEER_EXECUTABLE_PATH: '/usr/bin/chromium'
+          CHROME_PATH: '/usr/bin/chromium'
         run: |
-          docker run -d \
-            -v /home/scrapi/mydb.sqlite:/home/scrapi/mydb.sqlite \
-            -v /home/scrapi/mydb.sqlite-shm:/home/scrapi/mydb.sqlite-shm \
-            -v /home/scrapi/mydb.sqlite-wal:/home/scrapi/mydb.sqlite-wal \
-            --name scrapi \
-            -p 80:80 \
-            --cap-add=SYS_ADMIN \
-            -e EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }} \
-            -e OPENAI_API_KEY=${{ secrets.OPEN_AI_API_KEY }} \
-            -m 5g \
-            scrapi:latest \
-            /bin/sh -c "bun ."
+          nohup bun . > app.log 2>&1 &
+          echo $! > .pid
 
       - name: Notify on failure
         if: failure()
-        run: echo "Build failed. Old container may not have been stopped or replaced."
+        run: echo "Build or deployment failed."
