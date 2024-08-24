@@ -83,7 +83,11 @@ nano .env
 bun runner.ts
 ```
 
-**and that's it!**
+**and that's it!** 
+
+<br>
+<hr>
+<br>
 
 ### For Production (for C&W Berry Ltd IT staff on Windows)
 1. Install [Ubuntu](https://www.microsoft.com/store/productId/9PDXGNCFSCZV?ocid=pdpshare) from the Windows Store
