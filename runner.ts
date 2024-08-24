@@ -82,4 +82,5 @@ async function startServer() {
     await server;
 }
 
+await runBuildProcess();
 startServer(); // Start the HTTP server
