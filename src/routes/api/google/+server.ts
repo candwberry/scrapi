@@ -597,6 +597,7 @@ async function google(query: string, baseUrl: string) {
         }
 
         console.log(item.price, ourPrice);
+        clog(`${item.price} vs ${ourPrice}`)
         item.price = ourPrice;
         clog(item.price);
         clog(items);
