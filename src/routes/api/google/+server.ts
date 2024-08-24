@@ -576,6 +576,7 @@ async function google(query: string, baseUrl: string) {
         clog(item.price);
         if (item.price.includes("to")) {
           clog(item.price.split('£'))
+          clog(item.price.split('£').pop())
           item.price == item.price.split('£').pop();
         }
 
