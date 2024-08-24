@@ -31,7 +31,7 @@ let browser: Browser | undefined;
 function clog(msg: string) { consolelog(msg, isBatchProcessing); }
 function cerr(msg: string, error: any) { consoleerror(msg, error, isBatchProcessing); }
 
-const cache = {};
+let cache = {};
 async function manomano(query: string) {
     let page: Page | undefined;
     try {
