@@ -10,8 +10,12 @@ jobs:
     runs-on: [self-hosted, Linux, X64]
     steps:        
       - name: Reload by calling the server
-        run: curl http://localhost:8081
-
+        run: |
+          curl -X POST "http://localhost:8081?EBAY_CERT_ID=${{ secrets.EBAY_CERT_ID }}&OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}"
+        env:
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -22,6 +26,6 @@ jobs:
         id: build
         env:
           EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
-          OPENAI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
         run: bun --bun run build
