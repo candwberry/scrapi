@@ -18,7 +18,7 @@ async function startBunProcess(test) {
 
             if (!isRestarting) {
                 console.log("Restarting Bun process...");
-                startBunProcess(false); // Restart the process only if it was unexpected
+                //startBunProcess(false); // Restart the process only if it was unexpected
             }
         }
     });
