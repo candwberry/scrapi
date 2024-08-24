@@ -96,4 +96,4 @@ async function startServer() {
 }
 
 await runBuildProcess();
-startServer(); // Start the HTTP server
+startServer(); // Start the HTTP server test
