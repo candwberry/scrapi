@@ -17,6 +17,15 @@ async function startBunProcess(test) {
     });
 }
 
+async function writeEnvFile(envVars) {
+    let envContent = '';
+    for (const [key, value] of Object.entries(envVars)) {
+        envContent += `${key}=${value}\n`;
+    }
+    await Bun.write(envFilePath, envContent);
+    console.log('.env file has been updated.');
+}
+
 async function forceGitPull() {
     console.log("Forcing git pull...");
     
