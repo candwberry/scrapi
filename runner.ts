@@ -70,7 +70,6 @@ async function forceGitPull() {
     await Bun.spawn(["git", "pull", "--force"]).exited;
 }
 
-
 async function handleRequest(req) {
     console.log("Received build trigger request.");
 
