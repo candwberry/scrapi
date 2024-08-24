@@ -35,7 +35,7 @@ curl -fsSL https://bun.sh/install | bash # for macOS, Linux, and WSL
 source ~/.bashrc
 ```
 
-2. Download [ExpressVPN](https://www.expressvpn.com/latest#linux) and [Google Chrome](https://www.google.com/chrome/?platform=linux) from the web and install them using the following command.
+2. Download [ExpressVPN](https://www.expressvpn.com/latest#linux) and [Google Chrome](https://www.google.com/chrome/?platform=linux) from the web and **once downloaded** (select the first options - for ubuntu and .deb), install them using the following commands.
 ```bash
 cd Downloads
 sudo dpkg -i expressvpn*.deb
