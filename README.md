@@ -32,6 +32,7 @@ Scrapi is a homemade web scraper for C&W Berry LTD - Builders' Merchant.
 sudo apt update
 sudo apt install -y git unzip
 curl -fsSL https://bun.sh/install | bash # for macOS, Linux, and WSL
+source ~/.bashrc
 ```
 
 2. Download [ExpressVPN](https://www.expressvpn.com/latest#linux) and [Google Chrome](https://www.google.com/chrome/?platform=linux) from the web and install them using the following command.
