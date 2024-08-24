@@ -573,6 +573,7 @@ async function google(query: string, baseUrl: string) {
         }
 
         console.log(item.price, ourPrice);
+        clog(item.price);
         if (item.price.includes("to")) {
           item.price == item.price.split('£').pop();
         }
