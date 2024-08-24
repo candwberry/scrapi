@@ -584,15 +584,15 @@ async function google(query: string, baseUrl: string) {
         if (ourPrice === "99999") {
           ourPrice = item.price;
         } else if (
-          parseFloat(ourPrice).toFixed(2) ===
-          (1.2 * parseFloat(item.price)).toFixed(2)
-        ) {
-          item.price = parseFloat(ourPrice).toFixed(2);
-        } else if (
           parseFloat(item.price).toFixed(2) ===
           (1.2 * parseFloat(ourPrice)).toFixed(2)
         ) {
-          item.price = (parseFloat(ourPrice) / 1.2).toFixed(2);
+          ourPrice = item.price;
+        } else if (
+          parseFloat(ourPrice).toFixed(2) ===
+          (1.2 * parseFloat(item.price)).toFixed(2)
+        ) {
+          //item.price = (parseFloat(ourPrice)).toFixed(2);
         }
 
         console.log(item.price, ourPrice);
@@ -601,7 +601,7 @@ async function google(query: string, baseUrl: string) {
         clog(items);
 
         if (item.price.includes("delivery") || item.price.includes("day")) {
-          items.price = "99999";
+          item.price = "99999";
         }
       } catch (error) {
         cerr(`Error processing item ${item.title}:`, error);
