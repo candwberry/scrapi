@@ -575,9 +575,9 @@ async function google(query: string, baseUrl: string) {
         console.log(item.price, ourPrice);
         clog(item.price);
         if (item.price.includes("to")) {
-          clog(item.price.split('£'))
-          clog(item.price.split('£').pop())
-          item.price == item.price.split('£').pop();
+          item.price == item.price.split('£')[item.price.split('£').length - 1]
+          clog("Changing to");
+          clog(item.price);
         }
 
         // if one of them is 1.2 * the other, then we give the vat EXC one theek hai. Test
