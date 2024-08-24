@@ -324,3 +324,12 @@ export const POST: RequestHandler = async ({ request, url }) => {
         return ok(result);
     }
 }
+
+// Function to reset the cache
+function resetCache() {
+    cache = {};
+    console.log("Cache has been reset");
+}
+
+// Set an interval to reset the cache every 4 hours (4 hours * 60 minutes * 60 seconds * 1000 milliseconds)
+setInterval(resetCache, 4 * 60 * 60 * 1000);
