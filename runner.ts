@@ -1,20 +1,15 @@
 let currentBunProcess = null;
-let isRestarting = false; // Track if we are intentionally restarting
 const port = 8081;
 const envFilePath = '.env';
 
-async function startBunProcess(test) {
-    if (currentBunProcess) currentBunProcess.kill(); // Terminate any existing process
-
+async function startBunProcess() {    
     // Start a new bun process
     currentBunProcess = Bun.spawn(["bun", "--bun", "."], {
         onExit(proc, exitCode, signalCode, error) {
             console.error(`Bun process exited with code ${exitCode}.`);
 
-            if (!isRestarting) {
-                console.log("Restarting Bun process...");
-                startBunProcess();
-            }
+            console.log("Restarting Bun process...");
+            startBunProcess();
         }
     });
 }
@@ -39,7 +34,8 @@ async function runBuildProcess() {
     await buildProcess.exited;
 
     if (buildProcess.exitCode === 0) {
-        startBunProcess(true); // Start or restart the bun process after a successful build
+        try { if (currentBunProcess) currentBunProcess.kill(); else { startBunProcess(); } } catch (error) { console.log(error) };
+        
         return true;
     } else {
         console.error("Build process failed with exit code", buildProcess.exitCode);
