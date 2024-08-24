@@ -573,6 +573,9 @@ async function google(query: string, baseUrl: string) {
         }
 
         console.log(item.price, ourPrice);
+        if (item.price.includes("to")) {
+          item.price == item.price.split('£').pop();
+        }
 
         // if one of them is 1.2 * the other, then we give the vat EXC one theek hai.
         if (ourPrice === "99999") {
