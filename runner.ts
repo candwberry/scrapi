@@ -2,6 +2,8 @@ let currentBunProcess = null;
 const port = 8081;
 const envFilePath = '.env';
 
+// Test
+
 async function startBunProcess(test) {
     if (currentBunProcess && test) {
         currentBunProcess.kill(); // Terminate any existing process
