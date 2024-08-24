@@ -596,6 +596,10 @@ async function google(query: string, baseUrl: string) {
         item.price = ourPrice;
         clog(item.price);
         clog(items);
+
+        if (items.price.includes("delivery") || items.price.includes("day")) {
+          items.price = "99999";
+        }
       } catch (error) {
         cerr(`Error processing item ${item.title}:`, error);
       }
