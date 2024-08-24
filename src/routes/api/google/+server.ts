@@ -733,6 +733,11 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
 
             clog(JSON.stringify(items));
+            try {
+              items.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+            } catch (error) {
+              clog("help", error);
+            }
 
             const maxItems = Math.min(items.length, 3);
             if (maxItems > 0) {
