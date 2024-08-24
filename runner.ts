@@ -1,5 +1,6 @@
 let currentBunProcess = null;
 const port = 8081;
+const envFilePath = '.env';
 
 async function startBunProcess(test) {
     if (currentBunProcess && test) {
@@ -27,50 +28,57 @@ async function forceGitPull() {
 
 async function runBuildProcess() {
     await forceGitPull(); // Pull the latest changes before building
-
     // Remove the build directory
     await Bun.spawn(["rm", "-rf", "build"]).exited;
-
     // Install any package changes
-    let installProcess = Bun.spawn(["bun", "install"], {
-        onExit(proc, exitCode, signalCode, error) {
-            if (exitCode !== 0) console.error("Install process failed :(")
-        }
-    });
+    let installProcess = Bun.spawn(["bun", "install"]);
+    await installProcess.exited;
+    
+    if (installProcess.exitCode !== 0) {
+        console.error("Install process failed :(");
+        return false;
+    }
   
     // Run the build process
-    let buildProcess = Bun.spawn(["bun", "run", "build"], {
-        onExit(proc, exitCode, signalCode, error) {
-            if (exitCode === 0) {
-                startBunProcess(true); // Start or restart the bun process after a successful build
-            } else {
-                console.error("Build process failed with exit code", exitCode);
-            }
-        }
-    });
-
+    let buildProcess = Bun.spawn(["bun", "run", "build"]);
     await buildProcess.exited;
+    
+    if (buildProcess.exitCode === 0) {
+        startBunProcess(true); // Start or restart the bun process after a successful build
+        return true;
+    } else {
+        console.error("Build process failed with exit code", buildProcess.exitCode);
+        return false;
+    }
 }
 
-async function handleRequest(req, res) {
+async function handleRequest(req) {
     console.log("Received build trigger request.");
-    res.end("Build triggered.\n");
 
-    await runBuildProcess(); // Trigger the build and restart process
+    const url = new URL(req.url);
+    const envVars = Object.fromEntries(url.searchParams);
+
+    if (Object.keys(envVars).length > 0) {
+        await writeEnvFile(envVars);
+    }
+
+    const buildSuccess = await runBuildProcess(); // Trigger the build and restart process
+    
+    if (buildSuccess) {
+        return new Response("Build succeeded.\n");
+    } else {
+        return new Response("Build failed.\n", { status: 500 });
+    }
 }
 
 async function startServer() {
     console.log(`Listening for requests on http://localhost:${port}`);
-
     const server = Bun.serve({
         port,
         fetch(req) {
-            runBuildProcess();
-            // Maybe we could return based on what runBuildProcess returns, so that the GitHub runner knows if some freak accident fails too.
-	          return new Response("Received.");
+            return handleRequest(req);
         }
     });
-
     await server;
 }
 
