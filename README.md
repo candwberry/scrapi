@@ -27,7 +27,14 @@ Scrapi is a homemade web scraper for C&W Berry LTD - Builders' Merchant.
 
 # Installation
 ### For Production on Ubuntu (Linux)
-1. Install the [GitHub Actions Runner script](https://github.com/organizations/candwberry/settings/actions/runners). <- Click this link. Then `New Runner` > `Self-Hosted` > `Linux x64`, and follow those instructions. I'll give you them here, but you will need to get the private token from the GitHub page.
+1. Install `git`, `unzip`, `bun`.
+```bash
+sudo apt update
+sudo apt install -y git unzip
+curl -fsSL https://bun.sh/install | bash # for macOS, Linux, and WSL
+```
+
+2. Install the [GitHub Actions Runner script](https://github.com/organizations/candwberry/settings/actions/runners). <- Click this link. Then `New Runner` > `Self-Hosted` > `Linux x64`, and follow those instructions. I'll give you them here, but you will need to get the private token from the GitHub page.
 
 **GitHub Action Download**
 ```bash
@@ -53,15 +60,9 @@ tar xzf ./actions-runner-linux-x64-2.319.1.tar.gz
 ./run.sh
 ```
 
-2. Install `git`, `unzip`, `bun`.
+3. Open a new terminal window at ~, and clone the git repository.
 ```bash
-sudo apt update
-sudo apt install -y git unzip
-curl -fsSL https://bun.sh/install | bash # for macOS, Linux, and WSL
-```
-
-3. Clone the git repository.
-```bash
+cd ~
 git clone https://www.github.com/candwberry/scrapi.git
 ```
 
