@@ -585,9 +585,11 @@ async function google(query: string, baseUrl: string) {
         if (ourPrice === "99999") {
           ourPrice = item.price;
         } else if (
-          (parseFloat(item.price).toFixed(2) <
-          (1.2 * parseFloat(ourPrice + 1)).toFixed(2) && parseFloat(item.price).toFixed(2) >
-          (1.2 * parseFloat(ourPrice - 1)).toFixed(2))
+          (
+          parseFloat(item.price) < (1.2 * parseFloat(ourPrice + 1)) 
+          && 
+          parseFloat(item.price) > (1.2 * parseFloat(ourPrice - 1))
+          )
         ) {
           ourPrice = item.price;
         } else if (
