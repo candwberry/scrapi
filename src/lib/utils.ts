@@ -140,7 +140,7 @@ function getDecentTime(time: number): string {
  * @returns {string} - The extracted domain name with the first letter capitalized, or "unknown" if extraction fails.
  */
 function extractDomain(url: string): string {
-  url = url.replaceAll(/^www\./, "");
+  url = url.replace(/^www\./, "");
   const parts = url.split(".");
   parts.pop();
   let name = parts.reduce((a: string, b: string) =>

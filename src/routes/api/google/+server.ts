@@ -591,6 +591,8 @@ async function google(query: string, baseUrl: string) {
 
         console.log(item.price, ourPrice);
         item.price = ourPrice;
+        clog(item.price);
+        clog(items);
       } catch (error) {
         cerr(`Error processing item ${item.title}:`, error);
       }
