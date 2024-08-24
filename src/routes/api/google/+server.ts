@@ -335,7 +335,7 @@ async function findPrice(
     priceFound,
   };
 }
-const cache = {};
+let cache = {};
 
 async function google(query: string, baseUrl: string) {
   let page;
