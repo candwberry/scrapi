@@ -34,7 +34,14 @@ sudo apt install -y git unzip
 curl -fsSL https://bun.sh/install | bash # for macOS, Linux, and WSL
 ```
 
-2. Install the [GitHub Actions Runner script](https://github.com/organizations/candwberry/settings/actions/runners). <- Click this link. Then `New Runner` > `Self-Hosted` > `Linux x64`, and follow those instructions. I'll give you them here, but you will need to get the private token from the GitHub page.
+2. Download [ExpressVPN](https://www.expressvpn.com/latest#linux) and [Google Chrome](https://www.google.com/chrome/?platform=linux) from the web and install them using the following command.
+```bash
+cd Downloads
+sudo dpkg -i expressvpn*.deb
+sudo dpkg -i google-chrome*.deb
+```
+
+3. Install the [GitHub Actions Runner script](https://github.com/organizations/candwberry/settings/actions/runners). <- Click this link. Then `New Runner` > `Self-Hosted` > `Linux x64`, and follow those instructions. I'll give you them here, but you will need to get the private token from the GitHub page.
 
 **GitHub Action Download**
 ```bash
@@ -60,19 +67,18 @@ tar xzf ./actions-runner-linux-x64-2.319.1.tar.gz
 ./run.sh
 ```
 
-3. Open a new terminal window at ~, and clone the git repository.
+4. Open a new terminal window at ~, and clone the git repository, change directory into the repository, create the database files, and create the .env file.
 ```bash
 cd ~
 git clone https://www.github.com/candwberry/scrapi.git
-```
-
-4. Then change directory into the repository, and add in the environment variables.
-```bash
 cd scrapi
+touch mydb.sqlite
+touch mydb.sqlite-wal
+touch mydb.sqlite-shm
 nano .env
 ```
 
-5. Then to leave, type `CTRL+X`, then `ENTER`. And finally, run the auto-updater.
+5. Then to leave the text editor, type `CTRL+X`, then `ENTER`. And finally, run the auto-updater.
 ```bash
 bun runner.ts
 ```
