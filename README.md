@@ -68,7 +68,7 @@ tar xzf ./actions-runner-linux-x64-2.319.1.tar.gz
 ./run.sh
 ```
 
-4. Open a new terminal window at ~, and clone the git repository, change directory into the repository, create the database files, and create the .env file.
+4. Open a new terminal window at ~, and clone the git repository, change directory into the repository, and create the database files.
 ```bash
 cd ~
 git clone https://www.github.com/candwberry/scrapi.git
@@ -76,10 +76,9 @@ cd scrapi
 touch mydb.sqlite
 touch mydb.sqlite-wal
 touch mydb.sqlite-shm
-nano .env
 ```
 
-5. Then to leave the text editor, type `CTRL+X`, then `ENTER`. And finally, run the auto-updater.
+5. Finally, run the auto-updater. 
 ```bash
 bun runner.ts
 ```
