@@ -4,7 +4,7 @@ const port = 8081;
 const envFilePath = '.env';
 
 async function startBunProcess(test) {
-    currentBunProcess.kill(); // Terminate any existing process
+    if (currentBunProcess) currentBunProcess.kill(); // Terminate any existing process
 
     // Start a new bun process
     currentBunProcess = Bun.spawn(["bun", "--bun", "."], {
