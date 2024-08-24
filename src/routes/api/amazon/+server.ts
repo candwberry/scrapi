@@ -34,7 +34,7 @@ function cerr(msg: string, error: any) {
 
 let browser: Browser | undefined;
 
-const cache = {};
+let cache = {};
 async function amazon(query: string, asin?: string) {
   let page;
   try {
