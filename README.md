@@ -66,9 +66,14 @@ cd ~
 git clone https://www.github.com/candwberry/scrapi.git
 ```
 
-4. Then change directory into the repository.
+4. Then change directory into the repository, and add in the environment variables.
 ```bash
 cd scrapi
+nano .env
+```
+
+5. Then to leave, type `CTRL+X`, then `ENTER`. And finally, run the auto-updater.
+```bash
 bun runner.ts
 ```
 
