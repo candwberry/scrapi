@@ -576,7 +576,7 @@ async function google(query: string, baseUrl: string) {
         clog(item.price);
         if (item.price.includes("to")) {
           item.price = item.price.replaceAll('£', '');
-          item.price = (item.price.split('to')[item.price.split('to').length - 1]).replaceAll(' ', '');
+          item.price = (item.price.split('to')[item.price.split('to').length - 1]).replaceAll(' ', '').replaceAll('£', '');
           clog("Changing to");
           clog(item.price);
         }
