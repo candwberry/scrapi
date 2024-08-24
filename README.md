@@ -26,7 +26,54 @@ Scrapi is a homemade web scraper for C&W Berry LTD - Builders' Merchant.
 - ebay-api - Node eBay API wrapper
 
 # Installation
-### For Production (for C&W Berry Ltd IT staff)
+### For Production on Ubuntu (Linux)
+1. Install the [GitHub Actions Runner script](https://github.com/organizations/candwberry/settings/actions/runners). <- Click this link. Then `New Runner` > `Self-Hosted` > `Linux x64`, and follow those instructions. I'll give you them here, but you will need to get the private token from the GitHub page.
+
+**GitHub Action Download**
+```bash
+# Create a folder
+mkdir actions-runner && cd actions-runner
+
+# Download the latest runner package
+curl -o actions-runner-linux-x64-2.319.1.tar.gz -L https://github.com/actions/runner/releases/download/v2.319.1/actions-runner-linux-x64-2.319.1.tar.gz
+
+# Optional: Validate the hash
+echo "3f6efb7488a183e291fc2c62876e14c9ee732864173734facc85a1bfb1744464  actions-runner-linux-x64-2.319.1.tar.gz" | shasum -a 256 -c
+
+# Extract the installer
+tar xzf ./actions-runner-linux-x64-2.319.1.tar.gz
+```
+
+**GitHub Action Configuration**
+```bash
+# Create the runner and start the configuration experience
+./config.sh --url https://github.com/candwberry --token {FIND THE PRIVATE TOKEN ON THAT PAGE}
+
+# Last step, run it!
+./run.sh
+```
+
+2. Install `git`, `unzip`, `bun`.
+```bash
+sudo apt update
+sudo apt install -y git unzip
+curl -fsSL https://bun.sh/install | bash # for macOS, Linux, and WSL
+```
+
+3. Clone the git repository.
+```bash
+git clone https://www.github.com/candwberry/scrapi.git
+```
+
+4. Then change directory into the repository.
+```bash
+cd scrapi
+bun runner.ts
+```
+
+**and that's it!**
+
+### For Production (for C&W Berry Ltd IT staff on Windows)
 1. Install [Ubuntu](https://www.microsoft.com/store/productId/9PDXGNCFSCZV?ocid=pdpshare) from the Windows Store
 2. Launch it, and call the user `scrapi`. (You can call it anything but I will have to change settings if you do)
 3. Create our database files.
