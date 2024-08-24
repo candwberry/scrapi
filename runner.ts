@@ -1,22 +1,55 @@
 let currentBunProcess = null;
+let isRestarting = false; // Track if we are intentionally restarting
 const port = 8081;
 const envFilePath = '.env';
 
-// Test
-
 async function startBunProcess(test) {
     if (currentBunProcess && test) {
+        isRestarting = true;
         currentBunProcess.kill(); // Terminate any existing process
         await currentBunProcess.exited;
+        isRestarting = false;
     }
 
     // Start a new bun process
     currentBunProcess = Bun.spawn(["bun", "--bun", "."], {
         onExit(proc, exitCode, signalCode, error) {
-            console.error(`Bun process exited with code ${exitCode}. Restarting...`);
-            startBunProcess(false); // Restart the process if it exits unexpectedly
+            console.error(`Bun process exited with code ${exitCode}.`);
+
+            if (!isRestarting) {
+                console.log("Restarting Bun process...");
+                startBunProcess(false); // Restart the process only if it was unexpected
+            }
         }
     });
+}
+
+async function runBuildProcess() {
+    await forceGitPull(); // Pull the latest changes before building
+
+    // Remove the build directory
+    await Bun.spawn(["rm", "-rf", "build"]).exited;
+
+    // Install any package changes
+    let installProcess = Bun.spawn(["bun", "install"]);
+    await installProcess.exited;
+
+    if (installProcess.exitCode !== 0) {
+        console.error("Install process failed :(");
+        return false;
+    }
+
+    // Run the build process
+    let buildProcess = Bun.spawn(["bun", "run", "build"]);
+    await buildProcess.exited;
+
+    if (buildProcess.exitCode === 0) {
+        startBunProcess(true); // Start or restart the bun process after a successful build
+        return true;
+    } else {
+        console.error("Build process failed with exit code", buildProcess.exitCode);
+        return false;
+    }
 }
 
 async function writeEnvFile(envVars) {
@@ -37,31 +70,6 @@ async function forceGitPull() {
     await Bun.spawn(["git", "pull", "--force"]).exited;
 }
 
-async function runBuildProcess() {
-    await forceGitPull(); // Pull the latest changes before building
-    // Remove the build directory
-    await Bun.spawn(["rm", "-rf", "build"]).exited;
-    // Install any package changes
-    let installProcess = Bun.spawn(["bun", "install"]);
-    await installProcess.exited;
-    
-    if (installProcess.exitCode !== 0) {
-        console.error("Install process failed :(");
-        return false;
-    }
-  
-    // Run the build process
-    let buildProcess = Bun.spawn(["bun", "run", "build"]);
-    await buildProcess.exited;
-    
-    if (buildProcess.exitCode === 0) {
-        startBunProcess(true); // Start or restart the bun process after a successful build
-        return true;
-    } else {
-        console.error("Build process failed with exit code", buildProcess.exitCode);
-        return false;
-    }
-}
 
 async function handleRequest(req) {
     console.log("Received build trigger request.");
