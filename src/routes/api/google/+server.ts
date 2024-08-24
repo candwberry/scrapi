@@ -584,16 +584,16 @@ async function google(query: string, baseUrl: string) {
         // if one of them is 1.2 * the other, then we give the vat EXC one theek hai. Test
         clog(parseFloat(item.price));
         clog(parseFloat(item.price) <
-        (1.2 * parseFloat(ourPrice + 1)))
+        (1.2 * parseFloat(ourPrice ) + 1))
         clog(          parseFloat(item.price) > (1.2 * parseFloat(ourPrice - 1))      );
 
         if (ourPrice === "99999") {
           ourPrice = item.price;
         } else if (
           (
-          parseFloat(item.price) < (1.2 * parseFloat(ourPrice + 1)) 
+          parseFloat(item.price) < (1.2 * parseFloat(ourPrice)  + 1) 
           && 
-          parseFloat(item.price) > (1.2 * parseFloat(ourPrice - 1))
+          parseFloat(item.price) > (1.2 * parseFloat(ourPrice) - 1)
           )
         ) {
           ourPrice = item.price;
