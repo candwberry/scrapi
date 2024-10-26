@@ -168,6 +168,7 @@ Click that `tick`, click `See Details`, then `Re-run all jobs` to set-off the in
 2. Clone the repository: `git clone https://www.github.com/candwberry/scrapi`
 3. Change directory: `cd scrapi`
 4. Install dependencies: `bun install`
-5. Create the `mydb.sqlite` file, otherwise the database will not persist between runs
-6. Run the development server: `bun --bun run dev`. The `--bun` flag makes sure the `bun` runtime is used, and so `bun:sqlite` exists
-7. Go to [localhost](http://localhost) to view the project
+5. Create a `.env` file with EBAY_CERT_ID, and OPENAI_API_KEY
+6. Create the `mydb.sqlite` file, otherwise the database will not persist between runs
+7. Run the development server: `bun --bun run dev`. The `--bun` flag makes sure the `bun` runtime is used, and so `bun:sqlite` exists
+8. Go to [localhost](http://localhost) to view the project
