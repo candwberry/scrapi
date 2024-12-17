@@ -171,4 +171,4 @@ Click that `tick`, click `See Details`, then `Re-run all jobs` to set-off the in
 5. Create a `.env` file with EBAY_CERT_ID, and OPENAI_API_KEY
 6. Create the `mydb.sqlite` file, otherwise the database will not persist between runs
 7. Run the development server: `bun --bun run dev`. The `--bun` flag makes sure the `bun` runtime is used, and so `bun:sqlite` exists
-8. Go to [localhost](http://localhost) to view the project
+8. Go to [localhost](http://localhost) to view the project :)
