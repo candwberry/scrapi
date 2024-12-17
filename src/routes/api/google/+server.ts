@@ -338,6 +338,8 @@ async function findPrice(
 let cache = {};
 
 async function google(query: string, baseUrl: string) {
+  // Lets clean query in case it has wierd punctuation that interfers with search
+  query = query.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
   let page;
   try {
     if (!browser || !browser.connected)

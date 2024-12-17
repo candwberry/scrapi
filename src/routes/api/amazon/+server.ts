@@ -36,6 +36,8 @@ let browser: Browser | undefined;
 
 let cache = {};
 async function amazon(query: string, asin?: string) {
+  if (query)
+  query = query.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
   let page;
   try {
     if (!browser || !browser.connected) {

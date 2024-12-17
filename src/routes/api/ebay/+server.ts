@@ -46,6 +46,7 @@ async function ebay(
   sort: string,
   filter: string,
 ) {
+  if (query) query = query.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
   return await eBay.buy.browse.search({
     q: query,
     limit: limit,
