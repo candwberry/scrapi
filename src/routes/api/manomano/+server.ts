@@ -58,6 +58,11 @@ async function manomano(query: string) {
     }
 
     try {
+        // Clear cache every 5 minutes so we don't run out of memory
+        if (Date.now() % 300000 === 0) {
+            cache = {};
+        }
+
         clog('Launching page...');
         page = await browser.newPage();
         page.setDefaultNavigationTimeout(5000);
@@ -150,8 +155,9 @@ async function manomano(query: string) {
                     price = price.replace('£', '.').replace(',', '');
 
                     // Shipping is either free or you have to go into the product.
-                    const shipping = anchor.querySelector('[data-testid="free-delivery-label"]') ? '0' : '-1'; 
-
+                    const shipping = anchor.querySelector('[data-testid="free-delivery-label"]') ? '0' : '-1';
+                    // some mano prices have .price.decimal ( an extra full stop in front )
+                    price = price.replace(/^./, '');
                     return { title, price, shipping, href: `https://www.manomano.co.uk${href}`, thumbnail };
                 } catch (error) {
                     return {
@@ -171,7 +177,11 @@ async function manomano(query: string) {
         cerr('Error processing query', error);
         return [];
     } finally {
+        try { // redundant catch but idk what else to do..
         if (page) await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
+        } catch (error) {
+            cerr('Error closing page', error);
+        }
     }
 }
 

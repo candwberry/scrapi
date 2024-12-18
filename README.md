@@ -78,9 +78,11 @@ touch mydb.sqlite-wal
 touch mydb.sqlite-shm
 ```
 
-5. Finally, run the auto-updater. 
+5. Finally, run the auto-runner. 
 ```bash
-bun runner.ts
+# it might need permissions
+chmod +x run.sh
+./run.sh
 ```
 
 **and that's it!** 
