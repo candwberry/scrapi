@@ -329,7 +329,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
             }
         } catch (error) {
             cerr('Error processing batch', error);
-        }
+        }}
 
         isBatchProcessing.status = false;
         return ok(result);
