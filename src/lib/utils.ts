@@ -34,6 +34,9 @@ function consolelog(
     error: "INFO",
     info: msg,
   });
+  if (isBatchProcessing.logs.length > 1000) {
+    isBatchProcessing.logs.shift();
+  }
 }
 
 /**
@@ -53,6 +56,9 @@ function consoleerror(
     error: msg,
     info: JSON.stringify(error),
   });
+  if (isBatchProcessing.logs.length > 1000) {
+    isBatchProcessing.logs.shift();
+  }
 }
 
 /**
@@ -68,6 +74,8 @@ async function initBrowser(
 ): Promise<Browser | undefined> {
   if (!isBatchProcessing) isBatchProcessing = { logs: [] };
   let browser: Browser | undefined;
+  // lets wait half a  second so any extra browsers can be cleaned up 
+  await new Promise((resolve) => setTimeout(resolve, 500));
   try {
     browser = await puppeteer.launch({
       executablePath: "/usr/bin/google-chrome",

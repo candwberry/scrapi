@@ -234,6 +234,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
         const numBatches = Math.ceil(totalProducts / batchSize);
 
         for (let i = 0; i < numBatches; i++) {
+            try {
             // Get time estimate.
             const now = Date.now();
             const elapsed = now - start;
@@ -321,7 +322,13 @@ export const POST: RequestHandler = async ({ request, url }) => {
                 }
             });
 
-            await Promise.all(promises);
+            try {
+                await Promise.all(promises);
+            } catch (error) {
+                cerr('Error processing batch', error);
+            }
+        } catch (error) {
+            cerr('Error processing batch', error);
         }
 
         isBatchProcessing.status = false;
