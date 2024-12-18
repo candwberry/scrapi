@@ -430,7 +430,7 @@ async function google(query: string, baseUrl: string) {
       }
       if (skip) continue;
 
-      price = price.replace("£", "");
+      price = price.replaceAll("£", "");
       items.push({ title, price, href, domain });
     }
 

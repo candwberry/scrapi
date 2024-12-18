@@ -156,7 +156,7 @@ async function manomano(query: string) {
 
                     // Shipping is either free or you have to go into the product.
                     const shipping = anchor.querySelector('[data-testid="free-delivery-label"]') ? '0' : '-1';
-                    // some mano prices have .price.decimal ( an extra full stop in front )
+                    // some mano prices have .price.decimal ( an extra full stop in front ) - this is actually because of the lines above but this works anyway lol.
                     price = price.replace(/^./, '');
                     return { title, price, shipping, href: `https://www.manomano.co.uk${href}`, thumbnail };
                 } catch (error) {
