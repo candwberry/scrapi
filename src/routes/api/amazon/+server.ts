@@ -268,6 +268,8 @@ export const GET: RequestHandler = async ({ request, url }) => {
     isBatchProcessing.status = false;
     const isBatchProcessingCopy = { ...isBatchProcessing };
     isBatchProcessing.logs = [];
+    // kill chrome processes just to be safe. (pkill -f chrome)
+    Bun.spawn(["pkill", "-f", "chrome"]);
     return ok({ isBatchProcessingCopy });
   }
 

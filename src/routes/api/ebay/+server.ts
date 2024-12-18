@@ -64,6 +64,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
     checkRateLimits();
     const isBatchProcessingCopy = { ...isBatchProcessing };
     isBatchProcessing.logs = [];
+    Bun.spawn(["pkill", "-f", "chrome"]);
     return ok({ isBatchProcessingCopy });
   }
 
