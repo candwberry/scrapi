@@ -1,4 +1,4 @@
 while true; do
-	bun runner.ts
+	/home/scrapi/.bun/bin/bun runner.ts
 	sleep 0.5
 done
