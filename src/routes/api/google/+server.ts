@@ -624,7 +624,9 @@ async function google(query: string, baseUrl: string) {
     cerr(`Error in google function for query "${query}":`, err.message);
     return [];
   } finally {
-    if (page) await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
+    if (page && !page.isClosed()
+
+    ) await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
   }
 }
 
@@ -657,13 +659,14 @@ export const GET: RequestHandler = async ({ request, url }) => {
     const firstItem = itemsitems.length > 0 ? itemsitems[0] : null;
     const otherItems = itemsitems.slice(1);
 
+    if (browser && browser.connected) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
+
     return ok({ firstItem, otherItems });
   } catch (error) {
     cerr("Error in GET handler.", error);
     return err("An error occurred while processing your request.", { error });
   } finally {
-    if (browser)
-      await browser.close().catch((err) => cerr("Error closing browser:", err));
+    if (browser && browser.connected) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
   }
 };
 
@@ -816,13 +819,16 @@ export const POST: RequestHandler = async ({ request, url }) => {
       );
 
       await Promise.all(batchPromises);
+      if (browser && browser.connected) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
+
       isBatchProcessing.processed = end;
+
     } catch (error) {
       cerr("Error in batch processing.", error);
     }
   }
 
-  if (browser) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
+  if (browser && browser.connected) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
   isBatchProcessing.status = false;
   return ok(result);
 };
