@@ -75,11 +75,26 @@
 		data.shift();
 		const products = data.map((line) => {
 			const values = line.split(',');
+			let description = values[columns.indexOf(descriptionColumn)] || '';
+			// let us clean it:
+			// remove things inside of brackets (including brackets)
+			description = description.replace(/\(.*?\)/g, '');
+			// remove "To Order"
+			description = description.replace(/To Order/g, '');
+			// remove "inc."
+			description = description.replace(/inc\./g, '');
+			// remove "&,  and asterisk
+			description = description.replace(/&/g, '');
+			description = description.replace(/\*/g, '');
+			// remove speach marks if at start and end
+			description = description.replace(/^"/, '');
+			description = description.replace(/"$/, '');
+					
 			return {
 				berry: values[columns.indexOf(berryColumn)],
 				supplierCode: values[columns.indexOf(supplierCodeColumn)],
 				barcode: values[columns.indexOf(barcodeColumn)],
-				description: values[columns.indexOf(descriptionColumn)]
+				description: description,
 			};
 		});
 		
