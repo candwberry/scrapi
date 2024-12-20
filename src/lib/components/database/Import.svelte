@@ -89,6 +89,14 @@
 			// remove speach marks if at start and end
 			description = description.replace(/^"/, '');
 			description = description.replace(/"$/, '');
+			// remove mm from <number>mm and m from <number>m and cm from <number>cm
+			description = description.replace(/(\d+)mm/g, '$1');
+			description = description.replace(/(\d+)m/g, '$1');
+			description = description.replace(/(\d+)cm/g, '$1');
+			// remove any non-ascii
+			description = description.replace(/[^\x20-\x7E]/g, '');
+			// remove any leading or trailing spaces
+			description = description.trim();
 					
 			return {
 				berry: values[columns.indexOf(berryColumn)],
