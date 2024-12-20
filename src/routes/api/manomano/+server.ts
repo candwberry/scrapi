@@ -31,7 +31,7 @@ let browser: Browser | undefined;
 function clog(msg: string) { consolelog(msg, isBatchProcessing); }
 function cerr(msg: string, error: any) { consoleerror(msg, error, isBatchProcessing); }
 
-let cache = {};
+let cache: { [key: string]: { status: number; headers: any; body: Buffer; expires: number } } = {};
 async function manomano(query: string) {
     let page: Page | undefined;
     try {
@@ -82,7 +82,10 @@ async function manomano(query: string) {
             url.includes("doubleclick")
           ){ req.abort(); }
           else if (cache[url] && cache[url].expires > Date.now()) {
-            await req.respond(cache[url]);
+            await req.respond({
+                ...cache[url],
+                body: new Uint8Array(cache[url].body)
+            });
             return;
           } else {
             req.continue();
@@ -178,7 +181,9 @@ async function manomano(query: string) {
         return [];
     } finally {
         try { // redundant catch but idk what else to do..
-        if (page) await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
+        if (page && !page.isClosed()
+
+        ) await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
         } catch (error) {
             cerr('Error closing page', error);
         }
@@ -332,12 +337,13 @@ export const POST: RequestHandler = async ({ request, url }) => {
         }}
 
         isBatchProcessing.status = false;
+        if (browser && browser.connected) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
         return ok(result);
     } catch (error) {
         cerr('Error processing products', error);
     } finally {
         isBatchProcessing.status = false;
-        if (browser) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
+        if (browser && browser.connected) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
         return ok(result);
     }
 }

@@ -34,10 +34,10 @@ function cerr(msg: string, error: any) {
 
 let browser: Browser | undefined;
 
-let cache = {};
+let cache: { [key: string]: { status: number; headers: any; body: Buffer; expires: number } } = {};
 async function amazon(query: string, asin?: string) {
   if (query)
-  query = query.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
+    query = query.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
   let page;
   try {
     if (!browser || !browser.connected) {
@@ -77,9 +77,12 @@ async function amazon(query: string, asin?: string) {
         url.includes("googletagmanager") ||
         url.includes("facebook") ||
         url.includes("doubleclick")
-      ){ req.abort(); }
+      ) { req.abort(); }
       else if (cache[url] && cache[url].expires > Date.now()) {
-        await req.respond(cache[url]);
+        await req.respond({
+          ...cache[url],
+          body: new Uint8Array(cache[url].body)
+        });
         return;
       } else {
         req.continue();
@@ -93,24 +96,24 @@ async function amazon(query: string, asin?: string) {
       const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
       const maxAge = maxAgeMatch && maxAgeMatch.length > 1 ? parseInt(maxAgeMatch[1], 10) : 0;
       if (maxAge) {
-          if (cache[url] && cache[url].expires > Date.now()) return;
-  
-          let buffer;
-          try {
-              buffer = await response.buffer();
-          } catch (error) {
-              // some responses do not contain buffer and do not need to be catched
-              return;
-          }
-  
-          cache[url] = {
-              status: response.status(),
-              headers: response.headers(),
-              body: buffer,
-              expires: Date.now() + (maxAge * 1000),
-          };
+        if (cache[url] && cache[url].expires > Date.now()) return;
+
+        let buffer;
+        try {
+          buffer = await response.buffer();
+        } catch (error) {
+          // some responses do not contain buffer and do not need to be catched
+          return;
+        }
+
+        cache[url] = {
+          status: response.status(),
+          headers: response.headers(),
+          body: buffer,
+          expires: Date.now() + (maxAge * 1000),
+        };
       }
-  });
+    });
 
     // If the product has a validated ASIN, we can skip the Amazon search, and jump straight to the product page.
     if (asin) {
@@ -180,13 +183,18 @@ async function amazon(query: string, asin?: string) {
     }
 
     clog(`Searching for: ${query}`);
-    await Promise.race([ page.goto(
+    await Promise.race([page.goto(
       `https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`,
       { waitUntil: "domcontentloaded" }
     ), new Promise(
       (resolve, reject) => setTimeout(() => reject("Timeout"), 5000))]).catch((err) => cerr("Error loading page.", err));
-
-    const results = await page.$$(
+    //s-main-slot
+    const mainSlot = await page.$(".s-main-slot");
+    if (!mainSlot) {
+      cerr("Main slot not found.", "Main slot not found.");
+      return [];
+    }
+    const results = await mainSlot.$$(
       "[data-asin][data-component-type='s-search-result']",
     );
 
@@ -450,20 +458,22 @@ export const POST: RequestHandler = async ({ request, url }) => {
       await Promise.all(batchPromises);
     }
 
+    if (browser && browser.connected) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
+
     return ok(result);
   } catch (error) {
     cerr("Error in batch processing:", error);
   } finally {
     isBatchProcessing.status = false;
-    if (browser) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
+    if (browser && browser.connected) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
     return ok(result);
   }
 };
 
 // Function to reset the cache
 function resetCache() {
-    cache = {};
-    console.log("Cache has been reset");
+  cache = {};
+  console.log("Cache has been reset");
 }
 
 // Set an interval to reset the cache every 4 hours (4 hours * 60 minutes * 60 seconds * 1000 milliseconds)
