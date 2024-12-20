@@ -111,7 +111,9 @@
 			description = description.replace(/(\d+)mm/g, '$1');
 			description = description.replace(/(\d+)m/g, '$1');
 			description = description.replace(/(\d+)cm/g, '$1');
-			description = description.replace(/(\d+)M/g, '$1');
+			description = description.replace(/(\d+)Mtr/g, '$1');
+			description = description.replace(/(\d+)Mtr/g, '$1');
+
 			// replace <number>x<number> with <number> x <number>
 				description = description.replace(/(\d+)x(\d+)/g, '$1 x $2');
 
