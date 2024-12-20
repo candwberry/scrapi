@@ -35,16 +35,17 @@
 					const descriptionExamples = ['title', 'name', 'product', 'description'];
 
 					tempColumns.forEach((name) => {
-						name = name.toLowerCase();
 						if (berryExamples.some(example => name == example)) {
 							berryColumn = name;
-						} else if (supplierCodeExamples.some(example => name.includes(example))) {
+						} else {
+						name = name.toLowerCase();
+						if (supplierCodeExamples.some(example => name.includes(example))) {
 							supplierCodeColumn = name;
 						} else if (barcodeExamples.some(example => name.includes(example))) {
 							barcodeColumn = name;
 						} else if (descriptionExamples.some(example => name.includes(example))) {
 							descriptionColumn = name;
-						}
+						}}
 					});
 
 					columns = tempColumns;
