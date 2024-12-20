@@ -29,23 +29,22 @@
 				if (lines.length > 0) {
 					const tempColumns: string[] = lines[0].split(',').map((name) => name.trim());
 
-					const berryExamples = ['sku', 'berry', 'Code'];
-					const supplierCodeExamples = ['supplier', 'supplierproductcode'];
-					const barcodeExamples = ['barcode']
-					const descriptionExamples = ['title', 'name', 'product', 'description'];
+					const berryExamples = ['sku', 'berry', 'code'];
+					const supplierCodeExamples = ['purchasing.supplierproductcode'];
+					const barcodeExamples = ['p_barcode_manufact', 'barcode'];
+					const descriptionExamples = ['title', 'name', 'product', 'description', 'd_longdescription'];
 
 					tempColumns.forEach((name) => {
-						if (berryExamples.some(example => name == example)) {
-							berryColumn = name;
-						} else {
 						name = name.toLowerCase();
-						if (supplierCodeExamples.some(example => name.includes(example))) {
+						if (berryExamples.includes(name)) {
+							berryColumn = name;
+						} else if (supplierCodeExamples.includes(name)) {
 							supplierCodeColumn = name;
-						} else if (barcodeExamples.some(example => name.includes(example))) {
+						} else if (barcodeExamples.includes(name)) {
 							barcodeColumn = name;
-						} else if (descriptionExamples.some(example => name.includes(example))) {
+						} else if (descriptionExamples.includes(name)) {
 							descriptionColumn = name;
-						}}
+						}
 					});
 
 					columns = tempColumns;
