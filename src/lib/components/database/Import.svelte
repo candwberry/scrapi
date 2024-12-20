@@ -77,68 +77,64 @@
 			const values = line.split(',');
 			let description = values[columns.indexOf(descriptionColumn)] || '';
 
-			
-			// let us clean it:
-			// remove things inside of brackets (including brackets)
 			const olddesc = description;
-			description = description.replace(/\(.*?\)/g, '');
-			// end words to remove after 
-			const deleteafterwords = ["To Order", "must be paired with"]
-			// for each deleteafterwords, remove all text after and including occurance
-			deleteafterwords.forEach((word) => {
-				description = description.replace(new RegExp(word + '.*'), '');
-			});
-			const deletewords = ["Pre-Finished", "Pre-Fin", "Per", "c/w", "- Only", "Mtr", "CHECK STOCK"]
-			// for each deletewords, remove all occurance
-			deletewords.forEach((word) => {
-				description = description.replace(new RegExp(word, 'g'), '');
-			});
-			
-			// remove "To Order"
-			description = description.replace(/To Order/g, '');
-			// remove "inc."
-			description = description.replace(/inc\./g, '');
-			// remove "&,  and asterisk and ;
-			description = description.replace(/&/g, '');
-			description = description.replace(/\*/g, '');
-			description = description.replace(/;/g, '');
-			// replace + with ' +' so that whole words arent ignored by search engines
-			// we dont want to remove since + could be a different product
-			description = description.replace(/\+/g, ' +');
-			// remove speach marks if at start and end
-			description = description.replace(/^"/, '');
-			description = description.replace(/"$/, '');
-			// remove mm from <number>mm and m from <number>m and cm, M from <number>cm
-			description = description.replace(/(\d+)mm/g, '$1');
-			description = description.replace(/(\d+)m/g, '$1');
-			description = description.replace(/(\d+)cm/g, '$1');
-			description = description.replace(/(\d+)M/g, '$1');
-			description = description.replace(/(\d+)Mtr/g, '$1');
+// end words to remove after 
+const deleteafterwords = ["To Order", "must be paired with"]
+// for each deleteafterwords, remove all text after and including occurance
+deleteafterwords.forEach((word) => {
+    //description = description.replace(new RegExp(word + '.*'), '');
+});
+const deletewords = ["Pre-Finished", "Pre-Fin", "Per", "c/w", "- Only", "Mtr", "CHECK STOCK"]
+// for each deletewords, remove all occurance
+deletewords.forEach((word) => {
+    description = description.replace(new RegExp(word, 'g'), '');
+});
 
-			// replace <number>x<number> with <number> x <number>
-			description = description.replace(/(\d+)x(\d+)/g, '$1 x $2');
-			description = description.replace(/(\d+)x(\d+)/g, '$1 x $2');
+// remove "To Order"
+description = description.replace(/To Order/g, '');
+// remove "inc."
+description = description.replace(/inc\./g, '');
+// remove "&,  and asterisk and ; and ,
+description = description.replace(/&/g, '');
+description = description.replace(/\*/g, '');
+description = description.replace(/;/g, '');
+description = description.replace(/,/g, '');
+// replace + with ' +' so that whole words arent ignored by search engines
+// we dont want to remove since + could be a different product
+description = description.replace(/\+/g, ' +');
+// remove speach marks if at start and end
+description = description.replace(/^"/, '');
+description = description.replace(/"$/, '');
+// remove mm from <number>mm and m from <number>m and cm, M from <number>cm
+description = description.replace(/(\d+)mtr/g, '$1');
+description = description.replace(/(\d+)mm/g, '$1');
+description = description.replace(/(\d+)m/g, '$1');
+description = description.replace(/(\d+)cm/g, '$1');
 
-			// remove any non-ascii
-			//description = description.replace(/[^\x20-\x7E]/g, '');
-			// remove power 2 character
-			description = description.replace(/²/g, '');
-			// replace double speech marks with single
-			description = description.replace(/""/g, '"');
-			// replace /pk with empty string
-			description = description.replace(/\/pk/g, '');
-			// replace / with space
-			description = description.replace(/\//g, ' ');
-			// replace - Order with empty string
-			description = description.replace(/- Order/g, '');
-			// replace - with space
-			description = description.replace(/-/g, ' ');
-			// replace double spaces with single
-			description = description.replace(/  /g, ' ');
-			// remove any leading or trailing spaces
-			description = description.trim();
+// replace <number>x<number> with <number> x <number>
+description = description.replace(/(\d+)x(\d+)/g, '$1 x $2');
+description = description.replace(/(\d+)x(\d+)/g, '$1 x $2');
+
+// remove any non-ascii
+description = description.replace(/[^\x20-\x7E]/g, '');
+// remove power 2 character
+description = description.replace(/²/g, '');
+// replace double speech marks with single
+description = description.replace(/""/g, '"');
+// replace /pk with empty string
+description = description.replace(/\/pk/g, '');
+// replace / with space
+description = description.replace(/\//g, ' ');
+// replace - Order with empty string
+description = description.replace(/- Order/g, '');
+// replace - with space
+description = description.replace(/-/g, ' ');
+// replace double spaces with single
+description = description.replaceAll('  ', ' ');
+description = description.replaceAll('  ', ' ');
+// remove any leading or trailing spaces
+description = description.trim();
 			console.log(olddesc + ' -> ' + description);
-			console.error(olddesc + ' -> ' + description);
 
 			return {
 				berry: values[columns.indexOf(berryColumn)],

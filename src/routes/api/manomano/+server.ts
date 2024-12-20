@@ -118,12 +118,78 @@ async function manomano(query: string) {
           }
       });
 
-      page.goto(`https://www.manomano.co.uk/search/${encodeURIComponent(query)}`, { waitUntil: 'domcontentloaded' });
+      try {
+      await page.goto(`https://www.manomano.co.uk/search/${encodeURIComponent(query)}`, { waitUntil: 'domcontentloaded' });
+    } catch (error) {
+        cerr('Caught broken page ', error);
+        try {
+            // close page and try again
+            await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
+            page = await browser.newPage();
+            page.setDefaultNavigationTimeout(5000);
+            page.setRequestInterception(true);
+            page.on("request", async (req: HTTPRequest) => {
+                const resourceType = req.resourceType();
+                const url = req.url();
+                if (
+                    ["image", "stylesheet", "font", "media", "websocket", "script", "xhr", "fetch", "eventsource"].includes(
+                        resourceType,
+                    ) ||
+                    url.includes("google-analytics") ||
+                    url.includes("googletagmanager") ||
+                    url.includes("facebook") ||
+                    url.includes("doubleclick")
+                ) { req.abort(); }
+                else if (cache[url] && cache[url].expires > Date.now()) {
+                    await req.respond({
+                        ...cache[url],
+                        body: new Uint8Array(cache[url].body)
+                    });
+                    return;
+                } else {
+                    req.continue();
+                }
+            });
 
+            page.on('response', async (response) => {
+                const url = response.url();
+                const headers = response.headers();
+                const cacheControl = headers['cache-control'] || '';
+                const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
+                const maxAge = maxAgeMatch && maxAgeMatch.length > 1 ? parseInt(maxAgeMatch[1], 10) : 0;
+                if (maxAge) {
+                    if (cache[url] && cache[url].expires > Date.now()) return;
+
+                    let buffer;
+                    try {
+                        buffer = await response.buffer();
+                    } catch (error) {
+                        // some responses do not contain buffer and do not need to be catched
+                        return;
+                    }
+
+                    cache[url] = {
+                        status: response.status(),
+                        headers: response.headers(),
+                        body: buffer,
+                        expires: Date.now() + (maxAge * 1000),
+                    };
+                }
+            });
+
+
+        } catch (error) {
+            cerr('Error creating new page after initial broke', error);
+            return [];
+        }
+    }
 
         // Results are the anchor children of the first child of the fourth child of #listing-layout
+        try {
         await page.waitForSelector('#listing-layout');
-        
+    }   catch (error) {
+        cerr('Caught listing - layout broken', error);
+    }
         const results = await page.evaluate(() => {
             const listingLayout = document.querySelector('#listing-layout');
             if (!listingLayout) return [];
@@ -339,7 +405,8 @@ export const POST: RequestHandler = async ({ request, url }) => {
         isBatchProcessing.status = false;
         if (browser && browser.connected) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
         return ok(result);
-    } catch (error) {
+    } catch (error) {        if (browser && browser.connected) await browser.close().then(() => clog('Browser closed.')).catch((err) => cerr('Error closing browser', err));
+
         cerr('Error processing products', error);
     } finally {
         isBatchProcessing.status = false;
