@@ -544,7 +544,12 @@ async function google(query: string, baseUrl: string) {
         page2.setDefaultTimeout(2000);
 
         clog(item.href);
+        try{
         await page2.goto(item.href, { waitUntil: "domcontentloaded" });
+      }
+      catch(e){
+        clog("CAUGHT PAGE2.goto: " + e.message);
+      }
         console.log("FINDING PRICE");
 
         // dump page2content to file
