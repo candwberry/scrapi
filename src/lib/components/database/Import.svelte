@@ -138,6 +138,8 @@
 			// remove any leading or trailing spaces
 			description = description.trim();
 			console.log(olddesc + ' -> ' + description);
+			console.error(olddesc + ' -> ' + description);
+
 			return {
 				berry: values[columns.indexOf(berryColumn)],
 				supplierCode: values[columns.indexOf(supplierCodeColumn)],
