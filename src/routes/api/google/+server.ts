@@ -466,6 +466,9 @@ async function google(query: string, baseUrl: string) {
 
 
         let page2;
+        if (!browser || !browser.connected) {
+          return [];
+        }
         if (browser.connected)
           page2 = await browser.newPage();
         else {
@@ -553,7 +556,7 @@ async function google(query: string, baseUrl: string) {
         } else {
           result = await findPrice(page2);
         }
-        page2.close();
+        if (page2 && !page2.isClosed()) await page2.close().then(() => clog('Page2 closed.')).catch((err) => cerr('Error closing page2', err));
         clog(JSON.stringify(result));
 
         let ourPrice = result.price;
