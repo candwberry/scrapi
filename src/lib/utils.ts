@@ -13,6 +13,134 @@ puppeteer.use(
   }),
 );
 
+/**
+ * Clean string from rubbish
+ */
+function cleanString(str: string) {
+  if (!str) return 'empty_string';
+  const deleteafterwords = ["To Order", "must be paired with"]
+// for each deleteafterwords, remove all text after and including occurance
+deleteafterwords.forEach((word) => {
+  str = str.replace(new RegExp(word + '.*'), '');
+});
+const deletewords = ["Pre-Finished", "Pre-Fin", "Per", "c/w", "- Only", "Mtr", "CHECK STOCK"]
+// for each deletewords, remove all occurance
+deletewords.forEach((word) => {
+  str = str.replace(new RegExp(word, 'g'), '');
+});
+
+// remove "To Order"
+str = str.replace(/To Order/g, '');
+// remove "inc."
+str = str.replace(/inc\./g, '');
+// remove "&,  and asterisk and ; and ,
+str = str.replace(/&/g, '');
+str = str.replace(/\*/g, '');
+str = str.replace(/;/g, '');
+str = str.replace(/,/g, '');
+// replace + with ' +' so that whole words arent ignored by search engines
+// we dont want to remove since + could be a different product
+str = str.replace(/\+/g, ' +');
+// remove speach marks if at start and end
+str = str.replace(/^"/, '');
+str = str.replace(/"$/, '');
+// remove mm from <number>mm and m from <number>m and cm, M from <number>cm
+str = str.replace(/(\d+)mtr/g, '$1');
+str = str.replace(/(\d+)mm/g, '$1');
+str = str.replace(/(\d+)m/g, '$1');
+str = str.replace(/(\d+)cm/g, '$1');
+
+// replace <number>x<number> with <number> x <number>
+str = str.replace(/(\d+)x(\d+)/g, '$1 x $2');
+str = str.replace(/(\d+)x(\d+)/g, '$1 x $2');
+
+// remove any non-ascii
+str = str.replace(/[^\x20-\x7E]/g, '');
+// remove power 2 character
+str = str.replace(/²/g, '');
+// replace double speech marks with single
+str = str.replace(/""/g, '"');
+// replace /pk with empty string
+str = str.replace(/\/pk/g, '');
+// replace / with space
+str = str.replace(/\//g, ' ');
+// replace - Order with empty string
+str = str.replace(/- Order/g, '');
+// replace - with space
+str = str.replace(/-/g, ' ');
+// replace double spaces with single
+str = str.replaceAll('  ', ' ');
+str = str.replaceAll('  ', ' ');
+// remove any leading or trailing spaces
+str = str.trim();
+return str;
+}
+
+
+/**
+ * Calculate the Levenshtein distance between two strings
+ */
+function levenshteinDistance(str1: string, str2: string) {
+  // If either string is empty, distance is just the length of the other
+  if (!str1) return str2.length;
+  if (!str2) return str1.length;
+  
+  // Create distance matrix
+  const matrix = [];
+  const len1 = str1.length;
+  const len2 = str2.length;
+  
+  // Initialize the first row and column
+  for (let i = 0; i <= len1; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= len2; j++) {
+    matrix[0][j] = j;
+  }
+  
+  // Fill in the distance matrix
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,     // deletion
+        matrix[i][j - 1] + 1,     // insertion
+        matrix[i - 1][j - 1] + cost // substitution
+      );
+    }
+  }
+  
+  return matrix[len1][len2];
+}
+
+/**
+ * Calculate similarity score based on Levenshtein distance
+ */
+function getStringSimilarity(title1: string, title2: string) {
+  // 1) Normalize the strings by trimming and converting to lowercase
+  if (!title1 || !title2) return 0.5; //? 
+  const str1 = title1.trim().toLowerCase();
+  const str2 = title2.trim().toLowerCase();
+  
+  // 2) Compute the Levenshtein distance
+  const distance = levenshteinDistance(str1, str2);
+  
+  // 3) Convert distance to a similarity score between 0 and 1
+  const maxLen = Math.max(str1.length, str2.length);
+  
+  // Edge case: if both are empty strings, return 1
+  if (maxLen === 0) return 1;
+  
+  // Similarity = 1 - (distance / max possible difference)
+  const similarity = 1 - distance / maxLen;
+  return similarity;
+}
+
+export function similar(a: string, b: string): boolean {
+  return getStringSimilarity(a, cleanString(b)) > 0.4;
+}
+
 
 // Type definition for batch processing
 interface BatchProcessing {

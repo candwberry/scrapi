@@ -6,7 +6,8 @@ import {
     consolelog,
     consoleerror,
     ok,
-    err
+    err,
+    similar
 } from '$lib/utils';
 
 // Our API Status
@@ -216,6 +217,13 @@ async function manomano(query: string) {
                     };
 
                     const title = anchor.getAttribute('title') ?? '';
+                    if (!similar(query, title)) return {
+                        title: '',
+                        price: '0',
+                        shipping: '-1',
+                        href: '',
+                        thumbnail: '',
+                    };
                     const href = anchor.getAttribute('href') ?? '';
                     const thumbnail = anchor.querySelector('img')?.getAttribute('src') ?? '';
 

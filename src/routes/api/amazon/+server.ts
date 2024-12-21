@@ -6,6 +6,7 @@ import {
   consoleerror,
   ok,
   err,
+  similar
 } from "$lib/utils";
 import type { Browser, HTTPRequest } from "puppeteer";
 
@@ -216,6 +217,9 @@ async function amazon(query: string, asin?: string) {
             ".a-text-normal",
             (node) => node.textContent,
           )) ?? "";
+        if (!similar(query, title)) continue;
+        
+
         let price =
           (await results[i].$eval(".a-price", (node) => node.textContent)) ??
           "";

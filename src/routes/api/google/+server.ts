@@ -7,6 +7,7 @@ import {
   consoleerror,
   ok,
   err,
+  similar,
 } from "$lib/utils";
 import fs from "fs";
 import type { Browser, ElementHandle, HTTPRequest, Page } from "puppeteer";
@@ -396,6 +397,8 @@ async function google(query: string, baseUrl: string) {
           (el) => el.querySelector("h3")?.textContent,
           searchResults[i],
         );
+        if (!similar(query, title)) continue;
+        
         domain = await page.evaluate(
           (el) =>
             el.children[0].children[0].children[0].children[0]
