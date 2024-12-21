@@ -46,12 +46,14 @@ export const GET: RequestHandler = async ({ request, url, fetch }) => {
         delete row[key];
       } else if (key.toLowerCase().includes('href')) {
         let url = row[key] ?? 'null';
-        if (url == null) {
-          url = 'null';
-        }
         delete row[key];
         row[key] = url;
+        try {
         row[`${key}_domain`] = new URL(url).hostname;
+        } catch (e) {
+          row[`${key}_domain`] = 'null';
+        }
+
       }
     }
   });
@@ -173,7 +175,11 @@ WHERE p.berry IN (${berryList.map((b) => `'${b}'`).join(",")})`).all();
         }
         delete row[key];
         row[key] = url;
+        try {
         row[`${key}_domain`] = new URL(url).hostname;
+        } catch (e) {
+          row[`${key}_domain`] = 'null';
+        }
       }
     }
   });
