@@ -412,12 +412,14 @@ async function google(query: string, baseUrl: string) {
         );
       } catch (e) {
         // Search result is bugged, not my problem.
+        // well maybe it is but ignore for now:)
       }
 
       if (price == null || price === undefined || price.includes("rating"))
         price = "99999";
       if (domain == null || domain === undefined) title = "CNF";
       if (title == null || title === undefined) title = "CNF";
+      if (domain == null || domain === undefined) domain = "CNF";
       domain = domain.split(" ")[0].replace("https://", "").replace("www.", "");
       if (domain.endsWith(".ie")) continue;
 
@@ -541,8 +543,8 @@ async function google(query: string, baseUrl: string) {
         });
 
         //// MARK: Important.
-        page2.setDefaultNavigationTimeout(2000);
-        page2.setDefaultTimeout(2000);
+        page2.setDefaultNavigationTimeout(1000);
+        page2.setDefaultTimeout(1000);
 
         clog(item.href);
         try{

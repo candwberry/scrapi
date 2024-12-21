@@ -195,7 +195,7 @@ async function amazon(query: string, asin?: string) {
       return [];
     }
     const results = await mainSlot.$$(
-      "[data-asin][data-component-type='s-search-result']",
+      ":scope > [data-asin][data-component-type='s-search-result']"
     );
 
     const items = [];
