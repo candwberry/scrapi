@@ -45,7 +45,7 @@ export const GET: RequestHandler = async ({ request, url, fetch }) => {
       if (ignores.some(ignore => key.toLowerCase().includes(ignore))) {
         delete row[key];
       } else if (key.toLowerCase().includes('href')) {
-        const url = row[key];
+        const url = row[key] ?? 'null';
         delete row[key];
         row[key] = url;
         row[`${key}_domain`] = new URL(url).hostname;
@@ -164,7 +164,7 @@ WHERE p.berry IN (${berryList.map((b) => `'${b}'`).join(",")})`).all();
       if (ignores.some(ignore => key.toLowerCase().includes(ignore))) {
         delete row[key];
       } else if (key.toLowerCase().includes('href')) {
-        const url = row[key];
+        const url = row[key] ?? 'null';
         delete row[key];
         row[key] = url;
         row[`${key}_domain`] = new URL(url).hostname;
