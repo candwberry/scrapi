@@ -403,9 +403,10 @@ async function google(query: string, baseUrl: string) {
               .children[0].textContent,
           searchResults[i],
         );
+        // This may have to be changed upon google-chrome update but it also shouldn't update unless we do!
         price = await page.evaluate(
           (el) =>
-            el.getElementsByClassName("ChPIuf")[0].children[0]
+            el.getElementsByClassName("LI0TWe")[0]
               .textContent,
           searchResults[i],
         );

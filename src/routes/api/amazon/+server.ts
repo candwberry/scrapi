@@ -224,7 +224,7 @@ async function amazon(query: string, asin?: string) {
         try {
           shipping =
             (await results[i].$eval(
-              "[aria-label*='delivery' i]",
+              ".udm-primary-delivery-message",
               (node) => node.textContent,
             )) ?? "";
         } catch (err) {
