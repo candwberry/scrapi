@@ -57,7 +57,7 @@ async function manomano(query: string) {
         cerr("Browser is undefined", "Cannot launch.");
         return [];
     }
-
+    
     try {
         // Clear cache every 5 minutes so we don't run out of memory
         if (Date.now() % 300000 === 0) {

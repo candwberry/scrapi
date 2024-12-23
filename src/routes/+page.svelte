@@ -4,7 +4,7 @@
     import SingleBatch from "$lib/components/database/SingleBatch.svelte";
     import Database from "$lib/components/Database.svelte";
     import { onMount } from "svelte";
-
+    import { goto } from '$app/navigation'
     let show: boolean = false;
     let showSingleTime: boolean = false;
     let batches: {
@@ -26,6 +26,20 @@
     onMount(async () => {
         await getBatches();
     });
+
+    function run() {
+        const url = new URL(window.location.href);
+        url.port = (Number(url.port) + 1).toString();
+        alert("Click OK, and wait (5 seconds) for exit message.")
+        fetch(url, { method: 'GET' }).then(response => response.text())
+        .then(data => {
+          console.log('Fetched data:', data);
+        })
+        .catch(error => {
+          alert('Click OK to Refresh.\n(EXIT MSG):', error);
+          location.reload();
+        });
+    }
 </script>
 
 <svelte:head>
@@ -33,7 +47,7 @@
 </svelte:head>
 
 <Window>
-    <h1 slot="title" class="font-bold">Home</h1>
+    <div slot="title" class="flex justify-between flex-row gap-2 font-bold">Home<button on:click={run}>RESTART SCRAPI</button> </div>
     <div class="grid grid-cols-5 p-4 pb-0 gap-4 items-center max-h-full">
         <Scraper name="ebay" />
         <Scraper name="amazon" />
