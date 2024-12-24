@@ -631,6 +631,11 @@ async function google(query: string, baseUrl: string, description: string = "") 
           clog(item.price);
         }
 
+        item.price = item.price.replaceAll("£", "");
+        item.price = item.price.replaceAll("€", "");
+        ourPrice = ourPrice.replaceAll("£", "");
+        ourPrice = ourPrice.replaceAll("€", "");
+        
         // if one of them is 1.2 * the other, then we give the vat EXC one theek hai. Test
         clog(parseFloat(item.price).toString());
         clog((parseFloat(item.price) < (1.2 * (parseFloat(ourPrice) + 1))).toString())
