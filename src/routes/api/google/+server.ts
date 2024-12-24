@@ -406,7 +406,7 @@ async function google(query: string, baseUrl: string, description: string = "") 
 
           continue;
         }
-        
+
         domain = await page.evaluate(
           (el) =>
             el.children[0].children[0].children[0].children[0]
@@ -617,6 +617,11 @@ async function google(query: string, baseUrl: string, description: string = "") 
           });
         }
 
+        if (item.price.includes("delivery") || item.price.includes("day")) {
+          item.price = "99999";
+        }
+
+
         clog(item.price, ourPrice);
         clog(item.price);
         if (item.price.includes("to")) {
@@ -627,16 +632,15 @@ async function google(query: string, baseUrl: string, description: string = "") 
         }
 
         // if one of them is 1.2 * the other, then we give the vat EXC one theek hai. Test
-        clog(parseFloat(item.price));
-        clog(parseFloat(item.price) <
-        (1.2 * parseFloat(ourPrice ) + 1))
-        clog(          parseFloat(item.price) > (1.2 * parseFloat(ourPrice - 1))      );
+        clog(parseFloat(item.price).toString());
+        clog((parseFloat(item.price) < (1.2 * (parseFloat(ourPrice) + 1))).toString())
+        clog((parseFloat(item.price) > (1.2 * (parseFloat(ourPrice) - 1))).toString());
 
         if (ourPrice === "99999") {
           ourPrice = item.price;
         } else if (
           (
-          parseFloat(item.price) < (1.2 * parseFloat(ourPrice)  + 1) 
+          parseFloat(item.price) < (1.2 * parseFloat(ourPrice) + 1) 
           && 
           parseFloat(item.price) > (1.2 * parseFloat(ourPrice) - 1)
           )
@@ -655,9 +659,7 @@ async function google(query: string, baseUrl: string, description: string = "") 
         clog(item.price);
         clog(items);
 
-        if (item.price.includes("delivery") || item.price.includes("day")) {
-          item.price = "99999";
-        }
+        item.price = item.price.replaceAll(",", "");
       } catch (error) {
         cerr(`Error processing item ${item.title}:`, error);
       }
