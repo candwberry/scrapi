@@ -66,7 +66,7 @@ async function manomano(query: string) {
 
         clog('Launching page...');
         page = await browser.newPage();
-        page.setDefaultNavigationTimeout(5000);
+        page.setDefaultNavigationTimeout(1000);
 
         clog('Setting request interception...');
         await page.setRequestInterception(true);
@@ -127,7 +127,7 @@ async function manomano(query: string) {
             // close page and try again
             await page.close().then(() => clog('Page closed.')).catch((err) => cerr('Error closing page', err));
             page = await browser.newPage();
-            page.setDefaultNavigationTimeout(5000);
+            page.setDefaultNavigationTimeout(1000);
             page.setRequestInterception(true);
             page.on("request", async (req: HTTPRequest) => {
                 const resourceType = req.resourceType();
