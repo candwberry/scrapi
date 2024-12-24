@@ -223,7 +223,7 @@ async function amazon(query: string, asin?: string) {
         let price =
           (await results[i].$eval(".a-price", (node) => node.textContent)) ??
           "";
-        let shipping = "-1";
+        let shipping = "-0";
 
         try {
           shipping =

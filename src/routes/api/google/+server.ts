@@ -650,7 +650,7 @@ async function google(query: string, baseUrl: string) {
         item.price = ourPrice;
         clog(item.price);
         clog(items);
-
+        
         if (item.price.includes("delivery") || item.price.includes("day")) {
           item.price = "99999";
         }
