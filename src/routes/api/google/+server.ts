@@ -480,9 +480,10 @@ async function google(query: string, baseUrl: string) {
           clog("Browser not connected");  
           return [];
         }
-        if (browser.connected)
+        if (browser.connected) {
           clog("creating new page");
           page2 = await browser.newPage();
+        }
         else {
           try {
             browser?.close();
