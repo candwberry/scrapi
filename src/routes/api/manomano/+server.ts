@@ -188,7 +188,7 @@ async function manomano(query: string) {
 
         // Results are the anchor children of the first child of the fourth child of #listing-layout
         try {
-        await page.waitForSelector('#listing-layout');
+        await page.waitForSelector('#listing-layout', { timeout: 1000 });
     }   catch (error) {
         cerr('Caught listing - layout broken', error);
     }
