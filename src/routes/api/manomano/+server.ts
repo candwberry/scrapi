@@ -119,8 +119,9 @@ async function manomano(query: string) {
           }
       });
 
-      clog('Navigating to page...');
+      clog('Navigating to page... ' + query);
       try {
+        query.replace(/ /g, '+');
       await page.goto(`https://www.manomano.co.uk/search/${encodeURIComponent(query)}`, { waitUntil: 'domcontentloaded' });
     } catch (error) {
         cerr('Caught broken page ', error);
@@ -188,7 +189,7 @@ async function manomano(query: string) {
 
         // Results are the anchor children of the first child of the fourth child of #listing-layout
         try {
-        await page.waitForSelector('#listing-layout', { timeout: 1000 });
+        await page.waitForSelector('#listing-layout', { timeout: 500 });
     }   catch (error) {
         cerr('Caught listing - layout broken', error);
     }
