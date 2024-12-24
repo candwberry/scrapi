@@ -43,7 +43,7 @@
 
     let num = 0;
     let max = 0;
-    function runAll() {
+    async function runAll() {
         num = 0;
         // get all berry products
         // call /api/db/products
@@ -78,8 +78,8 @@
     <div slot="title" class="flex justify-between flex-row gap-2 font-bold">Home
         <div>
             <p>{num} / {max}</p>
-            <button on:click={runall}>RUN ALL ALL</button> </div>
-            <button on:click={run}>RESTART SCRAPI</button> </div>
+            <button on:click={runAll}>RUN ALL ALL</button> 
+            <button on:click={run}>RESTART SCRAPI</button> 
         </div>
     <div class="grid grid-cols-5 p-4 pb-0 gap-4 items-center max-h-full">
         <Scraper name="ebay" />
