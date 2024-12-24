@@ -344,7 +344,7 @@ async function google(query: string, baseUrl: string, description: string = "") 
   }
 
   // Lets clean query in case it has wierd punctuation that interfers with search
-  query = query.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
+  query = query.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
   let page;
   try {
     if (!browser || !browser.connected)
@@ -484,7 +484,7 @@ async function google(query: string, baseUrl: string, description: string = "") 
 
         let page2;
         if (!browser || !browser.connected) {
-          clog("Browser not connected");  
+          clog("Browser not connected");
           return [];
         }
         if (browser.connected) {
@@ -501,9 +501,10 @@ async function google(query: string, baseUrl: string, description: string = "") 
             cerr("Error in google function for browser reinit:", error);
           }
         }
-        if (!page2){
+        if (!page2) {
           clog("page 2 not created");
-        return [];}
+          return [];
+        }
         page2.setRequestInterception(true);
         page2.on("request", async (req: HTTPRequest) => {
           try {
@@ -511,7 +512,7 @@ async function google(query: string, baseUrl: string, description: string = "") 
             const url = req.url();
             if (
               ["image", "stylesheet", "font", "media", "websocket", "script", "xhr", "fetch", "eventsource"].includes(
-              resourceType,
+                resourceType,
               ) ||
               url.includes("google-analytics") ||
               url.includes("googletagmanager") ||
@@ -524,9 +525,9 @@ async function google(query: string, baseUrl: string, description: string = "") 
               url.endsWith(".tar") ||
               url.endsWith(".tgz") ||
               url.endsWith(".rar") ||
-              url.endsWith(".xml") 
-            ) { 
-              req.abort(); 
+              url.endsWith(".xml")
+            ) {
+              req.abort();
             } else if (cache[url] && cache[url].expires > Date.now()) {
               await req.respond(cache[url]);
               return;
@@ -576,13 +577,13 @@ async function google(query: string, baseUrl: string, description: string = "") 
         page2.setDefaultTimeout(1000);
 
         clog(item.href);
-        try{
-        await page2.goto(item.href, { waitUntil: "domcontentloaded" });
-        clog("Made it to page2.goto");
-      }
-      catch(e){
-        clog("CAUGHT PAGE2.goto: " + e.message);
-      }
+        try {
+          await page2.goto(item.href, { waitUntil: "domcontentloaded" });
+          clog("Made it to page2.goto");
+        }
+        catch (e) {
+          clog("CAUGHT PAGE2.goto: " + e.message);
+        }
         clog("looking for price");
 
         // dump page2content to file
@@ -648,9 +649,9 @@ async function google(query: string, baseUrl: string, description: string = "") 
           ourPrice = item.price;
         } else if (
           (
-          parseFloat(item.price) < (1.2 * parseFloat(ourPrice) + 1) 
-          && 
-          parseFloat(item.price) > (1.2 * parseFloat(ourPrice) - 1)
+            parseFloat(item.price) < (1.2 * parseFloat(ourPrice) + 1)
+            &&
+            parseFloat(item.price) > (1.2 * parseFloat(ourPrice) - 1)
           )
         ) {
           ourPrice = item.price;
@@ -9879,8 +9880,8 @@ const tailwindCSS = [
 
 // Function to reset the cache
 function resetCache() {
-    cache = {};
-    console.log("Cache has been reset");
+  cache = {};
+  console.log("Cache has been reset");
 }
 
 // Set an interval to reset the cache every 4 hours (4 hours * 60 minutes * 60 seconds * 1000 milliseconds)

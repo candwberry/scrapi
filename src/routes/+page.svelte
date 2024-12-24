@@ -76,9 +76,9 @@
 
 <Window>
     <div slot="title" class="flex justify-between flex-row gap-2 font-bold">Home
-        <div>
+        <div class="flex flex-row gap-2">
             <p>{num} / {max}</p>
-            <button on:click={runAll}>RUN ALL ALL</button> 
+            <button style="background-color: #009845; border-radius: 24px;"on:click={runAll}>RUN ALL</button> 
             <button on:click={run}>RESTART SCRAPI</button> 
         </div>
     </div>
