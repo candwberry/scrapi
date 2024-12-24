@@ -36,7 +36,7 @@
           console.log('Fetched data:', data);
         })
         .catch(error => {
-          alert('Click OK to Refresh.\n(EXIT MSG):', error);
+          alert('Click OK to Refresh.\n(EXIT MSG): ' + error);
           location.reload();
         });
     }

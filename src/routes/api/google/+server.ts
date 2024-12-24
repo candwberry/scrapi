@@ -491,6 +491,7 @@ async function google(query: string, baseUrl: string) {
             cerr("Error in google function for browser reinit:", error);
           }
         }
+        if (!page2) return [];
         page2.setRequestInterception(true);
         page2.on("request", async (req: HTTPRequest) => {
           try {
@@ -498,14 +499,23 @@ async function google(query: string, baseUrl: string) {
             const url = req.url();
             if (
               ["image", "stylesheet", "font", "media", "websocket", "script", "xhr", "fetch", "eventsource"].includes(
-                resourceType,
+              resourceType,
               ) ||
               url.includes("google-analytics") ||
               url.includes("googletagmanager") ||
               url.includes("facebook") ||
-              url.includes("doubleclick")
-                  ) { req.abort(); }
-            else if (cache[url] && cache[url].expires > Date.now()) {
+              url.includes("doubleclick") ||
+              url.endsWith(".xlsx") || // This are the files that were downloaded lol :)
+              url.endsWith(".zip") ||
+              url.endsWith(".pdf") ||
+              url.endsWith(".gz") ||
+              url.endsWith(".tar") ||
+              url.endsWith(".tgz") ||
+              url.endsWith(".rar") ||
+              url.endsWith(".xml") 
+            ) { 
+              req.abort(); 
+            } else if (cache[url] && cache[url].expires > Date.now()) {
               await req.respond(cache[url]);
               return;
             } else {
