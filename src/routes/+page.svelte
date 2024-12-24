@@ -81,6 +81,7 @@
             <button on:click={runAll}>RUN ALL ALL</button> 
             <button on:click={run}>RESTART SCRAPI</button> 
         </div>
+    </div>
     <div class="grid grid-cols-5 p-4 pb-0 gap-4 items-center max-h-full">
         <Scraper name="ebay" />
         <Scraper name="amazon" />
