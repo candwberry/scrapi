@@ -191,6 +191,7 @@ async function manomano(query: string) {
         try {
         await page.waitForSelector('#listing-layout', { timeout: 500 });
     }   catch (error) {
+        clog("broken layout");
         cerr('Caught listing - layout broken', error);
     }
         const results = await page.evaluate(() => {
@@ -372,6 +373,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
                             shipping: shipping,
                             href: item.href,
                         });
+                        clog(`Processed ${product.berry} - ${title} - ${price} - ${shipping} - ${href}`);
 
                         await fetch(`${url.origin}/api/db/prices`, {
                             method: 'PUT',
