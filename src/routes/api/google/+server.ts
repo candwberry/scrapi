@@ -566,11 +566,12 @@ async function google(query: string, baseUrl: string) {
         clog(item.href);
         try{
         await page2.goto(item.href, { waitUntil: "domcontentloaded" });
+        clog("Made it to page2.goto");
       }
       catch(e){
         clog("CAUGHT PAGE2.goto: " + e.message);
       }
-        console.log("FINDING PRICE");
+        clog("looking for price");
 
         // dump page2content to file
         // fs.writeFileSync("page2content.html", await page2.content());
@@ -581,7 +582,12 @@ async function google(query: string, baseUrl: string) {
         } else {
           result = await findPrice(page2);
         }
-        if (page2 && !page2.isClosed()) await page2.close().then(() => clog('Page2 closed.')).catch((err) => cerr('Error closing page2', err));
+        clog("Found price");
+        try {
+          if (page2 && !page2.isClosed()) await page2.close().then(() => clog('Page2 closed.')).catch((err) => cerr('Error closing page2', err));
+        } catch (e) {
+          cerr("Error in google function for closing page2:", e);
+        }
         clog(JSON.stringify(result));
 
         let ourPrice = result.price;
@@ -602,7 +608,7 @@ async function google(query: string, baseUrl: string) {
           });
         }
 
-        console.log(item.price, ourPrice);
+        clog(item.price, ourPrice);
         clog(item.price);
         if (item.price.includes("to")) {
           item.price = item.price.replaceAll('£', '');
