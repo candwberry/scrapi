@@ -133,22 +133,7 @@
                 {/if}
             </div>
             <div class="flex items-center gap-2">
-                {#if waiting}
-                    <button
-                        class="bg-[#f9f3ed] text-[#febb2e] font-bold px-2 py-1 rounded-lg text-sm"
-                        disabled>Waiting</button
-                    >
-                {:else if !$details.status}
-                    <button
-                        class="bg-[#f9f3ed] text-[#27c840] font-bold px-2 py-1 rounded-lg text-sm"
-                        on:click={startBatch}>Run All</button
-                    >
-                {:else}
-                    <button
-                        class="bg-[#f9f3ed] text-[#fe5c54] font-bold px-2 py-1 rounded-lg text-sm"
-                        on:click={stopBatch}>Stop</button
-                    >
-                {/if}
+                
             </div>
         </div>
         <div class="flex items-center gap-2">

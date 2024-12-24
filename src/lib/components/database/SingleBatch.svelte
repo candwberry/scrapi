@@ -13,6 +13,16 @@
         }
 
         try {
+            if (brefs.trim().length === 0) {
+                // get all from /api/db/products
+                const resp = await fetch(`/api/db/products`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    console.log("BatchBatch data:", data);
+                    brefs = data.map((product: any) => product.berry).join('\n');
+                }
+            }
+            
             waiting = true;
             const resp = await fetch(`/api/db/batch`, {
                 method: "POST",
