@@ -337,14 +337,6 @@ export const POST: RequestHandler = async ({ request, url }) => {
                     if (!query) return;
                     let items: { price: any; shipping: any; title: any; href: any; thumbnail: any; }[] = [];
                     items = await manomano(query, product.description);
-                    items.forEach(item => {
-                        clog(`Item found: ${item.title} - ${item.price}`);
-                        // perform similarity on
-                        if (!similar(product.description, item.title)) {
-                            items.shift();
-                            clog(`Item removed: ${item.title} - ${item.price}`);
-                        }
-                    });
 
                     while (items.length > 0 && items[0].price === '0' && !similar(product.description, items[0].title)) {
                         items.shift();
@@ -359,20 +351,15 @@ export const POST: RequestHandler = async ({ request, url }) => {
                         }
                     }
 
-                    // go through item and list there title and price:
-                    items.forEach(item => {
-                        clog(`Item found: ${item.title} - ${item.price}`);
-                        // perform similarity on
-                        if (!similar(product.description, item.title)) {
-                            items.shift();
-                            clog(`Item removed: ${item.title} - ${item.price}`);
-                        }
-                    });
-                    
                     // Remove bad items.
                     while (items.length > 0 && items[0].price === '0' && !similar(product.description, items[0].title)) {
                         items.shift();
                     }
+
+                    items.forEach(item => {
+                        clog(`Item found: ${item.title} - ${item.price}`);
+                    });
+
                     
                     if (items.length > 0) {
                         const item = items[0];
