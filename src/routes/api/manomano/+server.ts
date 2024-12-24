@@ -119,6 +119,7 @@ async function manomano(query: string) {
           }
       });
 
+      clog('Navigating to page...');
       try {
       await page.goto(`https://www.manomano.co.uk/search/${encodeURIComponent(query)}`, { waitUntil: 'domcontentloaded' });
     } catch (error) {

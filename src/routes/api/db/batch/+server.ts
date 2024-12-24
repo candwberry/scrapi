@@ -1,14 +1,6 @@
 import type { RequestHandler } from "@sveltejs/kit";
 import { ok, db } from "$lib/database";
 
-const query = db.query(`
-    CREATE TABLE IF NOT EXISTS batches (
-        name TEXT NOT NULL,
-        date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        batch TEXT NOT NULL
-    );
-`);
-
 export const GET: RequestHandler = async ({ request, url, fetch }) => {
   const name = url.searchParams.get("name") || "";
   if (name == "")
