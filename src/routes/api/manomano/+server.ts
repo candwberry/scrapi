@@ -211,13 +211,15 @@ async function manomano(query: string, description: string) {
             return Array.from(anchors).map((anchor) => {
                 try {
                     // Ignore those with style.includes display: none
-                    if (anchor.style.display.includes('none')) return {
+                    if (anchor.style.display.includes('none')) {
+                       clog("LEFT HERE");
+                        return {
                         title: '',
                         price: '0',
                         shipping: '-1',
                         href: '',
                         thumbnail: '',
-                    };
+                    };}
 
                     const title = anchor.getAttribute('title') ?? '';
                     if (!similar(description, title)) {
@@ -241,6 +243,7 @@ async function manomano(query: string, description: string) {
                     const shipping = anchor.querySelector('[data-testid="free-delivery-label"]') ? '0' : '-1';
                     // some mano prices have .price.decimal ( an extra full stop in front ) - this is actually because of the lines above but this works anyway lol.
                     price = price.replace(/^./, '');
+                    clog("GOT HERE");
                     return { title, price, shipping, href: `https://www.manomano.co.uk${href}`, thumbnail };
                 } catch (error) {
                     return {
