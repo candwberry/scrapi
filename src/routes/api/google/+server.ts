@@ -477,21 +477,25 @@ async function google(query: string, baseUrl: string) {
 
         let page2;
         if (!browser || !browser.connected) {
+          clog("Browser not connected");  
           return [];
         }
         if (browser.connected)
+          clog("creating new page");
           page2 = await browser.newPage();
         else {
           try {
             browser?.close();
             browser = await initBrowser(isBatchProcessing);
+            clog("browser REINIT")
             page2 = await browser.newPage();
-
           } catch (error) {
             cerr("Error in google function for browser reinit:", error);
           }
         }
-        if (!page2) return [];
+        if (!page2){
+          clog("page 2 not created");
+        return [];}
         page2.setRequestInterception(true);
         page2.on("request", async (req: HTTPRequest) => {
           try {
