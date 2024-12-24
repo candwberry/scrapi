@@ -352,6 +352,11 @@ export const POST: RequestHandler = async ({ request, url }) => {
                             );
                         }
                     }
+
+                    // go through item and list there title and price:
+                    items.forEach(item => {
+                        clog(`Item found: ${item.title} - ${item.price}`);
+                    });
                     
                     // Remove bad items.
                     while (items.length > 0 && items[0].price === '0') {
