@@ -421,6 +421,9 @@ async function google(query: string, baseUrl: string, description: string = "") 
               .textContent,
           searchResults[i],
         );
+        if (price?.includes("$") || price?.includes("€")) {
+          continue;
+        }
       } catch (e) {
         // Search result is bugged, not my problem.
         // well maybe it is but ignore for now:)
@@ -635,7 +638,7 @@ async function google(query: string, baseUrl: string, description: string = "") 
         item.price = item.price.replaceAll("€", "");
         ourPrice = ourPrice.replaceAll("£", "");
         ourPrice = ourPrice.replaceAll("€", "");
-        
+
         // if one of them is 1.2 * the other, then we give the vat EXC one theek hai. Test
         clog(parseFloat(item.price).toString());
         clog((parseFloat(item.price) < (1.2 * (parseFloat(ourPrice) + 1))).toString())
