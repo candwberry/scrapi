@@ -40,6 +40,34 @@
           location.reload();
         });
     }
+
+    let num = 0;
+    let max = 0;
+    function runAll() {
+        num = 0;
+        // get all berry products
+        // call /api/db/products
+        // for each product, call /api/db/batch with batch: product.berry   
+        const resp = await fetch(`/api/db/products`);
+        if (resp.ok) {
+            const data = await resp.json();
+            console.log(data);
+            if (Array.isArray(data) && data.length > 0) {
+                num++;
+                max = data.length;
+                for (let i = 0; i < data.length; i++) {
+                    const product = data[i];
+                    const resp = await fetch (`/api/db/batch`, {
+                        method: 'POST',
+                        body: JSON.stringify( {batch: product.berry} ),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                }
+            }
+        }
+    }
 </script>
 
 <svelte:head>
@@ -47,7 +75,12 @@
 </svelte:head>
 
 <Window>
-    <div slot="title" class="flex justify-between flex-row gap-2 font-bold">Home<button on:click={run}>RESTART SCRAPI</button> </div>
+    <div slot="title" class="flex justify-between flex-row gap-2 font-bold">Home
+        <div>
+            <p>{num} / {max}</p>
+            <button on:click={runall}>RUN ALL ALL</button> </div>
+            <button on:click={run}>RESTART SCRAPI</button> </div>
+        </div>
     <div class="grid grid-cols-5 p-4 pb-0 gap-4 items-center max-h-full">
         <Scraper name="ebay" />
         <Scraper name="amazon" />
