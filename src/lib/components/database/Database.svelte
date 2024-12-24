@@ -243,7 +243,7 @@ function getBiggestElements(_temp1, _temp2) {
                                     if (navigator && navigator.clipboard) navigator.clipboard.writeText(value);
                                 }}
                             >
-                                {value}
+                            {(!(value == "null" || value == null)) ? value.toString().substring(0, 50) : '-'}
                             </span>
                         {/if}
                     </div>
