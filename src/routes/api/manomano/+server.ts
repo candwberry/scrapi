@@ -346,6 +346,9 @@ export const POST: RequestHandler = async ({ request, url }) => {
                     if (!query) return;
                     let items: { price: any; shipping: any; title: any; href: any; thumbnail: any; }[] = [];
                     items = await manomano(query, product.description);
+                    items.forEach(item => {
+                        clog(`Item found: ${item.title} - ${item.price}`);
+                    });
 
                     if (!(items.length > 0 && items[0].price !== '0')) {
                         if (query == product.barcode) {
