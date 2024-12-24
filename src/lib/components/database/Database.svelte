@@ -236,7 +236,7 @@ function getBiggestElements(_temp1, _temp2) {
                             </span>
                         {:else if key === 'href'}
                             <a href={value} target="_blank">{value ? value.toString().substring(0, 50) : ''}</a>
-                        {:else if key.includes("gprice")}
+                        {:else if key.includes("price")}
                             {#if value.includes('to')}
                                 {value.split('to')[0]}<br>{value.split('to')[1]}
                             {:else}
