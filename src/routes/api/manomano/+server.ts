@@ -212,9 +212,8 @@ async function manomano(query: string, description: string) {
                 try {
                     // Ignore those with style.includes display: none
                     if (anchor.style.display.includes('none')) {
-                       clog("LEFT HERE");
                         return {
-                        title: '',
+                        title: 'LEFT HERE',
                         price: '0',
                         shipping: '-1',
                         href: '',
@@ -222,16 +221,6 @@ async function manomano(query: string, description: string) {
                     };}
 
                     const title = anchor.getAttribute('title') ?? '';
-                    if (!similar(description, title)) {
-                        clog("item not simlar");
-                        return {
-                        title: '',
-                        price: '0',
-                        shipping: '-1',
-                        href: '',
-                        thumbnail: '',
-                    };}
-                    clog("Found similar item");
                     const href = anchor.getAttribute('href') ?? '';
                     const thumbnail = anchor.querySelector('img')?.getAttribute('src') ?? '';
 
@@ -243,7 +232,6 @@ async function manomano(query: string, description: string) {
                     const shipping = anchor.querySelector('[data-testid="free-delivery-label"]') ? '0' : '-1';
                     // some mano prices have .price.decimal ( an extra full stop in front ) - this is actually because of the lines above but this works anyway lol.
                     price = price.replace(/^./, '');
-                    clog("GOT HERE");
                     return { title, price, shipping, href: `https://www.manomano.co.uk${href}`, thumbnail };
                 } catch (error) {
                     return {
@@ -351,7 +339,16 @@ export const POST: RequestHandler = async ({ request, url }) => {
                     items = await manomano(query, product.description);
                     items.forEach(item => {
                         clog(`Item found: ${item.title} - ${item.price}`);
+                        // perform similarity on
+                        if (!similar(product.description, item.title)) {
+                            items.shift();
+                            clog(`Item removed: ${item.title} - ${item.price}`);
+                        }
                     });
+
+                    while (items.length > 0 && items[0].price === '0' && !similar(product.description, items[0].title)) {
+                        items.shift();
+                    }
 
                     if (!(items.length > 0 && items[0].price !== '0')) {
                         if (query == product.barcode) {
@@ -365,10 +362,15 @@ export const POST: RequestHandler = async ({ request, url }) => {
                     // go through item and list there title and price:
                     items.forEach(item => {
                         clog(`Item found: ${item.title} - ${item.price}`);
+                        // perform similarity on
+                        if (!similar(product.description, item.title)) {
+                            items.shift();
+                            clog(`Item removed: ${item.title} - ${item.price}`);
+                        }
                     });
                     
                     // Remove bad items.
-                    while (items.length > 0 && items[0].price === '0') {
+                    while (items.length > 0 && items[0].price === '0' && !similar(product.description, items[0].title)) {
                         items.shift();
                     }
                     
