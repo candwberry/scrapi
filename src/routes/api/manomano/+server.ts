@@ -352,12 +352,12 @@ export const POST: RequestHandler = async ({ request, url }) => {
                     }
 
                     // Remove bad items.
-                    while (items.length > 0 && items[0].price === '0' && !similar(product.description, items[0].title)) {
+                    while (items.length > 0 && (items[0].price === '0' || !similar(product.description, items[0].title))) {
                         items.shift();
                     }
 
                     items.forEach(item => {
-                        clog(`Item found: ${item.title} - ${item.price}`);
+                        clog(`Item kept: ${item.title} - ${item.price}`);
                     });
 
                     
