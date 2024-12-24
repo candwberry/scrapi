@@ -78,8 +78,8 @@
     <div slot="title" class="flex justify-between flex-row gap-2 font-bold">Home
         <div class="flex flex-row gap-2">
             <p>{num} / {max}</p>
-            <button style="background-color: #009845; border-radius: 24px;"on:click={runAll}>RUN ALL</button> 
-            <button on:click={run}>RESTART SCRAPI</button> 
+            <button style="background-color: #009845; color: white; padding: 0 4px; border-radius: 24px;"on:click={runAll}>RUN ALL</button> 
+            <button style="background-color: red; color: white; padding: 0 4px; border-radius: 24px;on:click={run}>RESTART SCRAPI</button> 
         </div>
     </div>
     <div class="grid grid-cols-5 p-4 pb-0 gap-4 items-center max-h-full">
