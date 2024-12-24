@@ -33,7 +33,7 @@ function clog(msg: string) { consolelog(msg, isBatchProcessing); }
 function cerr(msg: string, error: any) { consoleerror(msg, error, isBatchProcessing); }
 
 let cache: { [key: string]: { status: number; headers: any; body: Buffer; expires: number } } = {};
-async function manomano(query: string) {
+async function manomano(query: string, description: string) {
     let page: Page | undefined;
     try {
         if (!browser || !browser.connected) {
@@ -342,13 +342,13 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
                     if (!query) return;
                     let items: { price: any; shipping: any; title: any; href: any; thumbnail: any; }[] = [];
-                    items = await manomano(query);
+                    items = await manomano(query, product.description);
 
                     if (!(items.length > 0 && items[0].price !== '0')) {
                         if (query == product.barcode) {
                             query = product.description;
                             items = await manomano(
-                                query
+                                query, product.description
                             );
                         }
                     }

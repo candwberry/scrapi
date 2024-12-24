@@ -338,7 +338,7 @@ async function findPrice(
 }
 let cache = {};
 
-async function google(query: string, baseUrl: string) {
+async function google(query: string, baseUrl: string, description: string = "") {
   if (Date.now() % 300000 === 0) {
     cache = {};
   }
@@ -401,7 +401,7 @@ async function google(query: string, baseUrl: string) {
           (el) => el.querySelector("h3")?.textContent,
           searchResults[i],
         );
-        if (!similar(query, title)) continue;
+        if (!similar(description, title)) continue;
         
         domain = await page.evaluate(
           (el) =>
@@ -650,7 +650,7 @@ async function google(query: string, baseUrl: string) {
         item.price = ourPrice;
         clog(item.price);
         clog(items);
-        
+
         if (item.price.includes("delivery") || item.price.includes("day")) {
           item.price = "99999";
         }
@@ -693,7 +693,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
       return err("No query provided", { error: "No query provided" });
     }
 
-    const itemsitems = await google(query, baseUrl);
+    const itemsitems = await google(query, baseUrl, query);
 
     const firstItem = itemsitems.length > 0 ? itemsitems[0] : null;
     const otherItems = itemsitems.slice(1);
@@ -778,12 +778,14 @@ export const POST: RequestHandler = async ({ request, url }) => {
             let items = await google(
               query,
               baseUrl,
+              product.description
             );
             if (items.length === 0) {
               if (query == product.barcode) {
                 items = await google(
                   product.description,
                   baseUrl,
+                  product.description
                 ); // no point trying suppliercode till we have suppliers uploaded.
               }
             }

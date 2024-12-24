@@ -36,7 +36,7 @@ function cerr(msg: string, error: any) {
 let browser: Browser | undefined;
 
 let cache: { [key: string]: { status: number; headers: any; body: Buffer; expires: number } } = {};
-async function amazon(query: string, asin?: string) {
+async function amazon(query: string, description?: string, asin?: string ): Promise<any[]> {
   if (query)
     query = query.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
   let page;
@@ -62,7 +62,7 @@ async function amazon(query: string, asin?: string) {
 
     clog("Opening new page...");
     page = await browser.newPage();
-    page.setDefaultNavigationTimeout(5000);
+    page.setDefaultNavigationTimeout(2500);
 
     // This blocks requests to unnecessary resources, e.g. images, stylesheets, to speed up loading of the page.
     clog("Setting request interception...");
@@ -188,7 +188,7 @@ async function amazon(query: string, asin?: string) {
       `https://www.amazon.co.uk/s?k=${encodeURIComponent(query)}&ref=nb_sb_noss_2`,
       { waitUntil: "domcontentloaded" }
     ), new Promise(
-      (resolve, reject) => setTimeout(() => reject("Timeout"), 5000))]).catch((err) => cerr("Error loading page.", err));
+      (resolve, reject) => setTimeout(() => reject("Timeout"), 2500))]).catch((err) => cerr("Error loading page.", err));
     //s-main-slot
     const mainSlot = await page.$(".s-main-slot");
     if (!mainSlot) {
@@ -217,7 +217,7 @@ async function amazon(query: string, asin?: string) {
             ".a-text-normal",
             (node) => node.textContent,
           )) ?? "";
-        if (!similar(query, title)) continue;
+        if (!similar(description, title)) continue;
         
 
         let price =
@@ -296,7 +296,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
       return err("No query provided", { error: "No query provided" });
     }
 
-    const items = await amazon(query);
+    const items = await amazon(query, query);
     const firstItem = items.length > 0 ? items[0] : null;
     const otherItems = items.slice(1);
 
@@ -380,18 +380,21 @@ export const POST: RequestHandler = async ({ request, url }) => {
             if (asin_validated !== 0)
               items = await amazon(
                 query,
+                product.description,
                 asin,
               );
             else
               items = await amazon(
-                query
+                query,
+                product.description,
               );
 
             if (!(items.length > 0 && items[0].price !== "0")) {
               if (query == product.barcode) {
                 query = product.description;
                 items = await amazon(
-                  query
+                  query,
+                  product.description,
                 );
               }
             }

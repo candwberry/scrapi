@@ -138,6 +138,10 @@ function getStringSimilarity(title1: string, title2: string) {
 }
 
 export function similar(a: string, b: string): boolean {
+  // if strings empty or null or undefined, assume true
+  if (!a || !b) return true;
+  if (a.trim() === "" || b.trim() === "") return true;
+
   return getStringSimilarity(a, cleanString(b)) > 0.4;
 }
 
