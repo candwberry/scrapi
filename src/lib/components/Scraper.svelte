@@ -38,7 +38,7 @@
                     remaining: data.isBatchProcessingCopy.remaining,
                     estimatedTime: data.isBatchProcessingCopy.estimatedTime,
                     logs: [
-                        ...currentDetails.logs,
+                        ...currentDetails.logs.slice(-99),
                         ...data.isBatchProcessingCopy.logs,
                     ],
                 }));

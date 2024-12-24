@@ -44,18 +44,18 @@
     let num = 0;
     let max = 0;
     async function runAll() {
-        num = 0;
         // get all berry products
         // call /api/db/products
         // for each product, call /api/db/batch with batch: product.berry   
+        num = 0;
         const resp = await fetch(`/api/db/products`);
         if (resp.ok) {
             const data = await resp.json();
             console.log(data);
             if (Array.isArray(data) && data.length > 0) {
-                num++;
                 max = data.length;
                 for (let i = 0; i < data.length; i++) {
+                    num++;
                     const product = data[i];
                     const resp = await fetch (`/api/db/batch`, {
                         method: 'POST',
