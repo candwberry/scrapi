@@ -220,13 +220,16 @@ async function manomano(query: string, description: string) {
                     };
 
                     const title = anchor.getAttribute('title') ?? '';
-                    if (!similar(query, title)) return {
+                    if (!similar(description, title)) {
+                        clog("item not simlar");
+                        return {
                         title: '',
                         price: '0',
                         shipping: '-1',
                         href: '',
                         thumbnail: '',
-                    };
+                    };}
+                    clog("Found similar item");
                     const href = anchor.getAttribute('href') ?? '';
                     const thumbnail = anchor.querySelector('img')?.getAttribute('src') ?? '';
 
