@@ -187,7 +187,7 @@ function getBiggestElements(_temp1, _temp2) {
                                 {:else if key === 'href'}
                                     <a href={value} target="_blank">{value ? value.toString().substring(0, 50) : ''}</a>
                                 {:else}
-                                    {value ? value.toString().substring(0, 50) : ''}
+                                    {(!(value == "null" || value == null)) ? value.toString().substring(0, 50) : ''}
                                 {/if}
                             </td>
                         {/each}
