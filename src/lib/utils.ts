@@ -142,7 +142,7 @@ export function similar(a: string, b: string): boolean {
   if (!a || !b) return true;
   if (a.trim() === "" || b.trim() === "") return true;
 
-  return getStringSimilarity(a, cleanString(b)) > 0.4;
+  return getStringSimilarity(a, cleanString(b)) > 0.3; // ? a bit low but 
 }
 
 
