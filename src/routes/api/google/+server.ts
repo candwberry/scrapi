@@ -401,7 +401,11 @@ async function google(query: string, baseUrl: string, description: string = "") 
           (el) => el.querySelector("h3")?.textContent,
           searchResults[i],
         );
-        if (!similar(description, title)) continue;
+        if (!similar(description, title)) {
+          clog("Skipped " + title + " because it is not similar to " + description);
+
+          continue;
+        }
         
         domain = await page.evaluate(
           (el) =>
