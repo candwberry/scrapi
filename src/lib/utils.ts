@@ -207,7 +207,7 @@ async function initBrowser(
   try {
     browser = await puppeteer.launch({
       executablePath: "/usr/bin/google-chrome",
-      headless: "shell",
+      headless: false,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -222,7 +222,7 @@ async function initBrowser(
         width: 1280,
         height: 720,
       },
-      timeout: 30000,
+      timeout: 5000,
     });
     consolelog("Browser launched successfully.", isBatchProcessing);
   } catch (err) {

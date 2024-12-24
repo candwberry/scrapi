@@ -72,7 +72,7 @@ export const POST: RequestHandler = async ({ request, url, fetch }) => {
   } catch (err) {
     console.error("Google error:", err);
     googleJSON = [];
-  }
+  } // push plez/
   try {
     manoJSON = await manomano.json();
   } catch (err) {
